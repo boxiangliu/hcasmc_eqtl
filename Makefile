@@ -23,8 +23,65 @@ dummy:
 	for i in $(seq 1 22); do 
 		bcftools view -G -r $i geno.vcf.gz >/dev/null
 	done
+#----- eQTL -----# 
+# convert impute2 output to genotype format by matrix eQTL: 
 
-# imputation: 
+
+
+#----- variance stabilization --------
+input27 = read_htseq_count.sample_list.txt
+table27 = ../processed_data/count_matrix.tsv
+$(table27): $(input27)
+	Rscript read_htseq_count.R $(input27) $(table27)
+
+#----- IBD -----# 
+input26 = ../data/joint/recalibrated_variants.GT.FORMAT
+subset26 = ../data/joint/recalibrated_variants.chr22.GT.FORMAT
+figure26 = ../figures/ibd.pdf
+$(figure26):$(input26)
+	awk '{ if ($$1 == "chr22" || $$1 == "CHROM") print $$0}' $(input26) > $(subset26)
+
+#----- detect DNA sample contamination ------#
+input25 = ../data/joint/recalibrated_variants.GT.FORMAT
+figure25 = ../figures/dna_contamination.pdf
+1000G_phase3v5a_chr20 = /srv/persistent/bliu2/shared/1000genomes/phase3v5a/ALL.chr20.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz
+out_dir25 = ../processed_data/dna_contamination/
+eur25 = ../processed_data/dna_contamination/chr20.AF.EUR.2.vcf.gz
+output25 = ../processed_data/dna_contamination/1020301
+# plot het/hom ratio: 
+$(figure25):$(input25) 
+	Rscript detect_sample_contamination.R $(input25) $(figure25)
+
+# model based method: 
+$(eur25):$(input25)
+	# if [ ! -d $(out_dir25) ]; then mkdir -p $(out_dir25); fi
+	# bcftools view -Ou -s HG00096 --force-samples --types snps $(1000G_phase3v5a_chr20) | bcftools annotate -Ov -x ^INFO/EUR_AF | sed -e "s/EUR_AF/AF/" -e "s/^20/chr20/" | bcftools view -Oz -o $(eur25)
+ 	bcftools view -Ov ../processed_data/dna_contamination/chr20.AF.EUR.vcf.gz | sed "s/contig=<ID=/contig=<ID=chr/" | bcftools view -Oz -o ../processed_data/dna_contamination/chr20.AF.EUR.2.vcf.gz
+$(output25): $(eur25)
+	verifyBamID --vcf $(eur25) --bam /mnt/data/WGS_HCASMC/1020301/recal_reads.bam --chip-none --precise --verbose --minAF 0 --minCallRate 0 --out $(out_dir25)/1020301 
+
+#----- count expression ------#
+input_dir24=../data/rnaseq/alignments/
+input24 =htseq_count.sample_list.txt
+output_dir_prefix24=../data/rnaseq/expression/
+.htseq_count.sh.done: $(input24) $(input_dir24)
+	bash htseq_count.sh $(input_dir24) $(input24) $(output_dir_prefix24)
+
+#----- sex determination -----#
+input23= ../data/joint/recalibrated_variants.GT.FORMAT
+table23= ../processed_data/sex.tsv
+figure23 = ../figures/sex.pdf
+$(figure23):$(outpu23)
+	Rscript sex_determination.R $(input23) $(figure23) $(table23)
+
+#---- convert impute2 output to genotype -----#
+mkdir ../processed_data/028_imputed_genotype
+Rscript convert_impute2_output_to_genotype.R
+
+# compare imputed genotype with unimputed genotypes: 
+zcat ../data/joint/recalibrated_variants.GRCh37.biallelic.pass.norm.id.hwe.missing.maf.vcf.gzary | grep -e ^#CHROM -e ^22 >  ../processed_data/028_imputed_genotype/recalibrated_variants.GRCh37.biallelic.pass.norm.id.hwe.missing.maf.chr22.vcf
+
+#---- imputation ------# 
 input19 = ../data/joint/recalibrated_variants.GRCh37.biallelic.pass.norm.id.hwe.missing.maf.vcf.gzary
 bed19 = ../processed_data/imputation/recalibrated_variants.GRCh37.biallelic.pass.norm.id.hwe.missing.maf.chr20.bed
 freq19 = ../processed_data/imputation/recalibrated_variants.GRCh37.biallelic.pass.norm.id.hwe.missing.maf.chr20.freq
@@ -76,7 +133,35 @@ $(imputed19):$(phased19)
 # imputation pipeline: 
 .imputation_pipeline.sh.done:$(input19)
 	bash imputation_pipeline.sh $(input19)
-# pre-imputation QC: 
+
+
+# re-run failed jobs 
+.rerun_failed_imputation_jobs.py.done: 
+	python rerun_failed_imputation_jobs.py ../data/joint/
+	touch .rerun_failed_imputation_jobs.py.done
+
+	# move files into a directory: 
+	mkdir ../data/joint/imputation
+	mv ../data/joint/*.imputed.* ../data/joint/imputation
+	mv ../data/joint/*chr*.{bed,bim,fam,frq,log,nosex,phased,snp}* ../data/joint/imputation
+
+# run on scg3: 
+wd=/srv/persistent/bliu2/tools/
+copy_imputation_pipeline_to_scg:
+	# scp imputation_pipeline.sh subset_to_chromosome.sh check_strand_alignment.sh plot_percentage_in_1000G.R prephasing.sh impute.sh utils.R bliu2@scg3.stanford.edu:/srv/gsfs0/projects/montgomery/bliu2/HCASMC_eQTL/scripts/
+	# scp ../data/joint/recalibrated_variants.GRCh37.biallelic.pass.norm.id.hwe.missing.maf.vcf.gzary bliu2@scg3.stanford.edu:/srv/gsfs0/projects/montgomery/bliu2/HCASMC_eQTL/data/joint/
+	# scp -r $(wd)/impute_v2.3.2_x86_64_static $(wd)/plink_1.90_beta3_linux_x86_64 $(wd)/shapeit.v2.r790.RHELS_5.4.dynamic bliu2@scg3.stanford.edu:/srv/gsfs0/projects/montgomery/bliu2/tools/
+	# scp -r /srv/persistent/bliu2/shared/haplotype_reference/ bliu2@scg3.stanford.edu:/srv/gsfs0/projects/montgomery/bliu2/shared/haplotype_reference
+	# scp utils.R bliu2@scg3.stanford.edu:/srv/gsfs0/projects/montgomery/bliu2/HCASMC_eQTL/scripts/
+
+
+# plot concordance table: 
+
+# concatenate chunks in each chromosome:
+.concat_impute2_output.py.done:
+	python concat_impute2_output.R
+
+#----- pre-imputation QC ------# 
 # input8 = ../data/joint/recalibrated_variants.GRCh37.pass.vcf.gz
 # input8 = ../data/joint/recalibrated_variants.GRCh37.pass.id.vcf.gzary
 input8 = ../data/joint/recalibrated_variants.GRCh37.biallelic.pass.norm.id.vcf.gz
@@ -96,42 +181,93 @@ $(output8): $(input8)
 	--recode vcf bgz \
 	--out $(output8:.vcf.gzary=) > log/pre_imputation_qc.log
 
-	# --exclude $(exclude) \
 	tabix -p vcf $(output8)
 
-# RNA-WGS match: 
+
+#------- RNA-WGS match -------#
 input17 = ../data/joint/recalibrated_variants.vcf.gz
+genotype17 = ../data/joint/recalibrated_variants.GT.FORMAT
 variants17 = ../processed_data/rna_wgs_match/variants.chr1_chr11_chr22.bed
 mpileup_dir17 = ../processed_data/rna_wgs_match/mpileup
-sample_list17 = rna_wgs_match.pileup.sample_list.txt
-sample_list17_2 = rna_wgs_match.variant_counts.sample_list.txt
+count_dir17= ../processed_data/rna_wgs_match/variant_count/
+# sample_list17 = rna_wgs_match.pileup.sample_list.txt
+# sample_list17 = rna_wgs_match.pileup.sample_list.2.txt
+# sample_list17 = rna_wgs_match.pileup.sample_list.3.txt
+sample_list17 = rna_wgs_match.pileup.sample_list.4.txt
+# sample_list17_2 = rna_wgs_match.variant_counts.sample_list.txt
+# sample_list17_2 = rna_wgs_match.variant_counts.sample_list.2.txt
+# sample_list17_2 = rna_wgs_match.variant_counts.sample_list.3.txt
+sample_list17_2 = rna_wgs_match.variant_counts.sample_list.4.txt
+sample_list17_3 = rna_wgs_match.R.sample_list.txt
 figure17 = ../figures/rna_wgs_match.pdf
+table17 = ../processed_data/rna_wgs_match.tsv
 $(variants17): $(input17)
 	# extract variant sites on chr22:
 	zcat $(input17) | awk 'BEGIN {OFS = "\t"} {if ( ($$1 == "chr1" || $$1 == "chr11" || $$1 == "chr22") && $$7 == "PASS") print $$1,$$2-1,$$2}' > $(variants17)
 
-.rna_wgs_match.mpileup.sh.done: $(variants17)
+.rna_wgs_match.mpileup.sh.done: $(variants17) $(sample_list17)
 	# samtools mpileup at variant sites: 
 	bash rna_wgs_match.mpileup.sh ../data/rnaseq/alignments/ $(sample_list17) $(mpileup_dir17) $(variants17) 
-	
+
 .rna_wgs_match.variant_counts.sh.done: .rna_wgs_match.mpileup.sh.done $(sample_list17_2)
 	# convert mpileup to variant counts: 
-	bash rna_wgs_match.variant_counts.sh ../processed_data/rna_wgs_match/mpileup/ $(sample_list17_2) ../processed_data/rna_wgs_match/variant_count/
+	bash rna_wgs_match.variant_counts.sh ../processed_data/rna_wgs_match/mpileup/ $(sample_list17_2) $(count_dir17)
 
 
-split:split
+$(figure17): .rna_wgs_match.variant_counts.sh.done $(sample_list17_3)
 	# extract genotype from WGS VCF file: 
-	vcftools --gzvcf $(input17) --extract-FORMAT-info GT --out $(input17:.vcf.gz=)
+	# vcftools --gzvcf $(input17) --extract-FORMAT-info GT --out $(genotype17:.GT.FORMAT=)
 
 	# check RNA-WGS concordance: 
-	Rscript rna_wgs_match.R $(input17:.vcf.gz=.GT.FORMAT.chr22) ../processed_data/rna_wgs_match/variant_count/ rna_wgs_match.R.sample_list.txt
+	Rscript rna_wgs_match.R $(genotype17) $(count_dir17) $(sample_list17_3) $(figure17) $(table17)
 
-# copy RNAseq alignments from valk: 
+
+
+#---- check all RNAseq has been mapped ------# 
+$(output22):$(input22)
+	# on valk: 
+	mkdir ../processed_data/check_all_rnaseq_has_mapped/
+	scp bosh@valkyr.stanford.edu:/home/mpjanic/Stanford_3rd_round_seqs_GOOD_pools1and2only/AAA-StudyInfo.txt ../processed_data/check_all_rnaseq_has_mapped/Stanford_3rd_round_AAA-StudyInfo.txt
+	Rscript check_all_rnaseq_has_mapped.R 
+	# sample 2913 is in /home/diskstation/RNAseq/HCASMC/Raw_Data/Penn_2nd_round_RNAseq_GOOD_cvrg_8-11-15/
+
+
+#------- link Olga's samples: -------# 
+output23 = .link_olgas_samples.sh.done
+$(output23):
+	bash link_olgas_samples.sh 
+
+
+
+
+#------- copy RNAseq alignments from valk ------# 
 input18 = copy_rnaseq_from_valk.sample_list.txt
 output18 = .copy_rnaseq_from_valk.done
+input18_2 = copy_rnaseq_from_valk_2.sample_list.txt
+output18_2 = .copy_rnaseq_from_valk_2.done
 $(output18):$(input18)
 	bash copy_rnaseq_from_valk.sh /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq/alignments/ $(input18)
 
+
+$(output18_2):$(input18_2)
+	bash copy_rnaseq_from_valk_2.sh /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq/alignments/ $(input18_2)
+	
+	cd ../data/rnaseq/alignments
+	mkdir 59885590_26425_CGATGT_2
+	mv 59885590_26425_CGATGT/{Aligned.out.bam.sort.bam,Aligned.out.bam.sort.bam.bai,Log.final.out,Log.progress.out,Log.out} 59885590_26425_CGATGT_2
+	
+	mv 59885590_26425_CGATGT_2/Aligned.out.bam.sort.bam 59885590_26425_CGATGT_2/Aligned.out.bam
+	mv 59885590_26425_CGATGT_2/Aligned.out.bam.sort.bam.bai 59885590_26425_CGATGT_2/Aligned.out.bam.bai
+	
+	mv 9071501.8_26436_ATCACG/Aligned.out.bam.sort.bam 9071501.8_26436_ATCACG/Aligned.out.bam
+	mv 9071501.8_26436_ATCACG/Aligned.out.bam.sort.bam.bai 9071501.8_26436_ATCACG/Aligned.out.bam.bai
+	
+	mv 8072501_26426_TGACCA/Aligned.out.bam.sort.bam 8072501_26426_TGACCA/Aligned.out.bam
+	mv 8072501_26426_TGACCA/Aligned.out.bam.sort.bam.bai 8072501_26426_TGACCA/Aligned.out.bam.bai
+
+	rsync -avzh --progress bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/HCASMC/Raw_Data/Penn_2nd_round_RNAseq_GOOD_cvrg_8-11-15/2913_26442_GCCAAT/Pass2/{Log.out,Log.final.out,Log.progress.out,Aligned.out.bam.sort.bam,Aligned.out.bam.sort.bam.bai} /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq/alignments/2913_26442_GCCAAT
+	mv 2913_26442_GCCAAT/Aligned.out.bam.sort.bam 2913_26442_GCCAAT/Aligned.out.bam
+	mv 2913_26442_GCCAAT/Aligned.out.bam.sort.bam.bai 2913_26442_GCCAAT/Aligned.out.bam.bai
 
 # compare duplicate samples: 
 input15 = ../processed_data/recalibrated_variants.GRCh37.tsv
@@ -199,6 +335,7 @@ merged = ../processed_data/recalibrated_variants.1000G_phase3v5a.merged.1000aims
 1000G_panel = /srv/persistent/bliu2/shared/1000genomes/phase3v5a/integrated_call_samples_v3.20130502.ALL.panel
 figure7_1 = ../figures/ancestry_proportions.pdf
 figure7_2 = ../figures/ancestry_PCs.pdf
+table7 = ../processed_data/ancestry_proportions.tsv
 $(figure7_1): $(input7) 
 	# create $(aims)
 	tail -n +2 /srv/persistent/bliu2/ancestry/AIMS_selection/AIMs/five_superpopulations/with_heterogeneity_filter/filter_SAS/propmultiIn_0.0/AFR_AMR_EAS_EUR_SAS_with_heterogeneity_filter500k_1000.aims | awk 'BEGIN {OFS = "\t"}{print $$2,$$3-1,$$3}' > $(aims) 
@@ -223,7 +360,7 @@ $(figure7_1): $(input7)
 	mv $(notdir $(merged:vcf.gz=biallelic.nomissing.noSAS.4.Q)) ../processed_data/
 
 	# plot ancestry proportion with R: 
-	Rscript plot_ancestry_proportions.R ../processed_data/$(notdir $(merged:vcf.gz=biallelic.nomissing.noSAS.4.Q)) ../processed_data/$(notdir $(merged:vcf.gz=biallelic.nomissing.noSAS.fam)) $(figure7_1)
+	Rscript plot_ancestry_proportions.R ../processed_data/$(notdir $(merged:vcf.gz=biallelic.nomissing.noSAS.4.Q)) ../processed_data/$(notdir $(merged:vcf.gz=biallelic.nomissing.noSAS.fam)) $(figure7_1) $(table7)
 
 	# plot ancestry PCs with R:
 	Rscript plot_ancestry_PCs.R ../processed_data/recalibrated_variants.1000G_phase3v5a.merged.1000aims.vcf.GT.FORMAT $(figure7_2)
@@ -321,9 +458,9 @@ $(output1): $(input1)
 /srv/persistent/bliu2/shared/1000genomes/phase3v5a/ALL.concat.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.vcf.gz: 
 	python concat_1000G_vcfs.py /srv/persistent/bliu2/shared/1000genomes/phase3v5a sample_list.txt ALL.concat.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.vcf
 
-# copy BAM and VCF to valk: 
-transfer_to_valk.py.done: 
-	python transfer_to_valk.py /mnt/data/WGS_HCASMC sample_list.txt
+#----- copy BAM and VCF to valk -----# 
+# transfer_to_valk.py.done: 
+# 	python transfer_to_valk.py /mnt/data/WGS_HCASMC sample_list.txt
 
 .copy_bam_and_vcf_to_valk.sh.done: 
 	bash copy_bam_and_vcf_to_valk.sh copy_bam_and_vcf_to_valk.sample_list.txt
