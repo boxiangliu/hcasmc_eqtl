@@ -18,7 +18,7 @@ while read sample; do
 	echo $sample
 	[[ ! -d  $(dirname $PILEUP_DIR/$sample.pileup) ]] && mkdir -p $(dirname $PILEUP_DIR/$sample.pileup)
 	echo "writing to $PILEUP_DIR/$sample.pileup"
-	samtools mpileup -Q $QUAL -BAf $REF -l $VARIANT $BAM_DIR/$sample > $PILEUP_DIR/${sample/out.bam/pileup}
+	samtools mpileup -Q $QUAL -BAf $REF -l $VARIANT $BAM_DIR/$sample > $PILEUP_DIR/${sample/out.sorted.bam/pileup}
 done < $SAMPLE_LIST
 
 touch .rna_wgs_match.mpileup.sh.done

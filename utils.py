@@ -8,7 +8,7 @@ def setwd(wd):
 	print "[ cwd ] " + os.getcwd()
 
 def reportDone():
-	name = sys.argv[0] + '.done'
+	name = "." + sys.argv[0] + '.done'
 	cmd = ['touch', name]
 	sp.call(cmd)
 	print "[ done ] created %s"%name
@@ -16,6 +16,11 @@ def reportDone():
 def call(cmd,dry_run=False):
 	print "[ cmd ] %s"%cmd
 	if not dry_run: sp.call(cmd, shell=True)
+
+def check_output(cmd, dry_run=False):
+	print "[ cmd ] %s"%cmd 
+	if not dry_run: 
+		return sp.check_output(cmd, shell = True)
 
 def readSampleList(sample_list):
 	with open(sample_list, 'r') as f: 

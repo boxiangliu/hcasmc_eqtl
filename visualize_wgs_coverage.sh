@@ -12,7 +12,7 @@ while read sample; do
 	sample=${sample}/recal_reads.bam
 	bamToBed -i ${sample} > ${sample/bam/bed}
 	sort -k1,1 ${sample/bam/bed} > ${sample/bam/sorted.bed}
-	genomeCoverageBed -bga -i ${sample/bam/sorted.bed} -g ${HG19} > ${sample/bam/bedGraph}
+	genomeCoverageBed -bga -i ${sample/bam/sorted.bed} -g ${CHROM_SIZE} > ${sample/bam/bedGraph}
 	/srv/persistent/bliu2/tools/ucsc_tools/bedGraphToBigWig ${sample/bam/bedGraph} ${CHROM_SIZE} ${sample/bam/bw}
 done < ${input}
 touch ${output}

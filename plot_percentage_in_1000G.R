@@ -25,7 +25,7 @@ merged[,N := .N, by='BIN']
 merged[,PCT_MISSING := N_MISSING/N, by='BIN']
 merged[,PCT_STRAND := N_STRAND/N, by='BIN']
 
-load('plot_percentage_in_1000G.RData')
+
 p1 = ggplot(merged,aes(x=BIN)) + geom_point(aes(y=PCT_MISSING,color = 'PCT_MISSING')) + geom_point(aes(y=PCT_STRAND,color='PCT_STRAND')) + xlab('Frequency') + ylab('Percentage') + theme(axis.text.x = element_text(angle = 90, hjust=1)) + scale_y_continuous(breaks = seq(0,0.8,0.05))
 save_plot(figure_filename, p1, base_width = 6)
 

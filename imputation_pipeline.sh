@@ -30,24 +30,24 @@ declare -A sizes=(["chr1"]=249250621 \
 ["chr22"]=51304566 \
 ["chr21"]=48129895)
 
-for chr in $(seq 22 22); do
+for chr in $(seq 1 22); do
 	# subset to chromosome and generate bed files 
 	bed=${input/.vcf.gzary/}
 	bed=$bed.chr$chr.bed
-	echo "[ subset to chrosome ]"
-	echo "writing to $bed"
-	bash subset_to_chromosome.sh $input $bed $chr
+	# echo "[ subset to chrosome ]"
+	# echo "writing to $bed"
+	# bash subset_to_chromosome.sh $input $bed $chr
 
 	# check strand alignment:
 	reference_hap=$SHARED/haplotype_reference/1000G_phase3/1000GP_Phase3/1000GP_Phase3_chr$chr.hap.gz
 	reference_legend=$SHARED/haplotype_reference/1000G_phase3/1000GP_Phase3/1000GP_Phase3_chr$chr.legend.gz
 	reference_sample=$SHARED/haplotype_reference/1000G_phase3/1000GP_Phase3/1000GP_Phase3.sample
 	strand_alignment_output=${bed/.bed/.snp.strand}
-	echo "[ check strand alignment ]"
-	echo "using input:" $bed
-	echo "using reference panel:" $reference_hap $reference_legend $reference_sample
-	echo "writing strand alignment to:" $strand_alignment_output
-	bash check_strand_alignment.sh $bed $reference_hap $reference_legend $reference_sample $strand_alignment_output
+	# echo "[ check strand alignment ]"
+	# echo "using input:" $bed
+	# echo "using reference panel:" $reference_hap $reference_legend $reference_sample
+	# echo "writing strand alignment to:" $strand_alignment_output
+	# bash check_strand_alignment.sh $bed $reference_hap $reference_legend $reference_sample $strand_alignment_output
 
 	# plot percent missing from 1000G reference panel vs freq in main panel:
 	freq=${bed/.bed/.frq}
@@ -60,12 +60,12 @@ for chr in $(seq 22 22); do
 	# prephasing: 
 	genetic_map=$SHARED/haplotype_reference/1000G_phase3/1000GP_Phase3/genetic_map_chr${chr}_combined_b37.txt
 	phased=${bed/.bed/.phased.haps}
-	echo "[ prephasing ]"
-	echo "excluding SNP in:" $strand_alignment_output.exclude
-	echo "using reference panel:" $reference_hap $reference_legend $reference_sample
-	echo "using genetic map:" $genetic_map
-	echo "writing phased haplotypes to:" $phased
-	bash prephasing.sh $bed $genetic_map $reference_hap $reference_legend $reference_sample $phased $strand_alignment_output.exclude
+	# echo "[ prephasing ]"
+	# echo "excluding SNP in:" $strand_alignment_output.exclude
+	# echo "using reference panel:" $reference_hap $reference_legend $reference_sample
+	# echo "using genetic map:" $genetic_map
+	# echo "writing phased haplotypes to:" $phased
+	# bash prephasing.sh $bed $genetic_map $reference_hap $reference_legend $reference_sample $phased $strand_alignment_output.exclude
 
 	# imputation: 
 	imputed=${phased/.haps/.imputed}
@@ -75,7 +75,7 @@ for chr in $(seq 22 22); do
 	echo "using reference panel:" $reference_hap $reference_legend $reference_sample
 	echo "using genetic map:" $genetic_map
 	echo "writing imputed genotypes to:" $imputed
-	# bash impute.sh $phased $reference_hap $reference_legend $genetic_map $imputed $size
+	bash impute.sh $phased $reference_hap $reference_legend $genetic_map $imputed $size
 done 
 
 touch .imputation_pipeline.sh.done

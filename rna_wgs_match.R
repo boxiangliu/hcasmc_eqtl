@@ -9,10 +9,12 @@ args = commandArgs(T)
 genotype_filename = args[1]
 count_dir = args[2]
 count_filenames = args[3]
-genotype_filename = '../data/joint/recalibrated_variants.GT.FORMAT'
-count_dir = '../processed_data/rna_wgs_match/variant_count/'
-count_filenames = 'rna_wgs_match.R.sample_list.txt'
-
+figure_filename = args[4]
+table_filename = args[5]
+# genotype_filename = '../data/joint/recalibrated_variants.GT.FORMAT'
+# count_dir = '../processed_data/rna_wgs_match/variant_count/'
+# count_filenames = 'rna_wgs_match.R.sample_list.txt'
+# figure_filename = '../figures/rna_wgs_match.pdf'
 
 # read genotypes: 
 genotypes = fread(genotype_filename, header = T)
@@ -62,4 +64,22 @@ for (wgs_sample in wgs_samples){
 }
 
 # make heatmap of match_matrix:  
+pdf(figure_filename)
 heatmap.2(match_matrix, trace = 'none', dendrogram='none', Rowv=F, Colv=F)
+for (rna_sample in rna_samples){
+	plot(match_matrix[rna_sample,], main = rna_sample, xlim=c(1,75), ylab = '% match', xlab = 'Sample index')
+	text(match_matrix[rna_sample,], labels = wgs_samples, srt = -45, adj = -0.1)
+}
+for (wgs_sample in wgs_samples){
+	plot(match_matrix[,wgs_sample], main = wgs_sample, xlim=c(1,84), ylab = '% match', xlab = 'Sample index')
+	text(match_matrix[,wgs_sample], labels = rna_samples, srt = -45, adj = -0.1)
+}
+dev.off()
+
+# make rna wgs hash table: 
+best_matches = data.frame(rna = character(), wgs = character())
+for (rna_sample in rna_samples){
+	wgs_sample = names(which.max(match_matrix[rna_sample,]))
+	best_matches=rbind(best_matches, data.frame(rna = rna_sample, dna=wgs_sample))
+}
+write.table(best_matches, file = table_filename, sep = '\t', row.names=FALSE, col.names=TRUE, quote=FALSE)

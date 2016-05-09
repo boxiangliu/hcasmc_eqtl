@@ -33,6 +33,7 @@ args = commandArgs(T)
 QFilename = args[1]
 famFileName = args[2]
 figure_name = args[3]
+table_filename = args[4]
 
 # read Q file (the ancestry proportion file):
 # QFilename = '../processed_data/recalibrated_variants.1000G_phase3v5a.merged.1000aims.biallelic.nomissing.noSAS.4.Q' 
@@ -64,7 +65,7 @@ QFileFam = QFile
 QFileFam = cbind(data.frame(ID = famFile[,1],QFile)) # this assumes that the fam file and Q file are in the same order
 
 # merge QFileFam with ethnicity:  
-QFileFamEthnicity<-merge(QFileFam,hcasmc_TGK_ethnicity, by = 'ID')
+QFileFamEthnicity<-merge(QFileFam,hcasmc_TGK_ethnicity, by = 'ID', all.x = T)
 
 
 # change columns to population names: 
@@ -91,13 +92,14 @@ QFileFamEthnicity[38,]
 
 population_columns = c('AFR','EAS','AMR','EUR')
 setnames(QFileFamEthnicity, paste0('V', seq=1:4), population_columns)
-KPlot<-t(QFileFamEthnicity[,population_columns])
 
 
 ## plot ancestry proportions (using bar plots): 
+KPlot<-t(QFileFamEthnicity[,population_columns])
 KNum = 4 # number of source populations. 
-num_hcasmc = nrow(hcasmc_panel)
+num_hcasmc = nrow(hcasmc_panel) + 1 # sample 150328 not included in hcasmc_panel
 names = paste(QFileFamEthnicity$ID, QFileFamEthnicity$Ethnicity2, sep = '-')
+figure_name = '../figures/ancestry_proportions.pdf'
 pdf(figure_name, width = 10)
 par(mai=c(1.5,0,.1,0.25),font=2,font.lab=4)
 barplot(KPlot[,1:num_hcasmc], xlim = c(0,85), names.arg = names[1:num_hcasmc], col=rainbow(KNum),cex.names=.75, las = 2)
@@ -105,3 +107,11 @@ legend('right', col = rainbow(KNum), legend = population_columns, pch = 15)
 dev.off()
 
 
+# output ancestry proportion table: 
+output = QFileFamEthnicity
+output$self_report = output$Ethnicity2
+output$Ethnicity = NULL
+output$Ethnicity2 = NULL
+output = output[1:num_hcasmc,]
+# table_filename = '../processed_data/ancestry_proportions.tsv'
+write.table(output, file = table_filename, quote = FALSE, sep = '\t', row.names = F, col.names = T, )

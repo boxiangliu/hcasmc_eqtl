@@ -430,7 +430,7 @@ copy_imputation_pipeline_to_scg:
 
 # concatenate chunks in each chromosome:
 .concat_impute2_output.py.done:
-	python concat_impute2_output.R
+	Rscript concat_impute2_output.R ../data/joint/imputation/
 
 
 #----- sex determination -----#
@@ -481,21 +481,82 @@ $(figure26):$(input26)
 input27 = read_htseq_count.sample_list.txt
 table27 = ../processed_data/count_matrix.tsv
 $(table27): $(input27)
-	Rscript read_htseq_count.R $(input27) $(table27)
+	Rscript 027_read_htseq_count.R $(input27) $(table27)
+	Rscript 027_variance_stabilize.R
 
 
-# convert impute2 output to genotype 
+#----- 28 prepare genotype ----
+# 28.1 convert impute2 output to genotype 
 mkdir ../processed_data/028_imputed_genotype
-Rscript convert_impute2_output_to_genotype.R
+Rscript 028_convert_impute2_output_to_genotype.R
 
 
-# compare imputed genotype with unimputed genotypes: 
+# 28.2 compare imputed genotype with unimputed genotypes: 
 zcat ../data/joint/recalibrated_variants.GRCh37.biallelic.pass.norm.id.hwe.missing.maf.vcf.gzary | grep -e ^#CHROM -e ^22 >  ../processed_data/028_imputed_genotype/recalibrated_variants.GRCh37.biallelic.pass.norm.id.hwe.missing.maf.chr22.vcf
 Rscript 028_compare_imputed_and_original_genotypes.R
 
 
-# set 
-# meeting with Trieu and Milos
-# renamed RNAseq samples and associated WGS samples
+#------ 29 prepare gene expression -----
+# 29 set up gene expression for eQTL analysis: 
+# during meeting with Trieu and Milos
+# we renamed RNAseq samples and associated WGS samples
 # create symbolic link to indicate the change in RNAseq sample name:
+Rscript 029_link_RNAseq_samples.R
+
+
+#---- 30 PCA analysis -----
+# 30.1 save htseq count files for RNAseq sample in the working set into a tsv file 
+cp 027_read_htseq_count.R 030_read_htseq_count.R
+# modified 030_read_htseq_count.R
+Rscript 030_read_htseq_count.R
+
+# 30.2 compare 9052004_dase and 9052004
+Rscript 030_compare_9052004_samples.R 
+
+
+# 30.3 perform DESeq variance stabilization
+cp 027_variance_stabilize.R 030_variance_stabilize.R
+# modified 030_variance_stabilize.R
+Rscript 030_variance_stabilize.R
+
+
+# 30.4 make covariates table: 
+# don't run:
+Rscript 030_covariates_table.R
+
+
+# 30.4  perform PCA on RNAseq sample in the working set:
+Rscript 030_expression_PCA.R
+
+
+#--- 31 Matrix eQTL ----
+
+# 31.1 getting started with some sample code:
+# don't run 
+# download example data
+mkdir ../processed_data/031_matrix_eqtl_example
+wget -P ../processed_data/031_matrix_eqtl_example http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/Sample_Data/SNP.txt
+wget -P ../processed_data/031_matrix_eqtl_example http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/Sample_Data/GE.txt
+wget -P ../processed_data/031_matrix_eqtl_example http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/Sample_Data/Covariates.txt
+wget -P ../processed_data/031_matrix_eqtl_example http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/Sample_Data/geneloc.txt
+wget -P ../processed_data/031_matrix_eqtl_example http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/Sample_Data/snpsloc.txt
+Rscript 031_matrix_eqtl_example.R
+
+
+# 31.2 prepare matrix eQTL genotypes:
+# SNP file is already in matrix eQTL format, but 
+# their columns were not the same as the working set. So 
+# their columns were subsetted to the working set and sorted
+# alphanumerically. 
+for chr in $(seq 1 22); do
+echo $chr
+Rscript 031_prepare_matrix_eQTL_genotype.R $chr &
+done
+
+
+# 31.3 prepare matrix eQTL expression: 
+# create output directory: 
+mkdir ../processed_data/031_prepare_matrix_eQTL_expression
+# export DESeq vsd to matrix eQTL expression:
+Rscript 031_prepare_matrix_eQTL_expression.R 
 

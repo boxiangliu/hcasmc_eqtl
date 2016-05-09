@@ -1,6 +1,40 @@
 library(stringr)
 library(cowplot)
 library(data.table)
+#------ 30_compare_9052004_samples.R ------
+#' make pairs upper panel show correlation:
+#' taken from help file of pairs()
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+    usr <- par("usr"); on.exit(par(usr))
+    # par(usr = c(0, 1, 0, 1))
+    par(usr = c(0, 1, 0, 1), xlog = FALSE, ylog = FALSE)
+
+    r <- abs(cor(x, y))
+    txt <- format(c(r, 0.123456789), digits = digits)[1]
+    txt <- paste0(prefix, txt)
+    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+    text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+
+#------ convert_imput2_output_to_genotype.R -----
+#' convert impute2 output to genotype:
+#' @param impute2 (data.table(i,j)) impute2 output
+#' @return genotypes (matrix(i,(j-5)/3)) genotypes
+convImpute2ToGeno=function(impute2){
+	n_samples=(ncol(impute2)-5)/3
+	stopifnot(as.integer(n_samples)==n_samples)
+	n_snps=nrow(impute2)
+	genotypes=matrix(ncol=n_samples,nrow=n_snps)
+	colnames(genotypes)=1:n_samples
+	for (j in seq(1,n_samples)){
+		temp=impute2[,((j-1)*3+1+5):(j*3+5),with=F]
+		genotypes[,j]=max.col(temp)-1
+	}
+	return(genotypes)
+}
+
 
 #' report error if multi-allelic sites are found. 
 #' @param genotypes (data.table) genotypes with samples as columns and variants as rows
