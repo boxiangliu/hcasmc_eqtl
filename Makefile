@@ -428,7 +428,13 @@ copy_imputation_pipeline_to_scg:
 	# scp utils.R bliu2@scg3.stanford.edu:/srv/gsfs0/projects/montgomery/bliu2/HCASMC_eQTL/scripts/
 
 
-# concatenate chunks in each chromosome:
+
+
+# concatenate chunks in each chromosome 
+# I would like to concatenate the info files at some point too. 
+# I wrote code in concat_impute2_output.R (commented out) but it does not work
+# as intended because the info files have headers and cannot be simply 
+# concatenated.
 .concat_impute2_output.py.done:
 	Rscript concat_impute2_output.R ../data/joint/imputation/
 
@@ -486,6 +492,8 @@ $(table27): $(input27)
 
 
 #----- 28 prepare genotype ----
+# 28.0 post imputation QC: 
+
 # 28.1 convert impute2 output to genotype 
 mkdir ../processed_data/028_imputed_genotype
 Rscript 028_convert_impute2_output_to_genotype.R
@@ -559,4 +567,17 @@ done
 mkdir ../processed_data/031_prepare_matrix_eQTL_expression
 # export DESeq vsd to matrix eQTL expression:
 Rscript 031_prepare_matrix_eQTL_expression.R 
+
+
+
+# 31.4 prepare matrix eQTL covariates 
+mkdir ../processed_data/031_prepare_matrix_eQTL_covariate
+Rscript 031_prepare_matrix_eQTL_covariate.R
+
+# 31.5 post imputation QC
+
+# 31.6 prepare matrix eQTL snp location
+
+# 31.7 prepare matrix eQTL gene location 
+
 
