@@ -556,6 +556,7 @@ Rscript 031_matrix_eqtl_example.R
 # their columns were not the same as the working set. So 
 # their columns were subsetted to the working set and sorted
 # alphanumerically. 
+subl 031_prepare_matrix_eQTL_genotype.R
 for chr in $(seq 1 22); do
 echo $chr
 Rscript 031_prepare_matrix_eQTL_genotype.R $chr &
@@ -572,12 +573,35 @@ Rscript 031_prepare_matrix_eQTL_expression.R
 
 # 31.4 prepare matrix eQTL covariates 
 mkdir ../processed_data/031_prepare_matrix_eQTL_covariate
+subl 031_prepare_matrix_eQTL_covariate.R
 Rscript 031_prepare_matrix_eQTL_covariate.R
 
-# 31.5 post imputation QC
+# 31.5 keep snp with MAF > 5%
+mkdir ../processed_data/031_subset_genotype_by_maf
+subl 031_subset_genotype_by_maf.R
+for chr in $(seq 1 22); do
+echo $chr
+Rscript 031_subset_genotype_by_maf.R $chr &
+done
+
 
 # 31.6 prepare matrix eQTL snp location
+mkdir ../processed_data/031_gen_snps_loc
+subl 031_gen_snps_loc.R
+less ../processed_data/031_gen_snps_loc/chr9.genotype_loc.txt
+
+for chr in $(seq 1 22); do
+echo $chr
+Rscript 031_gen_snps_loc.R $chr &
+done
+
 
 # 31.7 prepare matrix eQTL gene location 
+mkdir ../processed_data/031_gen_gene_loc
+subl 031_gen_gene_loc.R
+Rscript 031_gen_gene_loc.R
+# less ../processed_data/031_gen_gene_loc/gene_loc.txt
 
 
+# 31.8 run matrix eQTL:
+mkdir 
