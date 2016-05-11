@@ -10,13 +10,13 @@ output_dir=../processed_data/160511_calc_ibd_plink
 
 # select independent SNPs:
 if [[ ! -e $output_dir/indep_pairwise_50_5_0.2.prune.in ]]; then
-	plink --vcf $vcf --keep-allele-order --indep-pairwise 50 5 0.2 --out $output_dir/indep_pairwise_50_5_0.2
+	plink --vcf $vcf --keep-allele-order --maf 0.05 --geno 0.1 --indep-pairwise 50 5 0.2 --out $output_dir/indep_pairwise_50_5_0.2
 fi 
 
-# create independent SNP set: 
-if [[ ! -e $output_dir/indep_pairwise_50_5_0.2.bim ]]; then 
-	plink --vcf $vcf --make-bed --extract $output_dir/indep_pairwise_50_5_0.2.prune.in --out $output_dir/indep_pairwise_50_5_0.2
-fi
+# remove "." in the prune.in file: 
+awk '{ if ($1 != ".") print $0}' $output_dir/indep_pairwise_50_5_0.2.prune.in > $output_dir/indep_pairwise_50_5_0.2.prune.in.nodot
+
 
 # calculate IBS and IBD:
-plink --bfile $output_dir/indep_pairwise_50_5_0.2 --genome --out $output_dir/indep_pairwise_50_5_0.2
+# plink --bfile $output_dir/indep_pairwise_50_5_0.2 --genome --out $output_dir/indep_pairwise_50_5_0.2
+plink --vcf $vcf --extract $output_dir/indep_pairwise_50_5_0.2.prune.in.nodot --genome --out $output_dir/indep_pairwise_50_5_0.2
