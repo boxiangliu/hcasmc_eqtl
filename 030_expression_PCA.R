@@ -12,6 +12,8 @@ source('utils.R')
 # paths: 
 figure_path='../figures/030_expression_PCA/'
 if (!dir.exists(figure_path)) {dir.create(figure_path)}
+table_dir='../processed_data/030_expression_PCA'
+if(!dir.exists(table_dir)){dir.create(table_dir)}
 
 # read variance stabilized counts: 
 vsd=readRDS('../processed_data/030_variance_stabilize/vsd.rds')
@@ -20,6 +22,14 @@ vsd_filtered=readRDS('../processed_data/030_variance_stabilize/vsd_filtered.rds'
 
 # perform PCA on vsd_filtered:
 pcs = prcomp(t(assay(vsd_filtered)),center=T,scale=T)
+
+
+
+# write pcs to table:
+pc_matrix=pcs$x
+pc_matrix=as.data.table(pc_matrix,keep.rownames=T)
+setnames(pc_matrix,'rn','sample')
+write.table(pc_matrix, file=paste(table_dir,'pcs.tsv',sep="/"),col.names=T,row.names=F,quote=F,sep='\t')
 
 
 # make scree plot:
@@ -85,8 +95,6 @@ setnames(pc_cor,'rn','covariates')
 
 
 # write correlation to table:
-table_dir='../processed_data/030_expression_PCA'
-if(!dir.exists(table_dir)){dir.create(table_dir)}
 write.table(pc_cor, file=paste(table_dir,'cor_top_10_pcs.tsv',sep="/"),col.names=T,row.names=F,quote=F,sep='\t')
 
 

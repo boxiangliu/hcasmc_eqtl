@@ -530,10 +530,12 @@ Rscript 030_variance_stabilize.R
 
 # 30.4 make covariates table: 
 # don't run:
+subl 030_covariates_table.R
 Rscript 030_covariates_table.R
 
 
 # 30.4  perform PCA on RNAseq sample in the working set:
+subl 030_expression_PCA.R
 Rscript 030_expression_PCA.R
 
 
@@ -548,7 +550,8 @@ wget -P ../processed_data/031_matrix_eqtl_example http://www.bios.unc.edu/resear
 wget -P ../processed_data/031_matrix_eqtl_example http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/Sample_Data/Covariates.txt
 wget -P ../processed_data/031_matrix_eqtl_example http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/Sample_Data/geneloc.txt
 wget -P ../processed_data/031_matrix_eqtl_example http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/Sample_Data/snpsloc.txt
-Rscript 031_matrix_eqtl_example.R
+subl 031_matrix_eqtl_example.R
+
 
 
 # 31.2 prepare matrix eQTL genotypes:
@@ -567,6 +570,7 @@ done
 # create output directory: 
 mkdir ../processed_data/031_prepare_matrix_eQTL_expression
 # export DESeq vsd to matrix eQTL expression:
+subl 031_prepare_matrix_eQTL_expression.R
 Rscript 031_prepare_matrix_eQTL_expression.R 
 
 
@@ -588,7 +592,7 @@ done
 # 31.6 prepare matrix eQTL snp location
 mkdir ../processed_data/031_gen_snps_loc
 subl 031_gen_snps_loc.R
-less ../processed_data/031_gen_snps_loc/chr9.genotype_loc.txt
+
 
 for chr in $(seq 1 22); do
 echo $chr
@@ -603,5 +607,358 @@ Rscript 031_gen_gene_loc.R
 # less ../processed_data/031_gen_gene_loc/gene_loc.txt
 
 
-# 31.8 run matrix eQTL:
-mkdir 
+# 31.8 find optimal number of PCs:
+mkdir ../processed_data/031_find_optimal_PCs
+# gather matrix eQTL into one place: 
+ln ../processed_data/031_prepare_matrix_eQTL_expression/expression.txt ../processed_data/031_find_optimal_PCs/expression.txt
+ln ../processed_data/031_subset_genotype_by_maf/chr20.genotype.txt ../processed_data/031_find_optimal_PCs/chr20.genotype.txt
+ln ../processed_data/031_prepare_matrix_eQTL_covariate/covariates.txt ../processed_data/031_find_optimal_PCs/covariates.txt
+ln ../processed_data/031_gen_snps_loc/chr20.genotype_loc.txt ../processed_data/031_find_optimal_PCs/chr20.genotype_loc.txt
+ln ../processed_data/031_gen_gene_loc/gene_loc.txt ../processed_data/031_find_optimal_PCs/gene_loc.txt
+awk '{ if ($2=="20" || $2=="chr") print $0}' ../processed_data/031_find_optimal_PCs/gene_loc.txt > ../processed_data/031_find_optimal_PCs/chr20.gene_loc.txt
+subl 031_find_optimal_PCs.R
+Rscript 031_find_optimal_PCs.R
+
+
+# 2016/05/10
+# added the following papers to hcasmc binder: 
+# 1. uk10k
+# 2. dgn
+# 3. geuvadis
+# 4. immune cell eqtl, fairfax (2012)
+# 5. beta cell eqtl, Nica (2013)
+# 6. peer
+
+# 11:06
+# emailed Milos for an update on the status of RNAseq remap
+
+# 11:07
+# started writing the whole-genome sequencing analysis section of the supplement
+
+
+# 2016/05/11 (Wed)
+# 0:18am
+# I plan to re-run joint genotype calling and variant recalibration.
+# in the variant recalibration step, InbreedingCoeff should be used only when 
+# no closely related samples are present. 
+# need to check this using PLINK or BEAGLE. 
+
+
+# calculate IBD using PLINK:
+mkdir ../processed_data/160511_calc_ibd_plink
+subl 160511_calc_ibd_plink.sh
+mkdir ../figures/160511_analyze_ibd
+subl 160511_analyze_ibd.R
+
+
+
+# 11:14am
+# Lab meeting
+# Stephen suggested to filter on MAF and genotype quality. 
+# And also plot the MAF distribution of pruned set of variants.
+# Logic is that if the variants are rare then people are more likely to 
+# have IBD2. 
+
+
+# 11:57am 
+# plotting the allele frequency distribution of pruned marker set: 
+mkdir ../processed_data/160511_calc_freq
+subl 160511_calc_freq.sh
+mkdir ../figures/160511_calc_freq/
+subl 160511_plot_allele_frequency_of_pruned_marker_set.R 
+
+# Figure ../figures/160511_calc_freq/maf_dist.pdf shows that majority of 
+# variants have maf < 0.05. This increases sharing of IBS2 (think the extreme 
+# case of maf=0.0). I thus filtered on maf=0.05 and geno=0.1 and recalculated 
+# IBD probability
+subl 160511_calc_ibd_plink.sh
+
+# I plotted pi_hat and p(IBD=1)
+subl 160511_analyze_ibd.R
+# Figure ../figures/160511_analyze_ibd/pi_hat.pdf shows that besides three contaminated samples
+# 1848, 1868 and 24635, other sample pairs have pi_hat less than 0.125 (more remote
+# than 3rd degree relatives). Points very high are duplicates as labeled.
+
+# To understand why contaminated samples have high IBD sharing:
+# Figure ../figures/160511_analyze_ibd/Z1.pdf shows that contaminated samples have increases IBD1
+# sharing due to excessive heterozygosity.
+
+# It was not clear whether sample 24156 are contaminated. Figure ../figures/160511_analyze_ibd/24156.pdf
+# shows that 24156 is unrelated to majority of samples. It is unlikely to have been contaminated.
+
+
+# 2:19pm
+# With IBD information, it is worth recalling and recalibrating genotypes 
+# using individuals besides contaminated samples and duplicates
+# contaminated samples:
+# 1848
+# 1858
+# 24635
+
+# duplicate pairs: 
+# 1346 (180G) and CA1346 (177G)
+# 150328 (173G) and 59386145 (173G)
+# 2102 (220G) and 2105 (155G)
+# 2109 (182G) and CA1508 (175G)
+# 289727 (179G) and 2999 (168G)
+# 313605 (174G) and 317155 (167G)
+
+# I remove ones with smaller number of mapped reads as indicated 
+# in size of the bam files.
+# duplicate to remove:
+open ../figures/160511_analyze_ibd/pi_hat.pdf
+# CA1346
+# 150328
+# 2105 
+# CA1508
+# 2999
+# 317155 
+
+
+# 3:38pm
+# re-run joint genotyping and recalibration: 
+subl genotype_gvcfs.py
+mkdir ../data/joint2
+cp /mnt/data/WGS_HCASMC/sample_list.txt ../data/joint2/sample_list.txt
+subl ../data/joint2/sample_list.txt
+python genotype_gvcfs.py ../data/joint2 sample_list.txt 2> log/genotype_gvcfs.20160511.log 
+# killed at chromosome 19...
+# see 2016/05/12 2:52pm
+
+# 5:21pm 
+# added the matrix eQTL paper to hcasmc binder
+# I need to understand how to orthogolize out covariates 
+# Seber and Lee pg54 is a good read 
+
+
+# 5:53pm
+# BEAGLE genotype refinement sample code: 
+wget https://faculty.washington.edu/browning/beagle/run.beagle.03May16.862.example 
+mv run.beagle.03May16.862.example beagle_example.sh
+subl beagle_example.sh
+
+# 10:50pm
+# testing the beagle's conform-gt module:
+# I flipped the alleles of rs138720731, and conform-gt successfully flipped back
+# I also flipped the strand of rs73387790, and conform-gt reports OPPOSITE_STRAND
+# For alleles not in the reference panel, conform-gt reports REMOVED and NOT_IN_REFERENCE
+# Note that conform-gt reports FAIL for some correct SNPs likely because 
+# the evidence for correct strand is inconclusive. 
+# Since conform-gt incorrectly removes these "FAILED" variants, I need to construct vcf manually
+
+
+# 11:16pm 
+# download the beagle reference file: 
+mkdir /srv/persistent/bliu2/tools/beagle/reference
+cd /srv/persistent/bliu2/tools/beagle/reference
+for i in $(seq 1 22) X; do
+echo $i
+wget http://bochet.gcc.biostat.washington.edu/beagle/1000_Genomes_phase3_v5a/individual_chromosomes/chr$i.1kg.phase3.v5a.bref
+wget http://bochet.gcc.biostat.washington.edu/beagle/1000_Genomes_phase3_v5a/individual_chromosomes/chr$i.1kg.phase3.v5a.vcf.gz
+wget http://bochet.gcc.biostat.washington.edu/beagle/1000_Genomes_phase3_v5a/individual_chromosomes/chr$i.1kg.phase3.v5a.vcf.gz.tbi
+done 
+
+# download the genetic map: 
+wget http://bochet.gcc.biostat.washington.edu/beagle/genetic_maps/plink.GRCh37.map.zip
+
+# 11:21pm
+# read the BEAGLE genotype imputation paper (AJHJ 2016)
+# takeaway is beagle, impute2 and minimac3 have similar accuracy but 
+# beagle is faster
+
+
+# 2016/05/12
+# 9:38am
+# remap dASE samples using Milo's pipeline, making sure STAR versions are the same. 
+# download STAR 2.4.0j:
+cd /srv/persistent/bliu2/tools/
+wget https://github.com/alexdobin/STAR/archive/STAR_2.4.0j.tar.gz
+tar -xzf STAR_2.4.0j.tar.gz
+
+# Milos will help map the dASE samples on valkyr: 
+mkdir /home/diskstation/RNAseq/dase
+screen -S transfer_to_valk
+rsync -vzh /srv/persistent/bliu2/dase/data/RNAseq_HCASMC/fastq/*.fastq.gz bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase
+
+# Merge fastq files for CA2305:
+screen -S merge_fastq
+cd /srv/persistent/bliu2/dase/data/RNAseq_CA2305_NextSeq_20150512/fastq
+for file in FBS2_S4 FBS4_S5 FBS6_S6 SF4_S1 SF5_S2 SF6_S3; do 
+	for read in R1 R2; do 
+	echo sample: $file
+	echo reads: $read 
+	zcat ${file}_L00{1,2,3,4}_${read}_001.fastq.gz | gzip > ${file}_merged_${read}_001.fastq.gz &
+	done 
+done 
+# Transfer to valk:
+rsync -vzh /srv/persistent/bliu2/dase/data/RNAseq_CA2305_NextSeq_20150512/fastq/*merged*.fastq.gz bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase
+
+
+# 12:36pm 
+# Checked Milo's STAR mapping parameters. He used
+# --sjdbOverhang 100 but the mate length is 125bp. 
+# This is okay. As long as sjdbOverhang > seedSearchStartLmax (default 50bps), 
+# STAR is able to map the seed.
+
+
+# 2:52pm
+# genotype_gvcf.py failed presumably due to memory issues. 
+# I will rewrite genotype_gvcf.py to process each chromosome separately
+subl genotype_gvcfs.sh
+dat=$(date '+%Y%m%d')
+for chr in $(seq 1 22) X Y M; do 
+bash genotype_gvcfs.sh chr$chr 2> log/genotype_gvcfs.$chr.$dat.log &
+done
+
+# 5:30pm 
+# read STAR aligner paper by Alex Dobin, added to hcasmc binder
+
+
+
+# 2016/05/13
+# 9:37am 
+# concatenate raw_variants.chr*.vcf.gz
+screen -r concat
+bcftools concat -Ov -o raw_variants.vcf raw_variants.chr{M,{1..22},X,Y}.vcf
+mkdir by_chrom
+mv raw_variants.chr*.vcf* by_chrom
+
+
+# (pilot) recalibrate SNPs on chr22: 
+screen -S recalibrate_variants
+subl recalibrate_SNP.sh
+bash recalibrate_SNP.sh raw_variants.chr22.vcf
+
+
+# recalibrate SNPs on whole genome:
+# I added tranches at 0.1 increments in 99.9-99.0. It seems like 99.5 is the sweet spot
+bash recalibrate_SNP.sh raw_variants.vcf
+
+
+# recalibrate INDELs: 
+screen -S recalibrate_INDEL
+subl recalibrate_INDEL.sh 
+bash recalibrate_INDEL.sh recalibrated_snps_raw_indels.vcf 2> log/recalibrate_INDEL.160513.sh
+
+# plot sensitivity vs minVOSLod score: 
+mkdir ../figures/160513_plot_sensitivity/
+subl plot_sensitivity.R
+Rscript plot_sensitivity.R
+# conclusion: seems like 98% sensitivity (elbow) is a good cutoff. 
+
+# run ApplyRecalibration (commented out VariantRecalibrator code):
+bash recalibrate_INDEL.sh recalibrated_snps_raw_indels.vcf 2> log/recalibrate_INDEL.160514.sh
+
+# remove intermediate files:
+wd=../data/joint2/
+rm $wd/recalibrated_snps_raw_indels.vcf
+rm $wd/recalibrated_snps_raw_indels.vcf.idx
+mkdir $wd/variant_recalibration
+mv $wd/recalibrate_SNP* $wd/variant_recalibration
+mv $wd/recalibrate_INDEL* $wd/variant_recalibration
+
+
+# 4:57pm
+# checking possible sample contamination
+mkdir ../processed_data/160513_contamination
+verifyBamID --vcf /srv/persistent/bliu2/shared/1000genomes/phase3v5a/ALL.chr20.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz --bam /mnt/data/WGS_HCASMC/1020301/recal_reads.bam --chip-none --precise --verbose --minAF 0 --minCallRate 0 --out ../processed_data/160513_contamination/chr22
+zcat ../processed_data/dna_contamination/chr20.AF.EUR.2.vcf.gz | head -n10000 > ../processed_data/160513_contamination/chr20.AF.EUR.2.head10000.vcf
+verifyBamID --vcf ../processed_data/160513_contamination/chr20.AF.EUR.2.head10000.vcf --bam /mnt/data/WGS_HCASMC/1020301/recal_reads.bam --chip-none --precise --verbose --minAF 0 --minCallRate 0 --out ../processed_data/160513_contamination/chr22
+# subset bam to chr20
+samtools view -h /mnt/data/WGS_HCASMC/1020301/recal_reads.bam chr20:1-100000 | sed 's/chr20/20/' | samtools view -h -b -o ../processed_data/160513_contamination/recal_reads.chr20.bam -
+samtools index ../processed_data/160513_contamination/recal_reads.chr20.bam
+zcat /srv/persistent/bliu2/shared/1000genomes/phase3v5a/ALL.chr20.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz | head -n10000 > ../processed_data/160513_contamination/chr20.vcf
+verifyBamID --vcf ../processed_data/160513_contamination/chr20.vcf --bam ../processed_data/160513_contamination/recal_reads.chr20.bam --chip-none --precise --verbose --minAF 0 --minCallRate 0 --out ../processed_data/160513_contamination/chr22
+# I decided not to finish this analysis because of the following difficulties
+# 1) for admixed samples, MAF cannot be obtained from 1000 genome
+# 2) called genotypes may be incorrect
+
+
+# 6:26pm 
+# What is considered SNP by bcftools? 
+for type in snps indels mnps other;do
+bcftools view -Ov -o /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/by_chrom/raw_variants.chr20.$type.vcf --types $type /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/by_chrom/raw_variants.chr20.vcf &
+done
+# other means the following for example: 
+# chr20   83252   rs6137896       G       C,<*:DEL>
+
+
+# 2016/05/14:
+# 4:46pm
+# filter out variant that failed the filters:
+screen -S filter_variants
+wd=../data/joint2/
+bcftools view -Ov -o $wd/recalibrated_variants.pass.vcf -f PASS $wd/recalibrated_variants.vcf
+
+
+# calculate Ti/Tv ratio:
+mkdir ../processed_data/160514_Ts_Tv_ratio
+bcftools stats $wd/recalibrated_variants.pass.vcf > ../processed_data/160514_Ts_Tv_ratio/stats.txt
+plot-vcfstats --no-PDF -p ../processed_data/160514_Ts_Tv_ratio/stats ../processed_data/160514_Ts_Tv_ratio/stats.txt
+
+
+# what proportion of variants are biallelic SNPs: 
+screen -S count_variant_by_type
+mkdir ../processed_data/160514_variant_count_by_type
+mkdir ../figures/160514_variant_count_by_type
+cat ../processed_data/160514_Ts_Tv_ratio/stats.txt | grep "^SN" | awk 'BEGIN {FS="\t"} {print $0}' > ../processed_data/160514_variant_count_by_type/count.txt
+subl 160514_plot_variant_count_by_type.R
+
+
+# filter for biallelic snps:
+screen -S filter_biallelic_SNP
+bcftools view -m2 -M2 -v snps -Ov -o $wd/recalibrated_biallelic_SNP.pass.vcf $wd/recalibrated_variants.pass.vcf 
+
+
+# 7:00pm
+# impute with BEAGLE without reference panels:
+screen -S beagle_no_ref
+wd=../data/joint2/
+java=/srv/persistent/bliu2/tools/jre1.8.0_91/bin/java
+beagle=/srv/persistent/bliu2/tools/beagle/beagle.03May16.862.jar
+for i in $(seq 1 22);do
+$java -Xmx4096m -jar $beagle nthreads=2 chrom=chr$i gl=$wd/recalibrated_biallelic_SNP.pass.vcf out=$wd/recalibrated_biallelic_SNP.beagle.chr$i &
+done
+# index each vcf:
+for i in $(seq 1 22); do
+tabix -p vcf recalibrated_biallelic_SNP.beagle.chr$i.vcf.gz
+done 
+# concatenate all chromosomes:
+bcftools concat -Ov -o recalibrated_biallelic_SNP.beagle.vcf recalibrated_biallelic_SNP.beagle.chr{1..22}.vcf.gz
+# I made sure the beagle output is complete by comparing the CHROM and POS fields of 
+# recalibrated_biallelic_SNP.beagle.vcf and recalibrated_biallelic_SNP.pass.vcf
+# move beagle intermediate files to folder: 
+mkdir beagle_no_ref
+mv recalibrated_biallelic_SNP.beagle.chr* beagle_no_ref
+
+
+# 2016/05/15:
+# change chromosome names from "chr*" to "*":
+wd=../data/joint2/
+for i in $(seq 1 22) X Y M; do 
+echo "chr$i $i" >> $wd/old_to_new_chrom_name.txt
+done
+screen -S change_chrom_name
+bcftools annotate --rename-chrs $wd/old_to_new_chrom_name.txt -Ov -o $wd/recalibrated_biallelic_SNP.pass.GRCh37.vcf $wd/recalibrated_biallelic_SNP.pass.vcf
+# beagle with reference panel:
+screen -S beagle_with_ref
+java=/srv/persistent/bliu2/tools/jre1.8.0_91/bin/java
+beagle=/srv/persistent/bliu2/tools/beagle/beagle.03May16.862.jar
+reference_dir=/srv/persistent/bliu2/tools/beagle/reference
+for i in $(seq 1 22);do
+i=22 # test on chr22
+$java -Xmx32g -jar $beagle nthreads=24 chrom=$i ref=$reference_dir/chr$i.1kg.phase3.v5a.vcf.gz map=$reference_dir/plink.chr$i.GRCh37.map impute=false gl=$wd/recalibrated_biallelic_SNP.pass.GRCh37.vcf out=$wd/recalibrated_biallelic_SNP.beagle_1kg.chr$i > $wd/recalibrated_biallelic_SNP.beagle_1kg.chr$i.log2 &
+done
+
+
+# 11:32am 
+# beagle output QC:
+screen -S beagle_QC
+wd=../data/joint2/
+mkdir ../processed_data/160515_beagle_QC
+mkdir ../figures/160515_beagle_QC/
+cat $wd/recalibrated_biallelic_SNP.beagle.vcf | grep -v "^#" | awk 'BEGIN {FS="\t|;|="; OFS="\t"; print "CHROM","POS","AR2","DR2","AF"} {print $1,$2,$9,$11,$13}' >  ../processed_data/160515_beagle_QC/recalibrated_biallelic_SNP.r2.tsv
+
+
+subl beagle_QC.R
+# reference on how to calculate genotype R-squared: http://ingenoveritas.net/compare-true-and-imputed-genotypes-by-calculating-r-squared/

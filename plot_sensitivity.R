@@ -10,7 +10,7 @@ library(cowplot)
 
 # paths:
 input_file="../data/joint2/recalibrate_INDEL.tranches"
-figure_path='../figures/plot_sensitivity/'
+figure_path='../figures/160513_plot_sensitivity'
 
 # read input:
 input=fread(input_file,header=T)

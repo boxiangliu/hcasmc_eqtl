@@ -2,6 +2,7 @@ import os,sys,shutil
 import subprocess as sp
 from time import strftime
 from multiprocessing import Pool
+from functools import partial
 
 def setwd(wd):
 	os.chdir(wd)
