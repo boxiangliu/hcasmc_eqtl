@@ -59,6 +59,15 @@ dds = DESeqDataSetFromMatrix(countData = count_matrix, colData=colData, design=~
 colnames(dds) = colnames(count_matrix)
 
 
+# estimate size factors:
+dds=estimateSizeFactors(dds,'ratio')
+counts_size_corrected=counts(dds,normalized=T)
+
+
+# save size factor corrected counts:
+saveRDS(counts_size_corrected,file='../processed_data/030_variance_stabilize/counts_size_corrected.rds')
+
+
 # variance stabilizing transformation on all genes:
 vsd = varianceStabilizingTransformation(dds)
 
