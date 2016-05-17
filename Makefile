@@ -525,6 +525,7 @@ Rscript 030_compare_9052004_samples.R
 # 30.3 perform DESeq variance stabilization
 cp 027_variance_stabilize.R 030_variance_stabilize.R
 # modified 030_variance_stabilize.R
+subl 030_variance_stabilize.R
 Rscript 030_variance_stabilize.R
 
 
@@ -953,12 +954,96 @@ done
 
 # 11:32am 
 # beagle output QC:
+# to plot the dosage R2 as a function of chromosome, allele frequency
+# also to make histogram of dosage R2
 screen -S beagle_QC
 wd=../data/joint2/
 mkdir ../processed_data/160515_beagle_QC
 mkdir ../figures/160515_beagle_QC/
 cat $wd/recalibrated_biallelic_SNP.beagle.vcf | grep -v "^#" | awk 'BEGIN {FS="\t|;|="; OFS="\t"; print "CHROM","POS","AR2","DR2","AF"} {print $1,$2,$9,$11,$13}' >  ../processed_data/160515_beagle_QC/recalibrated_biallelic_SNP.r2.tsv
-
-
 subl beagle_QC.R
+Rscript beagle_QC.R
 # reference on how to calculate genotype R-squared: http://ingenoveritas.net/compare-true-and-imputed-genotypes-by-calculating-r-squared/
+
+
+# 5:45pm 
+# update sample names:
+wd=../data/joint2/
+cd $wd
+echo "CA1401 1401" >> old_to_new_sample_name.txt
+echo "2102 2105" >> old_to_new_sample_name.txt
+echo "2109 1508" >> old_to_new_sample_name.txt
+echo "289727 2999" >> old_to_new_sample_name.txt
+echo "313605 317155" >> old_to_new_sample_name.txt
+screen -S rename
+bcftools reheader -s old_to_new_sample_name.txt -o recalibrated_biallelic_SNP.beagle.rename.vcf recalibrated_biallelic_SNP.beagle.vcf
+
+# make sample list
+# list only contains unique sample names sorted alphanumerically for the 52 samples in the working set
+subl make_sample_list.R
+
+# extract dosage field:
+# the output column order will be the same as that in sample_list.txt
+wd=../data/joint2/
+cd /srv/persistent/bliu2/HCASMC_eQTL/scripts
+mkdir ../processed_data/160515_dosage
+screen -S extract_DS
+bcftools query -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%DS]\n' -o ../processed_data/160515_dosage/dosage.tsv $wd/recalibrated_biallelic_SNP.beagle.rename.vcf &
+bcftools query -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%GT]\n' -o ../processed_data/160515_dosage/genotype.tsv $wd/recalibrated_biallelic_SNP.beagle.rename.vcf &
+bcftools query -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%GP]\n' -o ../processed_data/160515_dosage/genotype_probability.tsv $wd/recalibrated_biallelic_SNP.beagle.rename.vcf &
+
+
+# 7:49pm
+# archive some files:
+screen -S archive
+gzip raw_variants.vcf recalibrated_variants.vcf recalibrated_variants.pass.vcf recalibrated_biallelic_SNP.pass.vcf recalibrated_biallelic_SNP.beagle.vcf
+gunzip raw_variants.vcf.gz recalibrated_variants.vcf.gz recalibrated_variants.pass.vcf.gz recalibrated_biallelic_SNP.pass.vcf.gz recalibrated_biallelic_SNP.beagle.vcf.gz
+bgzip raw_variants.vcf recalibrated_variants.vcf recalibrated_variants.pass.vcf recalibrated_biallelic_SNP.pass.vcf recalibrated_biallelic_SNP.beagle.vcf
+
+
+
+# 2016/05/16
+# Milos used STAR v2.5.1 instead of v2.4.0. So I need to remap. 
+# The three samples I need are FBS2_S4_merged_R1_001.fastq.gz (most reads among replicates)
+# S7_run0002_lane5_index7_1.fastq.gz (20805), pS17_1.fastq.gz (9052004)
+# on valk: 
+cd /home/diskstation/RNAseq/dase
+cp commands commands2
+vim commands2 
+# changed STAR to $STAR for pass2
+screen -S STAR
+bash commands2
+# I don't have permission to write...
+
+
+# detect RNAseq experssion outliers: 
+mkdir ../figures/160516_detect_expression_outlier/
+subl 160516_detect_expression_outlier.R
+# 2135, 2305 and 9070202 are outliers
+# 9070202 have low mapping rate (23%) so should use the remapped reads
+
+
+# does omitting covariate decrease power?
+mkdir ../figures/160516_sim_study_on_covariates/
+subl 160516_sim_study_on_covariates.R
+# conclusion: omitting covariates will decrease power.
+
+
+# 5:48pm
+
+# prepare matrix eQTL genotype: 
+wd=../data/joint2
+mkdir ../processed_data/160516_genotype
+bcftools query -H -e 'INFO/DR2<0.8' -t chr22 -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%DS]\n' -o ../processed_data/160516_genotype/chr22.gneotype.tmp $wd/recalibrated_biallelic_SNP.beagle.rename.vcf
+sed -e "s/# \[1\]CHROM_\[2\]POS_\[3\]REF_\[4\]ALT/id/" -e "s/\[[[:digit:]]\+\]//g" -e "s/:DS//g" -e "s/chr//" ../processed_data/160516_genotype/chr22.gneotype.tmp > ../processed_data/160516_genotype/chr22.genotype.txt
+
+# filter for genotype with maf>=0.05: 
+subl 160516_subset_genotype_by_maf.R 
+Rscript 160516_subset_genotype_by_maf.R ../processed_data/160516_genotype/chr22.genotype.txt ../processed_data/160516_genotype/chr22.genotype.maf.txt
+
+# prepare snp location:
+subl 160516_gen_snps_loc.R
+Rscript 160516_gen_snps_loc.R ../processed_data/160516_genotype/chr22.genotype.maf.txt ../processed_data/160516_genotype/chr22.genotype_loc.maf.txt
+
+
+# prepare expression:
