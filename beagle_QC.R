@@ -21,6 +21,7 @@ input=fread(input_file,header=T)
 input1=input %>% group_by(CHROM) %>% summarize(DR2_mean=mean(DR2))
 input1$CHROM=factor(input1$CHROM,levels=paste0('chr',seq(1,22)))
 
+
 # plot R2 vs chrom:
 p1=ggplot(input1,aes(x=CHROM,y=DR2_mean,group=1))+geom_line()+geom_point()+theme(axis.text.x=element_text(angle=90,vjust=0.5,hjust=1))+xlab('Chromosome')+ylab('Dosage R2')
 save_plot(paste0(figure_path,'dosageR2_by_chrom.pdf'),p1)
@@ -58,3 +59,10 @@ p2=ggplot(input2,aes(x=AF_lb,y=DR2_mean,group=1))+geom_line()+geom_point()+theme
 p3=ggplot(input2,aes(x=AF_lb,y=n,group=1))+geom_line()+geom_point()+theme(axis.text.x=element_text(angle=90,vjust=0.5,hjust=1))+xlab('AF')+ylab('Number of sites')
 p4=plot_grid(p2,p3,labels=c('A','B'))
 save_plot(paste0(figure_path,'dosageR2_by_AFbin_size_002.pdf'),p4,base_width=8)
+
+
+# plot histogram of R2:
+pdf(paste0(figure_path,'R2_histogram.pdf'))
+histogram=hist(input$DR2,breaks=seq(0,1,0.1),ylim=c(0,2e7),main='Dosage R2',xlab='Dosage R2')
+with(histogram,text(mids,counts+2e6,paste0(round(10*density,3),'%'),srt=90))
+dev.off()
