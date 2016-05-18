@@ -996,8 +996,6 @@ bcftools query -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%GP]\n' -o 
 # 7:49pm
 # archive some files:
 screen -S archive
-gzip raw_variants.vcf recalibrated_variants.vcf recalibrated_variants.pass.vcf recalibrated_biallelic_SNP.pass.vcf recalibrated_biallelic_SNP.beagle.vcf
-gunzip raw_variants.vcf.gz recalibrated_variants.vcf.gz recalibrated_variants.pass.vcf.gz recalibrated_biallelic_SNP.pass.vcf.gz recalibrated_biallelic_SNP.beagle.vcf.gz
 bgzip raw_variants.vcf recalibrated_variants.vcf recalibrated_variants.pass.vcf recalibrated_biallelic_SNP.pass.vcf recalibrated_biallelic_SNP.beagle.vcf
 
 
@@ -1016,11 +1014,14 @@ bash commands2
 # I don't have permission to write...
 
 
+# 12:00pm
 # detect RNAseq experssion outliers: 
 mkdir ../figures/160516_detect_expression_outlier/
 subl 160516_detect_expression_outlier.R
 # 2135, 2305 and 9070202 are outliers
 # 9070202 have low mapping rate (23%) so should use the remapped reads
+# 2135 has double peaked bioanalyzer result
+# 2305 is sequenced on a NextSeq separately from all other samples.
 
 
 # does omitting covariate decrease power?
@@ -1030,20 +1031,41 @@ subl 160516_sim_study_on_covariates.R
 
 
 # 5:48pm
-
 # prepare matrix eQTL genotype: 
 wd=../data/joint2
-mkdir ../processed_data/160516_genotype
-bcftools query -H -e 'INFO/DR2<0.8' -t chr22 -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%DS]\n' -o ../processed_data/160516_genotype/chr22.gneotype.tmp $wd/recalibrated_biallelic_SNP.beagle.rename.vcf
-sed -e "s/# \[1\]CHROM_\[2\]POS_\[3\]REF_\[4\]ALT/id/" -e "s/\[[[:digit:]]\+\]//g" -e "s/:DS//g" -e "s/chr//" ../processed_data/160516_genotype/chr22.gneotype.tmp > ../processed_data/160516_genotype/chr22.genotype.txt
+dir1=../processed_data/160516_genotype
+mkdir $dir1
+bcftools query -H -e 'INFO/DR2<0.8' -t chr22 -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%DS]\n' -o $dir1/chr22.gneotype.tmp $wd/recalibrated_biallelic_SNP.beagle.rename.vcf
+sed -e "s/# \[1\]CHROM_\[2\]POS_\[3\]REF_\[4\]ALT/id/" -e "s/\[[[:digit:]]\+\]//g" -e "s/:DS//g" -e "s/chr//" $dir1/chr22.gneotype.tmp > $dir1/chr22.genotype.txt
 
-# filter for genotype with maf>=0.05: 
+# filter for genotype with maf>=0.05:
 subl 160516_subset_genotype_by_maf.R 
-Rscript 160516_subset_genotype_by_maf.R ../processed_data/160516_genotype/chr22.genotype.txt ../processed_data/160516_genotype/chr22.genotype.maf.txt
+Rscript 160516_subset_genotype_by_maf.R $dir1/chr22.genotype.txt $dir1/chr22.genotype.maf.txt
 
 # prepare snp location:
 subl 160516_gen_snps_loc.R
-Rscript 160516_gen_snps_loc.R ../processed_data/160516_genotype/chr22.genotype.maf.txt ../processed_data/160516_genotype/chr22.genotype_loc.maf.txt
+Rscript 160516_gen_snps_loc.R $dir1/chr22.genotype.maf.txt $dir1/chr22.genotype_loc.maf.txt
+
+# prepare gene expression:
+# gene expression is already prepared 
 
 
-# prepare expression:
+# 7:00pm
+# on 16/05/16 12:00pm we determined that there are 3 outliers, 
+# here we determine whether including them will decrease power.
+# prepare genotype and expression files without the 3 outliers, which 
+# are columns 30, 34, and 50
+cut -f-29,31-33,35-49,51- $dir1/chr22.genotype.maf.txt > $dir1/chr22.genotype.maf.cut.txt
+cut -f-29,31-33,35-49,51- ../processed_data/031_prepare_matrix_eQTL_expression/expression.txt > $dir1/expression.cut.txt
+screen -S matrixeqtl
+mkdir ../figures/160516_matrix_eQTL/
+subl 160516_matrix_eQTL.R $dir1/chr22.genotype.maf.txt $dir1/chr22.genotype_loc.maf.txt ../processed_data/031_prepare_matrix_eQTL_expression/expression.txt ../processed_data/031_gen_gene_loc/gene_loc.txt "" $dir1
+
+
+# 2016/05/17
+# 6:41pm
+# get a clean set of gene expression data:
+mkdir ../data/rnaseq2
+# saved ../processed_data/rna_wgs_match.reduced_050616.xlsx into txt file 
+# use vim to turn all ^M into \r
+subl 160517_get_rnaseq_data.sh
