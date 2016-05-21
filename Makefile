@@ -978,6 +978,13 @@ echo "313605 317155" >> old_to_new_sample_name.txt
 screen -S rename
 bcftools reheader -s old_to_new_sample_name.txt -o recalibrated_biallelic_SNP.beagle.rename.vcf recalibrated_biallelic_SNP.beagle.vcf
 
+# filter for variants with dosage R2 >= 0.8:
+bcftools view -e 'INFO/DR2<0.8' -o recalibrated_biallelic_SNP.beagle.rename.dr2.vcf recalibrated_biallelic_SNP.beagle.rename.vcf
+ 
+# subset for Caucasian individuals to apply HWE filter: 
+subl caucasian_individual_for_hwe.R
+
+
 # make sample list
 # list only contains unique sample names sorted alphanumerically for the 52 samples in the working set
 subl make_sample_list.R
@@ -993,10 +1000,16 @@ bcftools query -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%GT]\n' -o 
 bcftools query -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%GP]\n' -o ../processed_data/160515_dosage/genotype_probability.tsv $wd/recalibrated_biallelic_SNP.beagle.rename.vcf &
 
 
+
+
 # 7:49pm
 # archive some files:
 screen -S archive
-bgzip raw_variants.vcf recalibrated_variants.vcf recalibrated_variants.pass.vcf recalibrated_biallelic_SNP.pass.vcf recalibrated_biallelic_SNP.beagle.vcf
+bgzip raw_variants.vcf &
+bgzip recalibrated_variants.vcf &
+bgzip recalibrated_variants.pass.vcf &
+bgzip recalibrated_biallelic_SNP.pass.vcf &
+bgzip recalibrated_biallelic_SNP.beagle.vcf &
 
 
 
@@ -1069,3 +1082,221 @@ mkdir ../data/rnaseq2
 # saved ../processed_data/rna_wgs_match.reduced_050616.xlsx into txt file 
 # use vim to turn all ^M into \r
 subl 160517_get_rnaseq_data.sh
+
+# sort and index some bam and sam files: 
+samtools sort -o 2305/Aligned.out.sorted.bam -O bam -@8 2305/Aligned.out.sam &
+samtools sort -o 9070202/Aligned.out.sorted.bam -O bam -@8 9070202/Aligned.out.bam &
+samtools sort -o 9052004/Aligned.out.sorted.bam -O bam -@8 9052004/Aligned.out.bam &
+samtools sort -o 20805/Aligned.out.sorted.bam -O bam -@8 20805/Aligned.out.sam &
+samtools index 2305/Aligned.out.sorted.bam & 
+samtools index 9070202/Aligned.out.sorted.bam & 
+samtools index 9052004/Aligned.out.sorted.bam & 
+samtools index 20805/Aligned.out.sorted.bam & 
+rm 2305/Aligned.out.sam 9070202/Aligned.out.bam 9052004/Aligned.out.bam 20805/Aligned.out.sam
+
+# cehck that all files are intact:
+samtools quickcheck */Aligned.out.sorted.bam
+# all files are intact. 
+
+
+# 11:35pm
+# create sequence dictionary:
+CreateSequenceDictionary=/software/picard-tools/1.92/CreateSequenceDictionary.jar
+java -jar $CreateSequenceDictionary R=/srv/persistent/bliu2/shared/genomes/hg19/hg19.fa O=/srv/persistent/bliu2/shared/genomes/hg19/hg19.dict
+
+# add read group:
+screen -S readgroup
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
+AddOrReplaceReadGroups=/software/picard-tools/1.92/AddOrReplaceReadGroups.jar
+samples=($(ls))
+n=0
+for sample in ${samples[@]}; do 
+echo $sample
+n=$((n+1))
+if [[ n -gt 30 ]];then
+	wait
+	n=0
+fi 
+java -Xmx2g -jar $AddOrReplaceReadGroups I=$sample/Aligned.out.sorted.bam O=$sample/Aligned.out.sorted.rg.bam RGID=$sample RGLB=lib1 RGPL=illumina RGPU=unit1 RGSM=$sample 2> AddOrReplaceReadGroups.$sample.log &
+done
+wait
+
+n=0
+for sample in ${samples[@]}; do 
+n=$((n+1))
+if [[ n -gt 30 ]];then
+	wait
+	n=0
+fi 
+echo $sample
+samtools index $sample/Aligned.out.sorted.rg.bam &
+done
+
+
+# filter for uniquely mapped reads: 
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
+samples=($(ls -d */))
+screen -S uniquely_mapped
+n=0
+for sample in ${samples[@]}; do 
+n=$((n+1))
+if [[ n -gt 15 ]];then
+	wait
+	n=0
+fi
+echo $sample
+samtools view -h -q 255 -b -o $sample/Aligned.out.sorted.rg.uniq.bam $sample/Aligned.out.sorted.rg.bam &
+done
+
+n=0
+for sample in ${samples[@]}; do 
+n=$((n+1))
+if [[ n -gt 20 ]];then
+	wait
+	n=0
+fi 
+echo $sample
+samtools index $sample/Aligned.out.sorted.rg.uniq.bam &
+done
+
+# mark duplicates: 
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
+screen -S mark_dup
+samples=($(ls -d */))
+MarkDuplicates=/software/picard-tools/1.92/MarkDuplicates.jar 
+n=0
+for sample in ${samples[@]}; do 
+n=$((n+1))
+if [[ n -gt 15 ]];then
+	wait
+	n=0
+fi
+echo $sample
+java -Xmx2g -jar $MarkDuplicates I=$sample/Aligned.out.sorted.rg.uniq.bam O=$sample/Aligned.out.sorted.rg.uniq.dup.bam  M=$sample/marked_dup_metrics.txt 2> MarkDuplicates.${sample///}.log &
+done
+
+n=0
+for sample in ${samples[@]}; do 
+n=$((n+1))
+if [[ n -gt 30 ]];then
+	wait
+	n=0
+fi 
+echo $sample
+samtools index $sample/Aligned.out.sorted.rg.uniq.dup.bam &
+done
+
+# make sample file for RNA-seQC:
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
+ls -d */ > sample_file.tmp
+cat sample_file.tmp | sed "s:/::" | awk 'BEGIN {OFS="\t"; print "Sample ID","Bam File","Notes"} {print $1,$1"/Aligned.out.sorted.rg.uniq.dup.bam",$1}' > sample_file.txt
+rm sample_file.tmp
+
+
+# get gtex v6p gencode gene models: 
+# this annotation collapses exons into genes:
+cd /srv/persistent/bliu2/shared/annotation/
+mkdir gtex
+ln -s /mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/reference_files/gencode.v19.genes.v6p.patched_contigs.gtf.gz . 
+gunzip -c gencode.v19.genes.v6p.patched_contigs.gtf.gz > gencode.v19.genes.v6p.patched_contigs.gtf
+cat gencode.v19.genes.v6p.patched_contigs.gtf | sed -e "/^[^#]/ s/^/chr/" -e "s/MT/M/" > gencode.v19.genes.v6p.hg19.gtf
+
+
+# run RNA-seQC: 
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
+screen -S rnaseqc
+rnaseqc=/srv/persistent/bliu2/tools/RNA-SeQC_v1.1.8.jar
+gencode19=/srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf
+hg19=/srv/persistent/bliu2/shared/genomes/hg19/hg19.fa
+rRNA=/srv/persistent/bliu2/shared/genomes/rRNA/human_all_rRNA.fasta
+# java -jar $rnaseqc -n 1000 -s sample_file.txt -t $gencode19 -r $hg19 -o report -noDoC -strictMode
+
+samples=($(ls -d */))
+n=0
+for sample in ${samples[@]}; do 
+n=$((n+1))
+if [[ n -gt 20 ]];then
+	wait
+	n=0
+fi
+sample=${sample///} # remove the backslash
+
+if [[ $(grep "Finished Successfully" rnaseqc.$sample.log) == "" ]]; then 
+echo $sample
+java -jar $rnaseqc -n 1000 -s "$sample|$sample/Aligned.out.sorted.rg.uniq.dup.bam|$sample" -t $gencode19 -r $hg19 -o $sample/report -noDoC -strictMode > rnaseqc.$sample.log &
+fi 
+done
+
+# 16/05/19:
+# combine all RPKMs:
+mkdir ../processed_data/160519_rpkm/
+wd=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
+
+tail -n +3 $wd/$sample/report/genes.rpkm.gct | cut -f1-2 > ../processed_data/160519_rpkm/combined.rpkm
+samples=($(ls -d $wd/*/))
+
+for sample in ${samples[@]};do
+sample=$(basename $sample)
+sample=${sample///}
+echo $sample
+tail -n +3 $wd/$sample/report/genes.rpkm.gct | cut -f3 > ../processed_data/160519_rpkm/$sample.rpkm.tmp
+cp ../processed_data/160519_rpkm/combined.rpkm ../processed_data/160519_rpkm/combined.rpkm.tmp
+paste -d "\t" ../processed_data/160519_rpkm/combined.rpkm.tmp ../processed_data/160519_rpkm/$sample.rpkm.tmp > ../processed_data/160519_rpkm/combined.rpkm
+done
+rm ../processed_data/160519_rpkm/*.tmp
+
+
+# calculate the sample-sample correlation:
+mkdir ../figures/160519_rpkm
+subl 160519_calc_sample_correlation.R
+
+
+# 5:01pm 
+# convert VCF to plink BED file:
+mkdir ../processed_data/160519_genotype_PCA
+plink --vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.vcf --keep-allele-order --make-bed --out ../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename
+plink --vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.vcf --keep-allele-order --make-bed --out ../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2
+
+# find genotype PCs: 
+# Bruna shared script to call genotype PCs through slack:
+mkdir ../figures/160519_genotype_PCA
+subl 160519_genotype_PCA.R
+# seems that 1020301 is an outlier? It has low heterozygosity rate (from the plink/seq analysis)
+
+# 16/05/20
+# 11:52am
+# 
+
+
+# look at WGS unique mapping rate for 1020301. 
+
+
+# 3:07pm
+# On 16/05/19 I showed that sample 9052004 (Stanford 2nd round sequencing) is an outlier. 
+# Here we analyze the dASE version of 9052004. 
+mv ../data/rnaseq2/alignments/9052004 ../data/rnaseq2/alignments/.9052004 # hide the bad sample
+dst=../data/rnaseq2/alignments/
+rsync -azvh bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase/pS17_1.fastq.gz_pS17_2.fastq.gz/Pass2/{Aligned.out.sam,Log.final.out,Log.out,Log.progress.out} $dst/9052004 &
+subl rerun_rnaseqc_for_9052004_dase.sh
+screen -S rerun_for_9042004
+bash rerun_rnaseqc_for_9052004_dase.sh
+
+wd=../data/rnaseq2/alignments/
+mkdir ../processed_data/160520_rpkm/
+tail -n +3 $wd/1020301/report/genes.rpkm.gct | cut -f1-2 > ../processed_data/160520_rpkm/combined.rpkm
+samples=($(ls -d $wd/*/))
+for sample in ${samples[@]};do
+sample=$(basename $sample)
+sample=${sample///}
+echo $sample
+tail -n +3 $wd/$sample/report/genes.rpkm.gct | cut -f3 > ../processed_data/160520_rpkm/$sample.rpkm.tmp
+cp ../processed_data/160520_rpkm/combined.rpkm ../processed_data/160520_rpkm/combined.rpkm.tmp
+paste -d "\t" ../processed_data/160520_rpkm/combined.rpkm.tmp ../processed_data/160520_rpkm/$sample.rpkm.tmp > ../processed_data/160520_rpkm/combined.rpkm
+done
+rm ../processed_data/160520_rpkm/*.tmp
+
+
+# calculate the sample-sample correlation:
+mkdir ../figures/160520_rpkm
+subl 160520_calc_sample_correlation.R
+Rscript 160520_calc_sample_correlation.R

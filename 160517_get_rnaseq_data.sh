@@ -125,3 +125,4 @@ rsync -azvh bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/HCASMC/Mapped_File
 rsync -azvh bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/HCASMC/Mapped_Files/HCASMC_RNASEQ_60lines_mapping_part1/REMAPPING_3_SAMPLES_WITH_LOW_MAPPED_READS/NEW_PARAM/9052004_26406_4_5_6_TTAGGC_4_5_TTAGGC/Pass2/{Aligned.out.bam,Log.final.out,Log.out,Log.progress.out} $dst/9052004 &
 rsync -azvh bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase/FBS2_S4_merged_R1_001.fastq.gz_FBS2_S4_merged_R2_001.fastq.gz/Pass2/{Aligned.out.sam,Log.final.out,Log.out,Log.progress.out} $dst/2305 &
 rsync -azvh bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase/S7_run0002_lane5_index7_1.fastq.gz_S7_run0002_lane5_index7_2.fastq.gz/Pass2/{Aligned.out.sam,Log.final.out,Log.out,Log.progress.out} $dst/20805 &
+
