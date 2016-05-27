@@ -16,7 +16,7 @@ output_file='../data/joint2/caucasian_for_hwe.txt'
 
 # read input:
 input=readWorksheet(loadWorkbook(input_file),sheet=4)
-input
+
 
 # select caucasian samples:
 sample_names=input[input$Genomic_Ethnicity=='Caucasian','DNA']
