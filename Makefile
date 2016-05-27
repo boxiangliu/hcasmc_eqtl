@@ -1093,7 +1093,7 @@ subl 160516_matrix_eQTL.R $dir1/chr22.genotype.maf.txt $dir1/chr22.genotype_loc.
 
 # 2016/05/17
 # 6:41pm
-# get a clean set of gene expression data:
+# get a clean set of gene expression data (also transfer some RNAseq data from valk)
 mkdir ../data/rnaseq2
 # saved ../processed_data/rna_wgs_match.reduced_050616.xlsx into txt file 
 # use vim to turn all ^M into \r
@@ -1120,128 +1120,9 @@ samtools quickcheck */Aligned.out.sorted.bam
 CreateSequenceDictionary=/software/picard-tools/1.92/CreateSequenceDictionary.jar
 java -jar $CreateSequenceDictionary R=/srv/persistent/bliu2/shared/genomes/hg19/hg19.fa O=/srv/persistent/bliu2/shared/genomes/hg19/hg19.dict
 
-# add read group:
-screen -S readgroup
-cd /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
-AddOrReplaceReadGroups=/software/picard-tools/1.92/AddOrReplaceReadGroups.jar
-samples=($(ls))
-n=0
-for sample in ${samples[@]}; do 
-echo $sample
-n=$((n+1))
-if [[ n -gt 30 ]];then
-	wait
-	n=0
-fi 
-java -Xmx2g -jar $AddOrReplaceReadGroups I=$sample/Aligned.out.sorted.bam O=$sample/Aligned.out.sorted.rg.bam RGID=$sample RGLB=lib1 RGPL=illumina RGPU=unit1 RGSM=$sample 2> AddOrReplaceReadGroups.$sample.log &
-done
-wait
+# run RNAseq-QC: 
+subl 160517_run_RNAseqQC.sh
 
-n=0
-for sample in ${samples[@]}; do 
-n=$((n+1))
-if [[ n -gt 30 ]];then
-	wait
-	n=0
-fi 
-echo $sample
-samtools index $sample/Aligned.out.sorted.rg.bam &
-done
-
-
-# filter for uniquely mapped reads: 
-cd /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
-samples=($(ls -d */))
-screen -S uniquely_mapped
-n=0
-for sample in ${samples[@]}; do 
-n=$((n+1))
-if [[ n -gt 15 ]];then
-	wait
-	n=0
-fi
-echo $sample
-samtools view -h -q 255 -b -o $sample/Aligned.out.sorted.rg.uniq.bam $sample/Aligned.out.sorted.rg.bam &
-done
-
-n=0
-for sample in ${samples[@]}; do 
-n=$((n+1))
-if [[ n -gt 20 ]];then
-	wait
-	n=0
-fi 
-echo $sample
-samtools index $sample/Aligned.out.sorted.rg.uniq.bam &
-done
-
-# mark duplicates: 
-cd /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
-screen -S mark_dup
-samples=($(ls -d */))
-MarkDuplicates=/software/picard-tools/1.92/MarkDuplicates.jar 
-n=0
-for sample in ${samples[@]}; do 
-n=$((n+1))
-if [[ n -gt 15 ]];then
-	wait
-	n=0
-fi
-echo $sample
-java -Xmx2g -jar $MarkDuplicates I=$sample/Aligned.out.sorted.rg.uniq.bam O=$sample/Aligned.out.sorted.rg.uniq.dup.bam  M=$sample/marked_dup_metrics.txt 2> MarkDuplicates.${sample///}.log &
-done
-
-n=0
-for sample in ${samples[@]}; do 
-n=$((n+1))
-if [[ n -gt 30 ]];then
-	wait
-	n=0
-fi 
-echo $sample
-samtools index $sample/Aligned.out.sorted.rg.uniq.dup.bam &
-done
-
-# make sample file for RNA-seQC:
-cd /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
-ls -d */ > sample_file.tmp
-cat sample_file.tmp | sed "s:/::" | awk 'BEGIN {OFS="\t"; print "Sample ID","Bam File","Notes"} {print $1,$1"/Aligned.out.sorted.rg.uniq.dup.bam",$1}' > sample_file.txt
-rm sample_file.tmp
-
-
-# get gtex v6p gencode gene models: 
-# this annotation collapses exons into genes:
-cd /srv/persistent/bliu2/shared/annotation/
-mkdir gtex
-ln -s /mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/reference_files/gencode.v19.genes.v6p.patched_contigs.gtf.gz . 
-gunzip -c gencode.v19.genes.v6p.patched_contigs.gtf.gz > gencode.v19.genes.v6p.patched_contigs.gtf
-cat gencode.v19.genes.v6p.patched_contigs.gtf | sed -e "/^[^#]/ s/^/chr/" -e "s/MT/M/" > gencode.v19.genes.v6p.hg19.gtf
-
-
-# run RNA-seQC: 
-cd /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
-screen -S rnaseqc
-rnaseqc=/srv/persistent/bliu2/tools/RNA-SeQC_v1.1.8.jar
-gencode19=/srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf
-hg19=/srv/persistent/bliu2/shared/genomes/hg19/hg19.fa
-rRNA=/srv/persistent/bliu2/shared/genomes/rRNA/human_all_rRNA.fasta
-# java -jar $rnaseqc -n 1000 -s sample_file.txt -t $gencode19 -r $hg19 -o report -noDoC -strictMode
-
-samples=($(ls -d */))
-n=0
-for sample in ${samples[@]}; do 
-n=$((n+1))
-if [[ n -gt 20 ]];then
-	wait
-	n=0
-fi
-sample=${sample///} # remove the backslash
-
-if [[ $(grep "Finished Successfully" rnaseqc.$sample.log) == "" ]]; then 
-echo $sample
-java -jar $rnaseqc -n 1000 -s "$sample|$sample/Aligned.out.sorted.rg.uniq.dup.bam|$sample" -t $gencode19 -r $hg19 -o $sample/report -noDoC -strictMode > rnaseqc.$sample.log &
-fi 
-done
 
 # 16/05/19:
 # combine all RPKMs:
@@ -1317,7 +1198,7 @@ subl 160520_calc_sample_correlation.R
 Rscript 160520_calc_sample_correlation.R
 
 
-# 150526
+# 160526
 # setup: 
 scripts=./160526
 mkdir $scripts
@@ -1344,3 +1225,7 @@ cat $dir1/verifyBAMID.*.selfSM | awk 'BEGIN{OFS="\t"} {if ($1!="#SEQ_ID") print 
 mkdir -p ../figures/160526/detect_WGS_contamination/
 subl $scripts/plot_verifyBAMID_result.R
 
+
+# 160527
+#--- run PEER correction -----
+# 
