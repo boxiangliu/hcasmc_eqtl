@@ -1326,15 +1326,21 @@ mkdir $processed_data
 
 #--- sample contamination ----
 # make sample file for each ethnicity:
-mkdir ../processed_data/160526/detect_sample_contamination_model_based
+dir1=../processed_data/160526/detect_WGS_contamination
+mkdir $dir1
 Rscript $scripts/gen_sample_sheet_each_ethnicity.R # output Caucasian.txt, Asian.txt, AA.txt, Hispanic.txt
-vim ../processed_data/160526/detect_sample_contamination_model_based/Caucasian.txt # changed 1508 to 2109, 2999 to 289727, 317155 to 313605
-vim ../processed_data/160526/detect_sample_contamination_model_based/Hispanic.txt # changed 1401 to CA1401, 2105 to 2102, added 1848 and 1858
-vim ../processed_data/160526/detect_sample_contamination_model_based/AA.txt # added 24635
-# run verifyBamID:
-subl $scripts/detect_sample_contamination_model_based.sh
-screen -S detect_sample_contamination_model_based
-subl $scripts/run_detect_sample_contamination_model_based.sh
-bash $scripts/run_detect_sample_contamination_model_based.sh
+vim $dir1/Caucasian.txt # changed 1508 to 2109, 2999 to 289727, 317155 to 313605
+vim $dir1/Hispanic.txt # changed 1401 to CA1401, 2105 to 2102, added 1848 and 1858
+vim $dir1/AA.txt # added 24635
 
-less -N -S $processed_data/verfyBAMID.out.selfSM
+# run verifyBamID:
+subl $scripts/detect_WGS_contamination.sh
+screen -S detect_WGS_contamination
+subl $scripts/run_detect_WGS_contamination.sh
+bash $scripts/run_detect_WGS_contamination.sh
+
+# plot verifyBamID result:
+cat $dir1/verifyBAMID.*.selfSM | awk 'BEGIN{OFS="\t"} {if ($1!="#SEQ_ID") print $1,$7}' > $dir1/verifyBAMID.combined.tsv
+mkdir -p ../figures/160526/detect_WGS_contamination/
+subl $scripts/plot_verifyBAMID_result.R
+
