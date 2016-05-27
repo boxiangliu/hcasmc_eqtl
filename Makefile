@@ -471,6 +471,7 @@ $(eur25):$(input25)
 	# if [ ! -d $(out_dir25) ]; then mkdir -p $(out_dir25); fi
 	# bcftools view -Ou -s HG00096 --force-samples --types snps $(1000G_phase3v5a_chr20) | bcftools annotate -Ov -x ^INFO/EUR_AF | sed -e "s/EUR_AF/AF/" -e "s/^20/chr20/" | bcftools view -Oz -o $(eur25)
  	bcftools view -Ov ../processed_data/dna_contamination/chr20.AF.EUR.vcf.gz | sed "s/contig=<ID=/contig=<ID=chr/" | bcftools view -Oz -o ../processed_data/dna_contamination/chr20.AF.EUR.2.vcf.gz
+
 $(output25): $(eur25)
 	verifyBamID --vcf $(eur25) --bam /mnt/data/WGS_HCASMC/1020301/recal_reads.bam --chip-none --precise --verbose --minAF 0 --minCallRate 0 --out $(out_dir25)/1020301 
 
@@ -981,8 +982,23 @@ bcftools reheader -s old_to_new_sample_name.txt -o recalibrated_biallelic_SNP.be
 # filter for variants with dosage R2 >= 0.8:
 bcftools view -e 'INFO/DR2<0.8' -o recalibrated_biallelic_SNP.beagle.rename.dr2.vcf recalibrated_biallelic_SNP.beagle.rename.vcf
  
-# subset for Caucasian individuals to apply HWE filter: 
+# subset for Caucasian individuals to apply HWE filter:
+cd /srv/persistent/bliu2/HCASMC_eQTL/scripts
 subl caucasian_individual_for_hwe.R
+
+# hwe filtering:
+cd ../data/joint2/
+grep -v "IMP" recalibrated_biallelic_SNP.beagle.rename.dr2.vcf > recalibrated_biallelic_SNP.beagle.rename.dr2.2.vcf
+vcftools --vcf recalibrated_biallelic_SNP.beagle.rename.dr2.2.vcf --keep caucasian_for_hwe.txt --hardy --out hwe_pval
+rm recalibrated_biallelic_SNP.beagle.rename.dr2.2.vcf
+
+# select sites with hwe > 1e-6:
+tail -n +2 hwe_pval.hwe | awk 'BEGIN{OFS="\t"} {if ($6 >= 1e-6) print $1,$2}' > pass_hwe.txt
+bcftools view -T pass_hwe.txt -Ov -o recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.vcf recalibrated_biallelic_SNP.beagle.rename.dr2.vcf
+
+
+# transfer the vcf file to valk: 
+rsync -vzh /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.vcf bosh@valkyr.stanford.edu:/home/diskstation/wgs/WGS_HCASMC_working_data_set/
 
 
 # make sample list
@@ -1254,7 +1270,6 @@ subl 160519_calc_sample_correlation.R
 # 5:01pm 
 # convert VCF to plink BED file:
 mkdir ../processed_data/160519_genotype_PCA
-plink --vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.vcf --keep-allele-order --make-bed --out ../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename
 plink --vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.vcf --keep-allele-order --make-bed --out ../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2
 
 # find genotype PCs: 
@@ -1300,3 +1315,19 @@ rm ../processed_data/160520_rpkm/*.tmp
 mkdir ../figures/160520_rpkm
 subl 160520_calc_sample_correlation.R
 Rscript 160520_calc_sample_correlation.R
+
+
+# 150526:
+scripts=./160526
+mkdir $scripts
+processed_data=../processed_data/160526
+mkdir $processed_data
+mkdir ../processed_data/160526/detect_sample_contamination_model_based
+subl $scripts/detect_sample_contamination_model_based.sh
+screen -S detect_sample_contamination_model_based
+# select 5 EUR samples: 
+samples=(1020301 102901 1042702 1051601 1060602)
+for sample in ${samples[@]}; do
+bash $scripts/detect_sample_contamination_model_based.sh $sample &
+done 
+less -N -S $processed_data/verfyBAMID.out.selfSM

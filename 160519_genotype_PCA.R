@@ -17,32 +17,38 @@ library('XLConnect')
 
 # Convert the PLINK files to the GDS file
 # Data should be QC-ed for missing rate, MAF and HWE!
-# bed.fn <- "../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.bed"
-# fam.fn <- "../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.fam"
-# bim.fn <- "../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.bim"
 bed.fn <- "../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2.bed"
 fam.fn <- "../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2.fam"
 bim.fn <- "../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2.bim"
 
 # convert
-# snpgdsBED2GDS(bed.fn, fam.fn, bim.fn, "../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.gds")
 snpgdsBED2GDS(bed.fn, fam.fn, bim.fn, "../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2.gds")
-# genofile <- snpgdsOpen("../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.gds")
 genofile <- snpgdsOpen("../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2.gds")
-snpset <- snpgdsLDpruning(genofile, ld.threshold=0.2, maf=0.05)
+
+# read sample sheet: 
+sample_sheet=readWorksheet(loadWorkbook("../processed_data/rna_wgs_match.reduced_050616.xlsx"),sheet=4)
+
+
+# select Caucasian for HWE calculation: 
+caucasian_sample=sample_sheet[sample_sheet$Genomic_Ethnicity=='Caucasian','DNA']
+
+
+# HWE: 
+hwe_pval=snpgdsHWE(genofile, sample.id=caucasian_sample, snp.id=NULL, with.id=TRUE)
+pass_hwe=hwe_pval$snp.id[which(hwe_pval$pvalue>=1e-6)]
+
+
+# LD pruning: 
+snpset <- snpgdsLDpruning(genofile, ld.threshold=0.2, maf=0.05, snp.id=pass_hwe)
 snpset.id <- unlist(snpset)
+
 
 # Run pca
 pca <- snpgdsPCA(genofile, snp.id=snpset.id, maf=0.05, num.thread=2)
 
 
-
-# read genomic ethnicity: 
-sample_sheet=readWorksheet(loadWorkbook("../processed_data/rna_wgs_match.reduced_050616.xlsx"),sheet=4)
-sample_sheet=sample_sheet[match(pca$sample.id,sample_sheet$DNA),]
-
-
 #Plot PCA:
+sample_sheet=sample_sheet[match(pca$sample.id,sample_sheet$DNA),]
 tab <- data.frame(sample.id = pca$sample.id,
                   EV1 = pca$eigenvect[,1],    # the first eigenvector
                   EV2 = pca$eigenvect[,2],    # the second eigenvector
