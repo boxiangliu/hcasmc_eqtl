@@ -1,0 +1,3296 @@
+Tue May 31 19:44:11 PDT 2016
+
+[33mF[0mast [33mQTL[0m
+  * Authors : Olivier DELANEAU, Halit ONGEN, Alfonso BUIL & Manolis DERMITZAKIS
+  * Contact : olivier.delaneau@gmail.com
+  * Webpage : http://fastqtl.sourceforge.net/
+  * Version : v2.0
+
+Perform permutation based analysis (used to calculate corrected p-values for MPs)
+  * Perform between 1000 and 10000 permutations
+  * Random number generator is seeded with 1464749051
+  * Considering variants within 1e+06 bp of the MPs
+  * Focus on region [chr22]
+
+Reading phenotype data in [../processed_data/160530//combined.filter.norm.bed.gz]
+  * region = chr22:0-1000000000
+  * 52 samples included
+  * 465 phenotypes included
+
+Reading genotype data in [/srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.gz] in VCF format
+  * region = chr22:0-1001000000
+  * 52 samples included
+  * 0 samples excluded without phenotype data
+  * 82923 sites included
+
+Reading covariates in [../processed_data/160530//covariates.fastqtl.tsv.gz]
+  * 52 samples included
+  * 19 covariate(s) included
+
+Imputing missing genotypes
+
+Imputing missing phenotypes
+
+Initialize covariate 
+
+Correcting genotypes for covariates
+
+[33mWARNING:[0m Linear dependency between covariates [#dropped=3]
+
+Processing gene [ENSG00000206195.6]
+  * Number of variants in cis = 368
+  * Best correlation = 0.4040
+  * Number of permutations = 1000 / 1483
+  * Beta distribution parameters = 0.9903 49.8268
+  * Progress = 0.2%
+
+Processing gene [ENSG00000272872.1]
+  * Number of variants in cis = 375
+  * Best correlation = 0.4828
+  * Number of permutations = 1000 / 4306
+  * Beta distribution parameters = 1.0384 51.9919
+  * Progress = 0.4%
+
+Processing gene [ENSG00000240122.1]
+  * Number of variants in cis = 2843
+  * Best correlation = 0.6494
+  * Number of permutations = 208 / 10000
+  * Beta distribution parameters = 1.0175 458.7860
+  * Progress = 0.6%
+
+Processing gene [ENSG00000100181.17]
+  * Number of variants in cis = 2874
+  * Best correlation = 0.5433
+  * Number of permutations = 1000 / 2355
+  * Beta distribution parameters = 0.9759 495.4769
+  * Progress = 0.9%
+
+Processing gene [ENSG00000237438.2]
+  * Number of variants in cis = 4265
+  * Best correlation = 0.6180
+  * Number of permutations = 845 / 10000
+  * Beta distribution parameters = 1.0309 583.6193
+  * Progress = 1.1%
+
+Processing gene [ENSG00000177663.9]
+  * Number of variants in cis = 4405
+  * Best correlation = 0.6580
+  * Number of permutations = 183 / 10000
+  * Beta distribution parameters = 1.0584 644.6937
+  * Progress = 1.3%
+
+Processing gene [ENSG00000235328.1]
+  * Number of variants in cis = 4425
+  * Best correlation = 0.5208
+  * Number of permutations = 1000 / 1332
+  * Beta distribution parameters = 1.0227 715.6091
+  * Progress = 1.5%
+
+Processing gene [ENSG00000069998.8]
+  * Number of variants in cis = 4508
+  * Best correlation = 0.6114
+  * Number of permutations = 1000 / 9350
+  * Beta distribution parameters = 1.0363 670.9705
+  * Progress = 1.7%
+
+Processing gene [ENSG00000185837.3]
+  * Number of variants in cis = 4587
+  * Best correlation = -0.6388
+  * Number of permutations = 427 / 10000
+  * Beta distribution parameters = 1.0367 695.5190
+  * Progress = 1.9%
+
+Processing gene [ENSG00000093072.11]
+  * Number of variants in cis = 4608
+  * Best correlation = 0.6821
+  * Number of permutations = 79 / 10000
+  * Beta distribution parameters = 1.0530 690.0227
+  * Progress = 2.2%
+
+Processing gene [ENSG00000099954.14]
+  * Number of variants in cis = 4609
+  * Best correlation = 0.5958
+  * Number of permutations = 1000 / 5651
+  * Beta distribution parameters = 1.0541 678.5313
+  * Progress = 2.4%
+
+Processing gene [ENSG00000182902.9]
+  * Number of variants in cis = 4858
+  * Best correlation = 0.5430
+  * Number of permutations = 1000 / 1698
+  * Beta distribution parameters = 1.0655 708.6464
+  * Progress = 2.6%
+
+Processing gene [ENSG00000131100.8]
+  * Number of variants in cis = 4898
+  * Best correlation = -0.6178
+  * Number of permutations = 915 / 10000
+  * Beta distribution parameters = 1.0434 724.9677
+  * Progress = 2.8%
+
+Processing gene [ENSG00000099968.13]
+  * Number of variants in cis = 4965
+  * Best correlation = 0.6204
+  * Number of permutations = 906 / 10000
+  * Beta distribution parameters = 1.0245 696.6530
+  * Progress = 3.0%
+
+Processing gene [ENSG00000015475.14]
+  * Number of variants in cis = 5116
+  * Best correlation = -0.5762
+  * Number of permutations = 1000 / 3311
+  * Beta distribution parameters = 1.0070 749.3590
+  * Progress = 3.2%
+
+Processing gene [ENSG00000243156.3]
+  * Number of variants in cis = 5123
+  * Best correlation = 0.5942
+  * Number of permutations = 1000 / 5468
+  * Beta distribution parameters = 1.0606 705.4745
+  * Progress = 3.4%
+
+Processing gene [ENSG00000225335.2]
+  * Number of variants in cis = 5004
+  * Best correlation = 0.5478
+  * Number of permutations = 1000 / 1957
+  * Beta distribution parameters = 1.0172 699.4230
+  * Progress = 3.7%
+
+Processing gene [ENSG00000215193.8]
+  * Number of variants in cis = 5009
+  * Best correlation = 0.5121
+  * Number of permutations = 1000 / 1222
+  * Beta distribution parameters = 1.0769 613.1633
+  * Progress = 3.9%
+
+Processing gene [ENSG00000184979.9]
+  * Number of variants in cis = 5080
+  * Best correlation = 0.5559
+  * Number of permutations = 1000 / 2191
+  * Beta distribution parameters = 1.0318 695.2906
+  * Progress = 4.1%
+
+Processing gene [ENSG00000234764.2]
+  * Number of variants in cis = 4889
+  * Best correlation = 0.4848
+  * Number of permutations = 1000 / 1081
+  * Beta distribution parameters = 0.9883 579.7602
+  * Progress = 4.3%
+
+Processing gene [ENSG00000183628.8]
+  * Number of variants in cis = 4940
+  * Best correlation = -0.7145
+  * Number of permutations = 15 / 10000
+  * Beta distribution parameters = 1.0549 567.8407
+  * Progress = 4.5%
+
+Processing gene [ENSG00000070413.14]
+  * Number of variants in cis = 4907
+  * Best correlation = -0.5246
+  * Number of permutations = 1000 / 1465
+  * Beta distribution parameters = 1.0240 521.8102
+  * Progress = 4.7%
+
+Processing gene [ENSG00000273311.1]
+  * Number of variants in cis = 4912
+  * Best correlation = 0.5979
+  * Number of permutations = 1000 / 6526
+  * Beta distribution parameters = 1.0524 565.6963
+  * Progress = 4.9%
+
+Processing gene [ENSG00000223461.1]
+  * Number of variants in cis = 4814
+  * Best correlation = 0.4710
+  * Number of permutations = 1000 / 1030
+  * Beta distribution parameters = 1.0247 590.9392
+  * Progress = 5.2%
+
+Processing gene [ENSG00000100056.7]
+  * Number of variants in cis = 4819
+  * Best correlation = -0.5384
+  * Number of permutations = 1000 / 1745
+  * Beta distribution parameters = 1.0704 501.2322
+  * Progress = 5.4%
+
+Processing gene [ENSG00000260924.2]
+  * Number of variants in cis = 4816
+  * Best correlation = 0.5110
+  * Number of permutations = 1000 / 1239
+  * Beta distribution parameters = 1.0503 570.6611
+  * Progress = 5.6%
+
+Processing gene [ENSG00000100075.5]
+  * Number of variants in cis = 4831
+  * Best correlation = -0.5008
+  * Number of permutations = 1000 / 1148
+  * Beta distribution parameters = 1.0049 678.9076
+  * Progress = 5.8%
+
+Processing gene [ENSG00000070371.11]
+  * Number of variants in cis = 4841
+  * Best correlation = 0.4913
+  * Number of permutations = 1000 / 1094
+  * Beta distribution parameters = 1.1104 586.2825
+  * Progress = 6.0%
+
+Processing gene [ENSG00000100084.10]
+  * Number of variants in cis = 4764
+  * Best correlation = -0.5660
+  * Number of permutations = 1000 / 3056
+  * Beta distribution parameters = 1.0364 614.6671
+  * Progress = 6.2%
+
+Processing gene [ENSG00000242259.4]
+  * Number of variants in cis = 4700
+  * Best correlation = -0.5035
+  * Number of permutations = 1000 / 1208
+  * Beta distribution parameters = 1.0552 515.3224
+  * Progress = 6.5%
+
+Processing gene [ENSG00000185608.4]
+  * Number of variants in cis = 4556
+  * Best correlation = -0.5826
+  * Number of permutations = 1000 / 4534
+  * Beta distribution parameters = 1.0426 507.5142
+  * Progress = 6.7%
+
+Processing gene [ENSG00000185065.6]
+  * Number of variants in cis = 4512
+  * Best correlation = -0.5734
+  * Number of permutations = 1000 / 3804
+  * Beta distribution parameters = 1.0371 552.1906
+  * Progress = 6.9%
+
+Processing gene [ENSG00000070010.14]
+  * Number of variants in cis = 4504
+  * Best correlation = -0.5253
+  * Number of permutations = 1000 / 1500
+  * Beta distribution parameters = 1.0683 590.8477
+  * Progress = 7.1%
+
+Processing gene [ENSG00000273300.1]
+  * Number of variants in cis = 4479
+  * Best correlation = -0.5219
+  * Number of permutations = 1000 / 1467
+  * Beta distribution parameters = 1.0065 567.3243
+  * Progress = 7.3%
+
+Processing gene [ENSG00000093009.5]
+  * Number of variants in cis = 4322
+  * Best correlation = 0.5111
+  * Number of permutations = 1000 / 1292
+  * Beta distribution parameters = 1.0716 562.3049
+  * Progress = 7.5%
+
+Processing gene [ENSG00000225007.1]
+  * Number of variants in cis = 3802
+  * Best correlation = 0.4978
+  * Number of permutations = 1000 / 1235
+  * Beta distribution parameters = 1.0962 328.6388
+  * Progress = 7.7%
+
+Processing gene [ENSG00000184702.13]
+  * Number of variants in cis = 3804
+  * Best correlation = -0.5149
+  * Number of permutations = 1000 / 1492
+  * Beta distribution parameters = 1.0290 438.4152
+  * Progress = 8.0%
+
+Processing gene [ENSG00000185838.9]
+  * Number of variants in cis = 3948
+  * Best correlation = -0.5126
+  * Number of permutations = 1000 / 1369
+  * Beta distribution parameters = 1.0749 406.7423
+  * Progress = 8.2%
+
+Processing gene [ENSG00000235776.2]
+  * Number of variants in cis = 3998
+  * Best correlation = 0.5486
+  * Number of permutations = 1000 / 2449
+  * Beta distribution parameters = 1.0530 452.9130
+  * Progress = 8.4%
+
+Processing gene [ENSG00000215012.4]
+  * Number of variants in cis = 4108
+  * Best correlation = -0.5697
+  * Number of permutations = 1000 / 3671
+  * Beta distribution parameters = 1.0508 404.0243
+  * Progress = 8.6%
+
+Processing gene [ENSG00000184470.15]
+  * Number of variants in cis = 4160
+  * Best correlation = 0.5003
+  * Number of permutations = 1000 / 1229
+  * Beta distribution parameters = 1.0490 343.4517
+  * Progress = 8.8%
+
+Processing gene [ENSG00000232926.1]
+  * Number of variants in cis = 4183
+  * Best correlation = 0.5595
+  * Number of permutations = 1000 / 3038
+  * Beta distribution parameters = 1.0475 452.1867
+  * Progress = 9.0%
+
+Processing gene [ENSG00000093010.7]
+  * Number of variants in cis = 4159
+  * Best correlation = -0.5352
+  * Number of permutations = 1000 / 1961
+  * Beta distribution parameters = 1.0648 397.2992
+  * Progress = 9.2%
+
+Processing gene [ENSG00000099889.9]
+  * Number of variants in cis = 4185
+  * Best correlation = 0.5532
+  * Number of permutations = 1000 / 2621
+  * Beta distribution parameters = 1.0713 461.7065
+  * Progress = 9.5%
+
+Processing gene [ENSG00000183597.11]
+  * Number of variants in cis = 4215
+  * Best correlation = 0.5216
+  * Number of permutations = 1000 / 1554
+  * Beta distribution parameters = 1.0665 399.4901
+  * Progress = 9.7%
+
+Processing gene [ENSG00000236540.3]
+  * Number of variants in cis = 4183
+  * Best correlation = -0.4608
+  * Number of permutations = 1000 / 1024
+  * Beta distribution parameters = 1.0401 526.8872
+  * Progress = 9.9%
+
+Processing gene [ENSG00000128191.9]
+  * Number of variants in cis = 4148
+  * Best correlation = -0.5608
+  * Number of permutations = 1000 / 3032
+  * Beta distribution parameters = 1.0414 502.1804
+  * Progress = 10.1%
+
+Processing gene [ENSG00000099899.10]
+  * Number of variants in cis = 4081
+  * Best correlation = 0.5891
+  * Number of permutations = 1000 / 6134
+  * Beta distribution parameters = 1.0487 457.7741
+  * Progress = 10.3%
+
+Processing gene [ENSG00000099901.12]
+  * Number of variants in cis = 4070
+  * Best correlation = -0.6294
+  * Number of permutations = 456 / 10000
+  * Beta distribution parameters = 1.0538 463.6619
+  * Progress = 10.5%
+
+Processing gene [ENSG00000099904.11]
+  * Number of variants in cis = 4066
+  * Best correlation = 0.5356
+  * Number of permutations = 1000 / 1879
+  * Beta distribution parameters = 1.1031 382.2661
+  * Progress = 10.8%
+
+Processing gene [ENSG00000234409.4]
+  * Number of variants in cis = 4068
+  * Best correlation = -0.5852
+  * Number of permutations = 1000 / 5324
+  * Beta distribution parameters = 1.0551 404.0401
+  * Progress = 11.0%
+
+Processing gene [ENSG00000236499.2]
+  * Number of variants in cis = 3991
+  * Best correlation = -0.4562
+  * Number of permutations = 1000 / 1024
+  * Beta distribution parameters = 1.1071 473.2285
+  * Progress = 11.2%
+
+Processing gene [ENSG00000040608.9]
+  * Number of variants in cis = 3993
+  * Best correlation = -0.5072
+  * Number of permutations = 1000 / 1352
+  * Beta distribution parameters = 1.0772 445.8199
+  * Progress = 11.4%
+
+Processing gene [ENSG00000128185.5]
+  * Number of variants in cis = 3946
+  * Best correlation = 0.5210
+  * Number of permutations = 1000 / 1633
+  * Beta distribution parameters = 1.0296 447.2359
+  * Progress = 11.6%
+
+Processing gene [ENSG00000273343.1]
+  * Number of variants in cis = 3947
+  * Best correlation = -0.5548
+  * Number of permutations = 1000 / 2937
+  * Beta distribution parameters = 1.0704 397.4773
+  * Progress = 11.8%
+
+Processing gene [ENSG00000273139.1]
+  * Number of variants in cis = 3947
+  * Best correlation = 0.6848
+  * Number of permutations = 42 / 10000
+  * Beta distribution parameters = 1.0631 393.9895
+  * Progress = 12.0%
+
+Processing gene [ENSG00000206176.5]
+  * Number of variants in cis = 4048
+  * Best correlation = 0.5826
+  * Number of permutations = 1000 / 5022
+  * Beta distribution parameters = 1.0204 454.2770
+  * Progress = 12.3%
+
+Processing gene [ENSG00000215513.7]
+  * Number of variants in cis = 4050
+  * Best correlation = 0.5219
+  * Number of permutations = 1000 / 1524
+  * Beta distribution parameters = 1.0614 406.1635
+  * Progress = 12.5%
+
+Processing gene [ENSG00000185252.13]
+  * Number of variants in cis = 3366
+  * Best correlation = 0.5407
+  * Number of permutations = 1000 / 2310
+  * Beta distribution parameters = 1.0960 314.0549
+  * Progress = 12.7%
+
+Processing gene [ENSG00000244486.3]
+  * Number of variants in cis = 3304
+  * Best correlation = 0.4844
+  * Number of permutations = 1000 / 1198
+  * Beta distribution parameters = 0.9959 379.3621
+  * Progress = 12.9%
+
+Processing gene [ENSG00000099910.12]
+  * Number of variants in cis = 3272
+  * Best correlation = -0.5187
+  * Number of permutations = 1000 / 1750
+  * Beta distribution parameters = 1.0642 406.0141
+  * Progress = 13.1%
+
+Processing gene [ENSG00000215493.3]
+  * Number of variants in cis = 3265
+  * Best correlation = 0.4720
+  * Number of permutations = 1000 / 1120
+  * Beta distribution parameters = 1.0450 328.8591
+  * Progress = 13.3%
+
+Processing gene [ENSG00000236670.1]
+  * Number of variants in cis = 3211
+  * Best correlation = 0.5254
+  * Number of permutations = 1000 / 1928
+  * Beta distribution parameters = 1.0389 346.8668
+  * Progress = 13.5%
+
+Processing gene [ENSG00000099917.13]
+  * Number of variants in cis = 3186
+  * Best correlation = 0.6970
+  * Number of permutations = 22 / 10000
+  * Beta distribution parameters = 1.0669 350.7726
+  * Progress = 13.8%
+
+Processing gene [ENSG00000226287.3]
+  * Number of variants in cis = 2817
+  * Best correlation = 0.5129
+  * Number of permutations = 1000 / 1698
+  * Beta distribution parameters = 1.0697 269.5446
+  * Progress = 14.0%
+
+Processing gene [ENSG00000241973.6]
+  * Number of variants in cis = 2818
+  * Best correlation = 0.6127
+  * Number of permutations = 572 / 10000
+  * Beta distribution parameters = 1.0347 305.1982
+  * Progress = 14.2%
+
+Processing gene [ENSG00000099937.6]
+  * Number of variants in cis = 2774
+  * Best correlation = 0.5428
+  * Number of permutations = 1000 / 2738
+  * Beta distribution parameters = 1.0861 285.6960
+  * Progress = 14.4%
+
+Processing gene [ENSG00000099940.7]
+  * Number of variants in cis = 2573
+  * Best correlation = -0.6454
+  * Number of permutations = 163 / 10000
+  * Beta distribution parameters = 1.0565 285.7618
+  * Progress = 14.6%
+
+Processing gene [ENSG00000099942.8]
+  * Number of variants in cis = 2553
+  * Best correlation = -0.5497
+  * Number of permutations = 1000 / 3992
+  * Beta distribution parameters = 1.0867 258.7860
+  * Progress = 14.8%
+
+Processing gene [ENSG00000237476.1]
+  * Number of variants in cis = 2561
+  * Best correlation = -0.5056
+  * Number of permutations = 1000 / 1777
+  * Beta distribution parameters = 1.0351 215.3500
+  * Progress = 15.1%
+
+Processing gene [ENSG00000183773.11]
+  * Number of variants in cis = 2577
+  * Best correlation = 0.5022
+  * Number of permutations = 1000 / 1610
+  * Beta distribution parameters = 1.0968 229.0963
+  * Progress = 15.3%
+
+Processing gene [ENSG00000099949.14]
+  * Number of variants in cis = 2603
+  * Best correlation = -0.7376
+  * Number of permutations = 2 / 10000
+  * Beta distribution parameters = 1.0601 246.6472
+  * Progress = 15.5%
+
+Processing gene [ENSG00000272829.1]
+  * Number of variants in cis = 2610
+  * Best correlation = 0.6147
+  * Number of permutations = 428 / 10000
+  * Beta distribution parameters = 1.0582 241.5410
+  * Progress = 15.7%
+
+Processing gene [ENSG00000184436.7]
+  * Number of variants in cis = 2637
+  * Best correlation = 0.5667
+  * Number of permutations = 1000 / 5876
+  * Beta distribution parameters = 1.0635 249.9454
+  * Progress = 15.9%
+
+Processing gene [ENSG00000230513.1]
+  * Number of variants in cis = 2642
+  * Best correlation = 0.6537
+  * Number of permutations = 98 / 10000
+  * Beta distribution parameters = 1.0359 272.4989
+  * Progress = 16.1%
+
+Processing gene [ENSG00000161149.7]
+  * Number of variants in cis = 2643
+  * Best correlation = 0.6224
+  * Number of permutations = 351 / 10000
+  * Beta distribution parameters = 1.0650 237.9649
+  * Progress = 16.3%
+
+Processing gene [ENSG00000099957.12]
+  * Number of variants in cis = 2664
+  * Best correlation = 0.6471
+  * Number of permutations = 133 / 10000
+  * Beta distribution parameters = 1.0657 249.3102
+  * Progress = 16.6%
+
+Processing gene [ENSG00000169635.5]
+  * Number of variants in cis = 4203
+  * Best correlation = 0.6149
+  * Number of permutations = 623 / 10000
+  * Beta distribution parameters = 1.0704 413.5213
+  * Progress = 16.8%
+
+Processing gene [ENSG00000183506.12]
+  * Number of variants in cis = 4292
+  * Best correlation = -0.5800
+  * Number of permutations = 1000 / 5415
+  * Beta distribution parameters = 1.0469 416.6029
+  * Progress = 17.0%
+
+Processing gene [ENSG00000185651.10]
+  * Number of variants in cis = 4508
+  * Best correlation = 0.5513
+  * Number of permutations = 1000 / 2674
+  * Beta distribution parameters = 1.0304 462.5195
+  * Progress = 17.2%
+
+Processing gene [ENSG00000161179.9]
+  * Number of variants in cis = 4473
+  * Best correlation = -0.5467
+  * Number of permutations = 1000 / 2459
+  * Beta distribution parameters = 1.0157 410.2967
+  * Progress = 17.4%
+
+Processing gene [ENSG00000128228.4]
+  * Number of variants in cis = 4436
+  * Best correlation = -0.6065
+  * Number of permutations = 862 / 10000
+  * Beta distribution parameters = 1.0583 389.5374
+  * Progress = 17.6%
+
+Processing gene [ENSG00000100023.13]
+  * Number of variants in cis = 4436
+  * Best correlation = -0.6219
+  * Number of permutations = 532 / 10000
+  * Beta distribution parameters = 1.0478 410.5830
+  * Progress = 17.8%
+
+Processing gene [ENSG00000100027.10]
+  * Number of variants in cis = 4557
+  * Best correlation = 0.5455
+  * Number of permutations = 1000 / 2344
+  * Beta distribution parameters = 1.0567 385.0496
+  * Progress = 18.1%
+
+Processing gene [ENSG00000100030.10]
+  * Number of variants in cis = 4747
+  * Best correlation = 0.5784
+  * Number of permutations = 1000 / 4841
+  * Beta distribution parameters = 1.0382 471.2689
+  * Progress = 18.3%
+
+Processing gene [ENSG00000225544.1]
+  * Number of variants in cis = 4869
+  * Best correlation = -0.5180
+  * Number of permutations = 1000 / 1462
+  * Beta distribution parameters = 1.0552 552.3313
+  * Progress = 18.5%
+
+Processing gene [ENSG00000100034.9]
+  * Number of variants in cis = 4897
+  * Best correlation = 0.5208
+  * Number of permutations = 1000 / 1476
+  * Beta distribution parameters = 1.0789 523.8326
+  * Progress = 18.7%
+
+Processing gene [ENSG00000224086.3]
+  * Number of variants in cis = 4925
+  * Best correlation = -0.8398
+  * Number of permutations = 0 / 10000
+  * Beta distribution parameters = 1.0552 542.0657
+  * Progress = 18.9%
+
+Processing gene [ENSG00000100038.15]
+  * Number of variants in cis = 4926
+  * Best correlation = -0.5178
+  * Number of permutations = 1000 / 1371
+  * Beta distribution parameters = 1.1064 676.9241
+  * Progress = 19.1%
+
+Processing gene [ENSG00000182502.2]
+  * Number of variants in cis = 4756
+  * Best correlation = -0.4994
+  * Number of permutations = 1000 / 1224
+  * Beta distribution parameters = 1.1116 374.5855
+  * Progress = 19.4%
+
+Processing gene [ENSG00000272216.1]
+  * Number of variants in cis = 5117
+  * Best correlation = -0.5940
+  * Number of permutations = 1000 / 7052
+  * Beta distribution parameters = 1.0536 508.3134
+  * Progress = 19.6%
+
+Processing gene [ENSG00000234630.1]
+  * Number of variants in cis = 5148
+  * Best correlation = -0.5524
+  * Number of permutations = 1000 / 2544
+  * Beta distribution parameters = 1.0402 591.7501
+  * Progress = 19.8%
+
+Processing gene [ENSG00000272779.1]
+  * Number of variants in cis = 5167
+  * Best correlation = -0.6435
+  * Number of permutations = 292 / 10000
+  * Beta distribution parameters = 1.0462 482.1506
+  * Progress = 20.0%
+
+Processing gene [ENSG00000211643.2]
+  * Number of variants in cis = 5192
+  * Best correlation = 0.5753
+  * Number of permutations = 1000 / 4335
+  * Beta distribution parameters = 1.0561 519.3975
+  * Progress = 20.2%
+
+Processing gene [ENSG00000211644.2]
+  * Number of variants in cis = 5201
+  * Best correlation = 0.5453
+  * Number of permutations = 1000 / 2129
+  * Beta distribution parameters = 1.0825 524.5088
+  * Progress = 20.4%
+
+Processing gene [ENSG00000198477.3]
+  * Number of variants in cis = 5763
+  * Best correlation = 0.4504
+  * Number of permutations = 1000 / 1008
+  * Beta distribution parameters = 1.0762 484.7411
+  * Progress = 20.6%
+
+Processing gene [ENSG00000169548.3]
+  * Number of variants in cis = 5932
+  * Best correlation = 0.4907
+  * Number of permutations = 1000 / 1094
+  * Beta distribution parameters = 1.1337 531.9767
+  * Progress = 20.9%
+
+Processing gene [ENSG00000237472.1]
+  * Number of variants in cis = 6580
+  * Best correlation = -0.4854
+  * Number of permutations = 1000 / 1046
+  * Beta distribution parameters = 1.0399 701.6515
+  * Progress = 21.1%
+
+Processing gene [ENSG00000128266.7]
+  * Number of variants in cis = 6454
+  * Best correlation = -0.4667
+  * Number of permutations = 1000 / 1013
+  * Beta distribution parameters = 1.0360 607.7345
+  * Progress = 21.3%
+
+Processing gene [ENSG00000100228.8]
+  * Number of variants in cis = 6214
+  * Best correlation = -0.6333
+  * Number of permutations = 513 / 10000
+  * Beta distribution parameters = 1.0430 653.4651
+  * Progress = 21.5%
+
+Processing gene [ENSG00000186716.15]
+  * Number of variants in cis = 6043
+  * Best correlation = -0.5321
+  * Number of permutations = 1000 / 1558
+  * Beta distribution parameters = 1.0429 527.2051
+  * Progress = 21.7%
+
+Processing gene [ENSG00000230701.1]
+  * Number of variants in cis = 5648
+  * Best correlation = -0.5372
+  * Number of permutations = 1000 / 1766
+  * Beta distribution parameters = 1.0573 526.5900
+  * Progress = 21.9%
+
+Processing gene [ENSG00000234353.2]
+  * Number of variants in cis = 4718
+  * Best correlation = 0.6946
+  * Number of permutations = 36 / 10000
+  * Beta distribution parameters = 1.0405 473.5880
+  * Progress = 22.2%
+
+Processing gene [ENSG00000272578.1]
+  * Number of variants in cis = 4734
+  * Best correlation = -0.5585
+  * Number of permutations = 1000 / 2846
+  * Beta distribution parameters = 1.0277 470.3767
+  * Progress = 22.4%
+
+Processing gene [ENSG00000159496.10]
+  * Number of variants in cis = 4636
+  * Best correlation = 0.5433
+  * Number of permutations = 1000 / 2186
+  * Beta distribution parameters = 1.0126 480.6483
+  * Progress = 22.6%
+
+Processing gene [ENSG00000270041.1]
+  * Number of variants in cis = 4460
+  * Best correlation = -0.5986
+  * Number of permutations = 1000 / 7953
+  * Beta distribution parameters = 1.0414 416.7075
+  * Progress = 22.8%
+
+Processing gene [ENSG00000187792.3]
+  * Number of variants in cis = 4448
+  * Best correlation = -0.5806
+  * Number of permutations = 1000 / 4934
+  * Beta distribution parameters = 1.0595 399.3762
+  * Progress = 23.0%
+
+Processing gene [ENSG00000169314.10]
+  * Number of variants in cis = 4432
+  * Best correlation = -0.5745
+  * Number of permutations = 1000 / 4370
+  * Beta distribution parameters = 1.0524 442.0708
+  * Progress = 23.2%
+
+Processing gene [ENSG00000250479.4]
+  * Number of variants in cis = 4407
+  * Best correlation = 0.5347
+  * Number of permutations = 1000 / 1911
+  * Beta distribution parameters = 1.0516 443.2819
+  * Progress = 23.4%
+
+Processing gene [ENSG00000099953.5]
+  * Number of variants in cis = 4394
+  * Best correlation = 0.5320
+  * Number of permutations = 1000 / 1874
+  * Beta distribution parameters = 1.0913 504.2124
+  * Progress = 23.7%
+
+Processing gene [ENSG00000099956.13]
+  * Number of variants in cis = 4354
+  * Best correlation = 0.5609
+  * Number of permutations = 1000 / 3182
+  * Beta distribution parameters = 1.0471 477.2551
+  * Progress = 23.9%
+
+Processing gene [ENSG00000099958.10]
+  * Number of variants in cis = 4424
+  * Best correlation = 0.5635
+  * Number of permutations = 1000 / 3383
+  * Beta distribution parameters = 1.0693 459.0615
+  * Progress = 24.1%
+
+Processing gene [ENSG00000133460.15]
+  * Number of variants in cis = 4424
+  * Best correlation = -0.5969
+  * Number of permutations = 1000 / 7858
+  * Beta distribution parameters = 1.0688 408.8077
+  * Progress = 24.3%
+
+Processing gene [ENSG00000244425.2]
+  * Number of variants in cis = 4462
+  * Best correlation = -0.6472
+  * Number of permutations = 243 / 10000
+  * Beta distribution parameters = 1.0502 429.8001
+  * Progress = 24.5%
+
+Processing gene [ENSG00000240972.1]
+  * Number of variants in cis = 4485
+  * Best correlation = 0.6666
+  * Number of permutations = 117 / 10000
+  * Beta distribution parameters = 1.0380 441.0428
+  * Progress = 24.7%
+
+Processing gene [ENSG00000218537.1]
+  * Number of variants in cis = 4485
+  * Best correlation = 0.8270
+  * Number of permutations = 0 / 10000
+  * Beta distribution parameters = 1.0680 430.8458
+  * Progress = 24.9%
+
+Processing gene [ENSG00000273295.1]
+  * Number of variants in cis = 4487
+  * Best correlation = 0.8809
+  * Number of permutations = 0 / 10000
+  * Beta distribution parameters = 1.0526 434.5008
+  * Progress = 25.2%
+
+Processing gene [ENSG00000133433.6]
+  * Number of variants in cis = 4481
+  * Best correlation = -0.8140
+  * Number of permutations = 0 / 10000
+  * Beta distribution parameters = 1.0353 467.7368
+  * Progress = 25.4%
+
+Processing gene [ENSG00000099974.7]
+  * Number of variants in cis = 4488
+  * Best correlation = -0.5020
+  * Number of permutations = 1000 / 1273
+  * Beta distribution parameters = 1.0813 491.2163
+  * Progress = 25.6%
+
+Processing gene [ENSG00000272787.1]
+  * Number of variants in cis = 4496
+  * Best correlation = 0.6053
+  * Number of permutations = 1000 / 9747
+  * Beta distribution parameters = 1.0807 400.3201
+  * Progress = 25.8%
+
+Processing gene [ENSG00000099977.9]
+  * Number of variants in cis = 4507
+  * Best correlation = 0.5163
+  * Number of permutations = 1000 / 1516
+  * Beta distribution parameters = 0.9922 460.9473
+  * Progress = 26.0%
+
+Processing gene [ENSG00000099984.6]
+  * Number of variants in cis = 4516
+  * Best correlation = -0.8366
+  * Number of permutations = 0 / 10000
+  * Beta distribution parameters = 1.0379 443.0264
+  * Progress = 26.2%
+
+Processing gene [ENSG00000235231.3]
+  * Number of variants in cis = 4472
+  * Best correlation = 0.8253
+  * Number of permutations = 0 / 10000
+  * Beta distribution parameters = 1.0476 459.0043
+  * Progress = 26.5%
+
+Processing gene [ENSG00000272955.1]
+  * Number of variants in cis = 4472
+  * Best correlation = 0.7174
+  * Number of permutations = 17 / 10000
+  * Beta distribution parameters = 1.0353 439.5034
+  * Progress = 26.7%
+
+Processing gene [ENSG00000184674.8]
+  * Number of variants in cis = 4474
+  * Best correlation = 0.8497
+  * Number of permutations = 0 / 10000
+  * Beta distribution parameters = 1.0687 422.5408
+  * Progress = 26.9%
+
+Processing gene [ENSG00000099991.12]
+  * Number of variants in cis = 4504
+  * Best correlation = -0.5599
+  * Number of permutations = 1000 / 3201
+  * Beta distribution parameters = 1.0650 442.2223
+  * Progress = 27.1%
+
+Processing gene [ENSG00000232545.1]
+  * Number of variants in cis = 4645
+  * Best correlation = -0.4745
+  * Number of permutations = 1000 / 1060
+  * Beta distribution parameters = 1.0149 456.1492
+  * Progress = 27.3%
+
+Processing gene [ENSG00000099994.10]
+  * Number of variants in cis = 4655
+  * Best correlation = 0.6842
+  * Number of permutations = 61 / 10000
+  * Beta distribution parameters = 1.0369 479.7062
+  * Progress = 27.5%
+
+Processing gene [ENSG00000099998.13]
+  * Number of variants in cis = 4739
+  * Best correlation = 0.5404
+  * Number of permutations = 1000 / 1917
+  * Beta distribution parameters = 1.0457 551.9221
+  * Progress = 27.7%
+
+Processing gene [ENSG00000128262.4]
+  * Number of variants in cis = 4728
+  * Best correlation = 0.5971
+  * Number of permutations = 1000 / 7027
+  * Beta distribution parameters = 1.0392 500.1214
+  * Progress = 28.0%
+
+Processing gene [ENSG00000215464.4]
+  * Number of variants in cis = 4763
+  * Best correlation = 0.5694
+  * Number of permutations = 1000 / 3507
+  * Beta distribution parameters = 1.0585 494.7701
+  * Progress = 28.2%
+
+Processing gene [ENSG00000100014.15]
+  * Number of variants in cis = 4762
+  * Best correlation = 0.5218
+  * Number of permutations = 1000 / 1455
+  * Beta distribution parameters = 1.0220 478.4409
+  * Progress = 28.4%
+
+Processing gene [ENSG00000128271.15]
+  * Number of variants in cis = 4642
+  * Best correlation = -0.6578
+  * Number of permutations = 162 / 10000
+  * Beta distribution parameters = 1.0459 500.1504
+  * Progress = 28.6%
+
+Processing gene [ENSG00000100024.10]
+  * Number of variants in cis = 4473
+  * Best correlation = -0.5094
+  * Number of permutations = 1000 / 1249
+  * Beta distribution parameters = 1.0599 504.4286
+  * Progress = 28.8%
+
+Processing gene [ENSG00000138867.12]
+  * Number of variants in cis = 4425
+  * Best correlation = 0.5876
+  * Number of permutations = 1000 / 5849
+  * Beta distribution parameters = 1.0361 491.7936
+  * Progress = 29.0%
+
+Processing gene [ENSG00000100028.7]
+  * Number of variants in cis = 4415
+  * Best correlation = -0.5546
+  * Number of permutations = 1000 / 2785
+  * Beta distribution parameters = 1.0524 434.3911
+  * Progress = 29.2%
+
+Processing gene [ENSG00000178026.8]
+  * Number of variants in cis = 4382
+  * Best correlation = 0.5003
+  * Number of permutations = 1000 / 1261
+  * Beta distribution parameters = 1.0261 415.6872
+  * Progress = 29.5%
+
+Processing gene [ENSG00000100031.14]
+  * Number of variants in cis = 4357
+  * Best correlation = 0.5660
+  * Number of permutations = 1000 / 3561
+  * Beta distribution parameters = 1.0576 456.4407
+  * Progress = 29.7%
+
+Processing gene [ENSG00000240906.2]
+  * Number of variants in cis = 4177
+  * Best correlation = 0.6321
+  * Number of permutations = 366 / 10000
+  * Beta distribution parameters = 1.0796 424.5263
+  * Progress = 29.9%
+
+Processing gene [ENSG00000224334.1]
+  * Number of variants in cis = 4128
+  * Best correlation = -0.5878
+  * Number of permutations = 1000 / 6514
+  * Beta distribution parameters = 1.0956 424.6619
+  * Progress = 30.1%
+
+Processing gene [ENSG00000197077.8]
+  * Number of variants in cis = 3941
+  * Best correlation = -0.6143
+  * Number of permutations = 762 / 10000
+  * Beta distribution parameters = 1.0524 436.4629
+  * Progress = 30.3%
+
+Processing gene [ENSG00000244752.2]
+  * Number of variants in cis = 4135
+  * Best correlation = 0.5469
+  * Number of permutations = 1000 / 2170
+  * Beta distribution parameters = 1.0574 482.3078
+  * Progress = 30.5%
+
+Processing gene [ENSG00000231466.2]
+  * Number of variants in cis = 4490
+  * Best correlation = -0.5076
+  * Number of permutations = 1000 / 1199
+  * Beta distribution parameters = 1.0819 521.5084
+  * Progress = 30.8%
+
+Processing gene [ENSG00000100068.7]
+  * Number of variants in cis = 4492
+  * Best correlation = -0.5254
+  * Number of permutations = 1000 / 1395
+  * Beta distribution parameters = 1.0438 641.5508
+  * Progress = 31.0%
+
+Processing gene [ENSG00000100058.8]
+  * Number of variants in cis = 4683
+  * Best correlation = 0.5777
+  * Number of permutations = 1000 / 3773
+  * Beta distribution parameters = 1.0572 630.9117
+  * Progress = 31.2%
+
+Processing gene [ENSG00000272977.1]
+  * Number of variants in cis = 4704
+  * Best correlation = -0.7031
+  * Number of permutations = 25 / 10000
+  * Beta distribution parameters = 1.0778 617.7086
+  * Progress = 31.4%
+
+Processing gene [ENSG00000100077.10]
+  * Number of variants in cis = 4849
+  * Best correlation = -0.6007
+  * Number of permutations = 1000 / 6649
+  * Beta distribution parameters = 1.0656 595.4312
+  * Progress = 31.6%
+
+Processing gene [ENSG00000224003.1]
+  * Number of variants in cis = 4990
+  * Best correlation = -0.5688
+  * Number of permutations = 1000 / 2940
+  * Beta distribution parameters = 1.0675 682.3462
+  * Progress = 31.8%
+
+Processing gene [ENSG00000133454.11]
+  * Number of variants in cis = 5083
+  * Best correlation = -0.6671
+  * Number of permutations = 161 / 10000
+  * Beta distribution parameters = 1.0385 663.1372
+  * Progress = 32.0%
+
+Processing gene [ENSG00000128203.6]
+  * Number of variants in cis = 5368
+  * Best correlation = -0.5612
+  * Number of permutations = 1000 / 2102
+  * Beta distribution parameters = 1.0506 909.5309
+  * Progress = 32.3%
+
+Processing gene [ENSG00000100099.16]
+  * Number of variants in cis = 5375
+  * Best correlation = -0.5978
+  * Number of permutations = 1000 / 5057
+  * Beta distribution parameters = 1.0619 783.0501
+  * Progress = 32.5%
+
+Processing gene [ENSG00000100104.8]
+  * Number of variants in cis = 5422
+  * Best correlation = -0.5353
+  * Number of permutations = 1000 / 1385
+  * Beta distribution parameters = 1.0407 899.8171
+  * Progress = 32.7%
+
+Processing gene [ENSG00000100109.12]
+  * Number of variants in cis = 5458
+  * Best correlation = -0.5766
+  * Number of permutations = 1000 / 2849
+  * Beta distribution parameters = 1.0872 763.1735
+  * Progress = 32.9%
+
+Processing gene [ENSG00000261188.1]
+  * Number of variants in cis = 5506
+  * Best correlation = -0.5799
+  * Number of permutations = 1000 / 3068
+  * Beta distribution parameters = 1.0062 947.7464
+  * Progress = 33.1%
+
+Processing gene [ENSG00000260065.1]
+  * Number of variants in cis = 5497
+  * Best correlation = 0.7891
+  * Number of permutations = 0 / 10000
+  * Beta distribution parameters = 1.0568 880.6135
+  * Progress = 33.3%
+
+Processing gene [ENSG00000128294.11]
+  * Number of variants in cis = 5512
+  * Best correlation = -0.5845
+  * Number of permutations = 1000 / 3399
+  * Beta distribution parameters = 1.0402 938.7170
+  * Progress = 33.5%
+
+Processing gene [ENSG00000213707.2]
+  * Number of variants in cis = 5523
+  * Best correlation = -0.5145
+  * Number of permutations = 1000 / 1114
+  * Beta distribution parameters = 1.0783 894.4731
+  * Progress = 33.8%
+
+Processing gene [ENSG00000225783.2]
+  * Number of variants in cis = 5792
+  * Best correlation = -0.6522
+  * Number of permutations = 330 / 10000
+  * Beta distribution parameters = 1.0573 917.2022
+  * Progress = 34.0%
+
+Processing gene [ENSG00000244625.1]
+  * Number of variants in cis = 5919
+  * Best correlation = 0.5405
+  * Number of permutations = 1000 / 1381
+  * Beta distribution parameters = 1.0980 669.8702
+  * Progress = 34.2%
+
+Processing gene [ENSG00000231369.1]
+  * Number of variants in cis = 5825
+  * Best correlation = -0.5579
+  * Number of permutations = 1000 / 1804
+  * Beta distribution parameters = 1.0640 935.2360
+  * Progress = 34.4%
+
+Processing gene [ENSG00000233521.1]
+  * Number of variants in cis = 5514
+  * Best correlation = 0.6128
+  * Number of permutations = 1000 / 8411
+  * Beta distribution parameters = 1.0447 979.6259
+  * Progress = 34.6%
+
+Processing gene [ENSG00000169184.5]
+  * Number of variants in cis = 4543
+  * Best correlation = -0.6060
+  * Number of permutations = 1000 / 7894
+  * Beta distribution parameters = 1.0353 701.3383
+  * Progress = 34.8%
+
+Processing gene [ENSG00000180957.13]
+  * Number of variants in cis = 4508
+  * Best correlation = 0.5734
+  * Number of permutations = 1000 / 3377
+  * Beta distribution parameters = 1.0901 579.0856
+  * Progress = 35.1%
+
+Processing gene [ENSG00000235954.2]
+  * Number of variants in cis = 4426
+  * Best correlation = 0.5203
+  * Number of permutations = 1000 / 1349
+  * Beta distribution parameters = 1.0295 610.4006
+  * Progress = 35.3%
+
+Processing gene [ENSG00000100154.10]
+  * Number of variants in cis = 4221
+  * Best correlation = 0.5453
+  * Number of permutations = 1000 / 1929
+  * Beta distribution parameters = 1.0870 453.5676
+  * Progress = 35.5%
+
+Processing gene [ENSG00000183765.16]
+  * Number of variants in cis = 3094
+  * Best correlation = -0.5088
+  * Number of permutations = 1000 / 1891
+  * Beta distribution parameters = 1.0794 166.9350
+  * Progress = 35.7%
+
+Processing gene [ENSG00000100209.5]
+  * Number of variants in cis = 3037
+  * Best correlation = 0.4258
+  * Number of permutations = 1000 / 1027
+  * Beta distribution parameters = 0.9748 231.5906
+  * Progress = 35.9%
+
+Processing gene [ENSG00000159873.5]
+  * Number of variants in cis = 3061
+  * Best correlation = -0.5152
+  * Number of permutations = 1000 / 2343
+  * Beta distribution parameters = 1.0071 156.5275
+  * Progress = 36.1%
+
+Processing gene [ENSG00000100219.12]
+  * Number of variants in cis = 3070
+  * Best correlation = -0.5049
+  * Number of permutations = 1000 / 2029
+  * Beta distribution parameters = 1.1030 142.9216
+  * Progress = 36.3%
+
+Processing gene [ENSG00000226471.2]
+  * Number of variants in cis = 3074
+  * Best correlation = 0.5208
+  * Number of permutations = 1000 / 2690
+  * Beta distribution parameters = 1.0672 145.4664
+  * Progress = 36.6%
+
+Processing gene [ENSG00000272858.1]
+  * Number of variants in cis = 3087
+  * Best correlation = 0.4939
+  * Number of permutations = 1000 / 1786
+  * Beta distribution parameters = 1.0621 154.0643
+  * Progress = 36.8%
+
+Processing gene [ENSG00000183579.11]
+  * Number of variants in cis = 3133
+  * Best correlation = -0.6042
+  * Number of permutations = 498 / 10000
+  * Beta distribution parameters = 1.0644 127.1928
+  * Progress = 37.0%
+
+Processing gene [ENSG00000183762.8]
+  * Number of variants in cis = 3242
+  * Best correlation = -0.5781
+  * Number of permutations = 987 / 10000
+  * Beta distribution parameters = 1.0453 146.3847
+  * Progress = 37.2%
+
+Processing gene [ENSG00000186998.11]
+  * Number of variants in cis = 3383
+  * Best correlation = -0.5025
+  * Number of permutations = 1000 / 2151
+  * Beta distribution parameters = 1.0367 147.7664
+  * Progress = 37.4%
+
+Processing gene [ENSG00000100263.9]
+  * Number of variants in cis = 3408
+  * Best correlation = -0.5456
+  * Number of permutations = 1000 / 4166
+  * Beta distribution parameters = 1.0337 149.0038
+  * Progress = 37.6%
+
+Processing gene [ENSG00000237015.1]
+  * Number of variants in cis = 3408
+  * Best correlation = -0.5380
+  * Number of permutations = 1000 / 3635
+  * Beta distribution parameters = 1.0645 149.4072
+  * Progress = 37.8%
+
+Processing gene [ENSG00000182944.13]
+  * Number of variants in cis = 3411
+  * Best correlation = -0.5482
+  * Number of permutations = 1000 / 4404
+  * Beta distribution parameters = 1.0701 148.5238
+  * Progress = 38.1%
+
+Processing gene [ENSG00000185340.11]
+  * Number of variants in cis = 3421
+  * Best correlation = -0.5351
+  * Number of permutations = 1000 / 3252
+  * Beta distribution parameters = 1.0540 162.6022
+  * Progress = 38.3%
+
+Processing gene [ENSG00000100280.12]
+  * Number of variants in cis = 3411
+  * Best correlation = 0.6258
+  * Number of permutations = 231 / 10000
+  * Beta distribution parameters = 1.0641 165.7649
+  * Progress = 38.5%
+
+Processing gene [ENSG00000100285.9]
+  * Number of variants in cis = 3589
+  * Best correlation = -0.5751
+  * Number of permutations = 1000 / 7743
+  * Beta distribution parameters = 1.0563 173.4090
+  * Progress = 38.7%
+
+Processing gene [ENSG00000100296.9]
+  * Number of variants in cis = 3623
+  * Best correlation = -0.5503
+  * Number of permutations = 1000 / 4239
+  * Beta distribution parameters = 1.0865 161.8586
+  * Progress = 38.9%
+
+Processing gene [ENSG00000184117.7]
+  * Number of variants in cis = 3664
+  * Best correlation = 0.5422
+  * Number of permutations = 1000 / 3444
+  * Beta distribution parameters = 1.0547 205.0977
+  * Progress = 39.1%
+
+Processing gene [ENSG00000186575.13]
+  * Number of variants in cis = 3700
+  * Best correlation = 0.4646
+  * Number of permutations = 1000 / 1190
+  * Beta distribution parameters = 1.1290 189.5253
+  * Progress = 39.4%
+
+Processing gene [ENSG00000100319.11]
+  * Number of variants in cis = 3894
+  * Best correlation = 0.5778
+  * Number of permutations = 1000 / 7181
+  * Beta distribution parameters = 1.0444 236.5812
+  * Progress = 39.6%
+
+Processing gene [ENSG00000184076.10]
+  * Number of variants in cis = 3871
+  * Best correlation = 0.4861
+  * Number of permutations = 1000 / 1356
+  * Beta distribution parameters = 1.0256 223.0560
+  * Progress = 39.8%
+
+Processing gene [ENSG00000100325.10]
+  * Number of variants in cis = 3849
+  * Best correlation = -0.5393
+  * Number of permutations = 1000 / 2911
+  * Beta distribution parameters = 1.1197 207.7265
+  * Progress = 40.0%
+
+Processing gene [ENSG00000100330.11]
+  * Number of variants in cis = 3868
+  * Best correlation = 0.6520
+  * Number of permutations = 148 / 10000
+  * Beta distribution parameters = 1.0435 237.0837
+  * Progress = 40.2%
+
+Processing gene [ENSG00000128342.4]
+  * Number of variants in cis = 3813
+  * Best correlation = -0.5303
+  * Number of permutations = 1000 / 2457
+  * Beta distribution parameters = 1.0428 223.9756
+  * Progress = 40.4%
+
+Processing gene [ENSG00000268812.2]
+  * Number of variants in cis = 3794
+  * Best correlation = 0.5478
+  * Number of permutations = 1000 / 3326
+  * Beta distribution parameters = 1.0566 221.4658
+  * Progress = 40.6%
+
+Processing gene [ENSG00000239282.3]
+  * Number of variants in cis = 3802
+  * Best correlation = -0.5402
+  * Number of permutations = 1000 / 2906
+  * Beta distribution parameters = 1.0371 217.6890
+  * Progress = 40.9%
+
+Processing gene [ENSG00000099992.11]
+  * Number of variants in cis = 3810
+  * Best correlation = 0.5179
+  * Number of permutations = 1000 / 2085
+  * Beta distribution parameters = 1.0347 286.7466
+  * Progress = 41.1%
+
+Processing gene [ENSG00000099995.14]
+  * Number of variants in cis = 3828
+  * Best correlation = -0.4602
+  * Number of permutations = 1000 / 1128
+  * Beta distribution parameters = 0.9954 230.2564
+  * Progress = 41.3%
+
+Processing gene [ENSG00000187860.6]
+  * Number of variants in cis = 3838
+  * Best correlation = 0.5130
+  * Number of permutations = 1000 / 1845
+  * Beta distribution parameters = 1.1000 223.7159
+  * Progress = 41.5%
+
+Processing gene [ENSG00000241528.1]
+  * Number of variants in cis = 3831
+  * Best correlation = -0.5353
+  * Number of permutations = 1000 / 2901
+  * Beta distribution parameters = 1.0584 209.2769
+  * Progress = 41.7%
+
+Processing gene [ENSG00000099999.10]
+  * Number of variants in cis = 3832
+  * Best correlation = 0.5424
+  * Number of permutations = 1000 / 3187
+  * Beta distribution parameters = 1.0426 254.0596
+  * Progress = 41.9%
+
+Processing gene [ENSG00000100003.13]
+  * Number of variants in cis = 3818
+  * Best correlation = 0.5211
+  * Number of permutations = 1000 / 2046
+  * Beta distribution parameters = 1.0860 223.4212
+  * Progress = 42.2%
+
+Processing gene [ENSG00000268538.1]
+  * Number of variants in cis = 3810
+  * Best correlation = 0.5568
+  * Number of permutations = 1000 / 4368
+  * Beta distribution parameters = 1.0678 214.8016
+  * Progress = 42.4%
+
+Processing gene [ENSG00000273350.1]
+  * Number of variants in cis = 3805
+  * Best correlation = 0.5677
+  * Number of permutations = 1000 / 5740
+  * Beta distribution parameters = 1.0674 213.5170
+  * Progress = 42.6%
+
+Processing gene [ENSG00000272689.1]
+  * Number of variants in cis = 3806
+  * Best correlation = -0.5918
+  * Number of permutations = 922 / 10000
+  * Beta distribution parameters = 1.0657 211.0020
+  * Progress = 42.8%
+
+Processing gene [ENSG00000242114.1]
+  * Number of variants in cis = 3808
+  * Best correlation = 0.5437
+  * Number of permutations = 1000 / 3285
+  * Beta distribution parameters = 1.0507 225.3658
+  * Progress = 43.0%
+
+Processing gene [ENSG00000225774.1]
+  * Number of variants in cis = 3734
+  * Best correlation = -0.4564
+  * Number of permutations = 1000 / 1127
+  * Beta distribution parameters = 1.0768 171.1503
+  * Progress = 43.2%
+
+Processing gene [ENSG00000100029.13]
+  * Number of variants in cis = 3703
+  * Best correlation = -0.4337
+  * Number of permutations = 1000 / 1035
+  * Beta distribution parameters = 1.0166 247.6727
+  * Progress = 43.4%
+
+Processing gene [ENSG00000185339.4]
+  * Number of variants in cis = 3665
+  * Best correlation = 0.4738
+  * Number of permutations = 1000 / 1244
+  * Beta distribution parameters = 1.1005 199.5638
+  * Progress = 43.7%
+
+Processing gene [ENSG00000100036.11]
+  * Number of variants in cis = 3701
+  * Best correlation = -0.4331
+  * Number of permutations = 1000 / 1027
+  * Beta distribution parameters = 1.0281 239.8911
+  * Progress = 43.9%
+
+Processing gene [ENSG00000167065.9]
+  * Number of variants in cis = 3708
+  * Best correlation = -0.5715
+  * Number of permutations = 1000 / 6348
+  * Beta distribution parameters = 1.0637 198.5730
+  * Progress = 44.1%
+
+Processing gene [ENSG00000250318.1]
+  * Number of variants in cis = 3708
+  * Best correlation = -0.5028
+  * Number of permutations = 1000 / 1677
+  * Beta distribution parameters = 1.1004 233.9546
+  * Progress = 44.3%
+
+Processing gene [ENSG00000184792.11]
+  * Number of variants in cis = 3684
+  * Best correlation = -0.6621
+  * Number of permutations = 86 / 10000
+  * Beta distribution parameters = 1.0465 211.0447
+  * Progress = 44.5%
+
+Processing gene [ENSG00000237977.1]
+  * Number of variants in cis = 3433
+  * Best correlation = 0.6234
+  * Number of permutations = 355 / 10000
+  * Beta distribution parameters = 1.0497 203.1460
+  * Progress = 44.7%
+
+Processing gene [ENSG00000133422.8]
+  * Number of variants in cis = 3428
+  * Best correlation = 0.5257
+  * Number of permutations = 1000 / 2292
+  * Beta distribution parameters = 1.0493 213.9990
+  * Progress = 44.9%
+
+Processing gene [ENSG00000253352.4]
+  * Number of variants in cis = 3436
+  * Best correlation = -0.4232
+  * Number of permutations = 1000 / 1024
+  * Beta distribution parameters = 1.0914 195.1840
+  * Progress = 45.2%
+
+Processing gene [ENSG00000183963.14]
+  * Number of variants in cis = 3339
+  * Best correlation = 0.5270
+  * Number of permutations = 1000 / 2361
+  * Beta distribution parameters = 1.0095 255.6816
+  * Progress = 45.4%
+
+Processing gene [ENSG00000273387.1]
+  * Number of variants in cis = 3319
+  * Best correlation = 0.5055
+  * Number of permutations = 1000 / 1668
+  * Beta distribution parameters = 1.0788 210.7975
+  * Progress = 45.6%
+
+Processing gene [ENSG00000198832.6]
+  * Number of variants in cis = 3298
+  * Best correlation = -0.5954
+  * Number of permutations = 849 / 10000
+  * Beta distribution parameters = 1.0521 228.4966
+  * Progress = 45.8%
+
+Processing gene [ENSG00000185133.9]
+  * Number of variants in cis = 3284
+  * Best correlation = -0.4687
+  * Number of permutations = 1000 / 1184
+  * Beta distribution parameters = 1.1142 219.4237
+  * Progress = 46.0%
+
+Processing gene [ENSG00000138942.11]
+  * Number of variants in cis = 3264
+  * Best correlation = -0.4998
+  * Number of permutations = 1000 / 1506
+  * Beta distribution parameters = 1.0168 244.9360
+  * Progress = 46.2%
+
+Processing gene [ENSG00000182541.13]
+  * Number of variants in cis = 3327
+  * Best correlation = -0.4339
+  * Number of permutations = 1000 / 1026
+  * Beta distribution parameters = 1.0509 234.6402
+  * Progress = 46.5%
+
+Processing gene [ENSG00000100100.8]
+  * Number of variants in cis = 3365
+  * Best correlation = -0.4935
+  * Number of permutations = 1000 / 1421
+  * Beta distribution parameters = 1.1280 210.3875
+  * Progress = 46.7%
+
+Processing gene [ENSG00000228839.1]
+  * Number of variants in cis = 3423
+  * Best correlation = 0.5280
+  * Number of permutations = 1000 / 2171
+  * Beta distribution parameters = 1.0641 204.3737
+  * Progress = 46.9%
+
+Processing gene [ENSG00000100105.13]
+  * Number of variants in cis = 3571
+  * Best correlation = -0.5150
+  * Number of permutations = 1000 / 1854
+  * Beta distribution parameters = 1.0634 281.4731
+  * Progress = 47.1%
+
+Processing gene [ENSG00000213888.2]
+  * Number of variants in cis = 3650
+  * Best correlation = -0.4854
+  * Number of permutations = 1000 / 1277
+  * Beta distribution parameters = 0.9997 305.9272
+  * Progress = 47.3%
+
+Processing gene [ENSG00000185721.7]
+  * Number of variants in cis = 3790
+  * Best correlation = 0.4928
+  * Number of permutations = 1000 / 1338
+  * Beta distribution parameters = 1.1195 227.2455
+  * Progress = 47.5%
+
+Processing gene [ENSG00000184708.13]
+  * Number of variants in cis = 3848
+  * Best correlation = 0.5870
+  * Number of permutations = 1000 / 7624
+  * Beta distribution parameters = 1.0341 273.3798
+  * Progress = 47.7%
+
+Processing gene [ENSG00000198089.10]
+  * Number of variants in cis = 3866
+  * Best correlation = 0.5832
+  * Number of permutations = 1000 / 7204
+  * Beta distribution parameters = 1.0497 282.6707
+  * Progress = 48.0%
+
+Processing gene [ENSG00000241878.5]
+  * Number of variants in cis = 4002
+  * Best correlation = 0.5748
+  * Number of permutations = 1000 / 5130
+  * Beta distribution parameters = 1.0298 329.5578
+  * Progress = 48.2%
+
+Processing gene [ENSG00000183530.9]
+  * Number of variants in cis = 3981
+  * Best correlation = 0.5872
+  * Number of permutations = 1000 / 7095
+  * Beta distribution parameters = 1.0661 317.8236
+  * Progress = 48.4%
+
+Processing gene [ENSG00000100150.12]
+  * Number of variants in cis = 4020
+  * Best correlation = -0.4993
+  * Number of permutations = 1000 / 1300
+  * Beta distribution parameters = 1.0438 403.8299
+  * Progress = 48.6%
+
+Processing gene [ENSG00000128245.10]
+  * Number of variants in cis = 4131
+  * Best correlation = -0.5526
+  * Number of permutations = 1000 / 3035
+  * Beta distribution parameters = 1.0392 389.3565
+  * Progress = 48.8%
+
+Processing gene [ENSG00000232346.1]
+  * Number of variants in cis = 4222
+  * Best correlation = -0.5146
+  * Number of permutations = 1000 / 1577
+  * Beta distribution parameters = 1.0535 345.6354
+  * Progress = 49.0%
+
+Processing gene [ENSG00000100220.7]
+  * Number of variants in cis = 4453
+  * Best correlation = 0.5579
+  * Number of permutations = 1000 / 2955
+  * Beta distribution parameters = 1.0926 414.7678
+  * Progress = 49.2%
+
+Processing gene [ENSG00000100225.13]
+  * Number of variants in cis = 4543
+  * Best correlation = -0.5911
+  * Number of permutations = 1000 / 6726
+  * Beta distribution parameters = 1.0283 475.9367
+  * Progress = 49.5%
+
+Processing gene [ENSG00000100234.11]
+  * Number of variants in cis = 4871
+  * Best correlation = 0.4894
+  * Number of permutations = 1000 / 1102
+  * Beta distribution parameters = 1.1182 453.6637
+  * Progress = 49.7%
+
+Processing gene [ENSG00000133424.16]
+  * Number of variants in cis = 5298
+  * Best correlation = -0.5504
+  * Number of permutations = 1000 / 2075
+  * Beta distribution parameters = 1.0366 545.3864
+  * Progress = 49.9%
+
+Processing gene [ENSG00000233080.2]
+  * Number of variants in cis = 5156
+  * Best correlation = 0.5522
+  * Number of permutations = 1000 / 2916
+  * Beta distribution parameters = 1.0480 321.5797
+  * Progress = 50.1%
+
+Processing gene [ENSG00000100281.9]
+  * Number of variants in cis = 5225
+  * Best correlation = 0.5367
+  * Number of permutations = 1000 / 2098
+  * Beta distribution parameters = 1.0350 360.0146
+  * Progress = 50.3%
+
+Processing gene [ENSG00000100284.16]
+  * Number of variants in cis = 5246
+  * Best correlation = -0.4685
+  * Number of permutations = 1000 / 1056
+  * Beta distribution parameters = 0.9971 388.4951
+  * Progress = 50.5%
+
+Processing gene [ENSG00000100292.12]
+  * Number of variants in cis = 5100
+  * Best correlation = -0.4892
+  * Number of permutations = 1000 / 1163
+  * Beta distribution parameters = 1.0251 490.4708
+  * Progress = 50.8%
+
+Processing gene [ENSG00000100297.11]
+  * Number of variants in cis = 4982
+  * Best correlation = 0.5714
+  * Number of permutations = 1000 / 4100
+  * Beta distribution parameters = 1.0490 407.5446
+  * Progress = 51.0%
+
+Processing gene [ENSG00000100302.6]
+  * Number of variants in cis = 4857
+  * Best correlation = -0.4764
+  * Number of permutations = 1000 / 1084
+  * Beta distribution parameters = 1.0574 490.5702
+  * Progress = 51.2%
+
+Processing gene [ENSG00000221963.5]
+  * Number of variants in cis = 4802
+  * Best correlation = 0.5001
+  * Number of permutations = 1000 / 1261
+  * Beta distribution parameters = 1.0145 524.7684
+  * Progress = 51.4%
+
+Processing gene [ENSG00000100320.18]
+  * Number of variants in cis = 4800
+  * Best correlation = 0.5597
+  * Number of permutations = 1000 / 3033
+  * Beta distribution parameters = 1.0325 563.1141
+  * Progress = 51.6%
+
+Processing gene [ENSG00000237406.1]
+  * Number of variants in cis = 4720
+  * Best correlation = 0.5316
+  * Number of permutations = 1000 / 1675
+  * Beta distribution parameters = 1.0824 524.2367
+  * Progress = 51.8%
+
+Processing gene [ENSG00000128284.15]
+  * Number of variants in cis = 4784
+  * Best correlation = -0.5409
+  * Number of permutations = 1000 / 1957
+  * Beta distribution parameters = 1.0125 613.2473
+  * Progress = 52.0%
+
+Processing gene [ENSG00000100336.13]
+  * Number of variants in cis = 4679
+  * Best correlation = -0.5792
+  * Number of permutations = 1000 / 4055
+  * Beta distribution parameters = 1.0483 570.1798
+  * Progress = 52.3%
+
+Processing gene [ENSG00000128335.9]
+  * Number of variants in cis = 4719
+  * Best correlation = 0.5592
+  * Number of permutations = 1000 / 2683
+  * Beta distribution parameters = 1.0160 583.6134
+  * Progress = 52.5%
+
+Processing gene [ENSG00000100342.16]
+  * Number of variants in cis = 4763
+  * Best correlation = -0.5832
+  * Number of permutations = 1000 / 4378
+  * Beta distribution parameters = 1.0446 520.5609
+  * Progress = 52.7%
+
+Processing gene [ENSG00000100345.16]
+  * Number of variants in cis = 4796
+  * Best correlation = 0.4930
+  * Number of permutations = 1000 / 1098
+  * Beta distribution parameters = 1.0128 651.1623
+  * Progress = 52.9%
+
+Processing gene [ENSG00000223695.1]
+  * Number of variants in cis = 4881
+  * Best correlation = 0.6070
+  * Number of permutations = 1000 / 8510
+  * Beta distribution parameters = 1.0665 599.6894
+  * Progress = 53.1%
+
+Processing gene [ENSG00000237668.1]
+  * Number of variants in cis = 4927
+  * Best correlation = -0.5546
+  * Number of permutations = 1000 / 2216
+  * Beta distribution parameters = 1.0257 790.6387
+  * Progress = 53.3%
+
+Processing gene [ENSG00000100348.5]
+  * Number of variants in cis = 4872
+  * Best correlation = 0.5890
+  * Number of permutations = 1000 / 4918
+  * Beta distribution parameters = 1.0196 601.2208
+  * Progress = 53.5%
+
+Processing gene [ENSG00000100350.10]
+  * Number of variants in cis = 4841
+  * Best correlation = -0.5862
+  * Number of permutations = 1000 / 4831
+  * Beta distribution parameters = 1.0321 654.6051
+  * Progress = 53.8%
+
+Processing gene [ENSG00000100353.13]
+  * Number of variants in cis = 4834
+  * Best correlation = -0.5289
+  * Number of permutations = 1000 / 1465
+  * Beta distribution parameters = 1.0623 586.8665
+  * Progress = 54.0%
+
+Processing gene [ENSG00000188078.5]
+  * Number of variants in cis = 4844
+  * Best correlation = -0.5404
+  * Number of permutations = 1000 / 1821
+  * Beta distribution parameters = 1.0766 566.0755
+  * Progress = 54.2%
+
+Processing gene [ENSG00000100360.10]
+  * Number of variants in cis = 4751
+  * Best correlation = -0.5742
+  * Number of permutations = 1000 / 3644
+  * Beta distribution parameters = 1.0491 640.0676
+  * Progress = 54.4%
+
+Processing gene [ENSG00000100365.10]
+  * Number of variants in cis = 4874
+  * Best correlation = 0.5389
+  * Number of permutations = 1000 / 1766
+  * Beta distribution parameters = 0.9952 644.1551
+  * Progress = 54.6%
+
+Processing gene [ENSG00000100368.9]
+  * Number of variants in cis = 4865
+  * Best correlation = 0.5292
+  * Number of permutations = 1000 / 1513
+  * Beta distribution parameters = 1.0434 770.3167
+  * Progress = 54.8%
+
+Processing gene [ENSG00000128311.9]
+  * Number of variants in cis = 4843
+  * Best correlation = -0.5626
+  * Number of permutations = 1000 / 2860
+  * Beta distribution parameters = 1.0260 719.5974
+  * Progress = 55.1%
+
+Processing gene [ENSG00000128309.12]
+  * Number of variants in cis = 4837
+  * Best correlation = -0.6186
+  * Number of permutations = 801 / 10000
+  * Beta distribution parameters = 1.0389 635.1962
+  * Progress = 55.3%
+
+Processing gene [ENSG00000100379.13]
+  * Number of variants in cis = 4803
+  * Best correlation = -0.5205
+  * Number of permutations = 1000 / 1358
+  * Beta distribution parameters = 1.0530 610.7707
+  * Progress = 55.5%
+
+Processing gene [ENSG00000133466.9]
+  * Number of variants in cis = 4834
+  * Best correlation = -0.6050
+  * Number of permutations = 1000 / 8294
+  * Beta distribution parameters = 1.0360 622.8108
+  * Progress = 55.7%
+
+Processing gene [ENSG00000128340.10]
+  * Number of variants in cis = 4721
+  * Best correlation = 0.5461
+  * Number of permutations = 1000 / 1947
+  * Beta distribution parameters = 1.0887 541.2950
+  * Progress = 55.9%
+
+Processing gene [ENSG00000100065.10]
+  * Number of variants in cis = 4456
+  * Best correlation = -0.5743
+  * Number of permutations = 1000 / 4010
+  * Beta distribution parameters = 1.0460 545.4207
+  * Progress = 56.1%
+
+Processing gene [ENSG00000128283.6]
+  * Number of variants in cis = 4275
+  * Best correlation = -0.5327
+  * Number of permutations = 1000 / 1779
+  * Beta distribution parameters = 1.0657 489.0837
+  * Progress = 56.3%
+
+Processing gene [ENSG00000100083.14]
+  * Number of variants in cis = 4219
+  * Best correlation = -0.6595
+  * Number of permutations = 144 / 10000
+  * Beta distribution parameters = 1.0741 437.9825
+  * Progress = 56.6%
+
+Processing gene [ENSG00000100092.16]
+  * Number of variants in cis = 4173
+  * Best correlation = 0.5880
+  * Number of permutations = 1000 / 5841
+  * Beta distribution parameters = 1.0333 475.1083
+  * Progress = 56.8%
+
+Processing gene [ENSG00000241360.1]
+  * Number of variants in cis = 4188
+  * Best correlation = 0.5010
+  * Number of permutations = 1000 / 1260
+  * Beta distribution parameters = 1.0129 526.4391
+  * Progress = 57.0%
+
+Processing gene [ENSG00000100097.7]
+  * Number of variants in cis = 4176
+  * Best correlation = 0.5156
+  * Number of permutations = 1000 / 1478
+  * Beta distribution parameters = 1.0452 447.3338
+  * Progress = 57.2%
+
+Processing gene [ENSG00000100101.13]
+  * Number of variants in cis = 4192
+  * Best correlation = 0.5105
+  * Number of permutations = 1000 / 1349
+  * Beta distribution parameters = 1.0874 377.7082
+  * Progress = 57.4%
+
+Processing gene [ENSG00000100106.15]
+  * Number of variants in cis = 4180
+  * Best correlation = -0.6103
+  * Number of permutations = 888 / 10000
+  * Beta distribution parameters = 1.0322 454.1554
+  * Progress = 57.6%
+
+Processing gene [ENSG00000189060.4]
+  * Number of variants in cis = 4104
+  * Best correlation = 0.5411
+  * Number of permutations = 1000 / 2118
+  * Beta distribution parameters = 1.0313 403.2935
+  * Progress = 57.8%
+
+Processing gene [ENSG00000100116.12]
+  * Number of variants in cis = 4095
+  * Best correlation = 0.5033
+  * Number of permutations = 1000 / 1247
+  * Beta distribution parameters = 1.0692 449.7004
+  * Progress = 58.1%
+
+Processing gene [ENSG00000100124.8]
+  * Number of variants in cis = 4067
+  * Best correlation = 0.4815
+  * Number of permutations = 1000 / 1119
+  * Beta distribution parameters = 1.0138 417.9187
+  * Progress = 58.3%
+
+Processing gene [ENSG00000100129.13]
+  * Number of variants in cis = 4054
+  * Best correlation = -0.5662
+  * Number of permutations = 1000 / 3815
+  * Beta distribution parameters = 1.0675 468.4412
+  * Progress = 58.5%
+
+Processing gene [ENSG00000100139.9]
+  * Number of variants in cis = 4118
+  * Best correlation = -0.4973
+  * Number of permutations = 1000 / 1216
+  * Beta distribution parameters = 1.0716 512.7034
+  * Progress = 58.7%
+
+Processing gene [ENSG00000128346.6]
+  * Number of variants in cis = 4078
+  * Best correlation = -0.5588
+  * Number of permutations = 1000 / 3311
+  * Beta distribution parameters = 1.0442 492.7179
+  * Progress = 58.9%
+
+Processing gene [ENSG00000272582.1]
+  * Number of variants in cis = 4071
+  * Best correlation = -0.6064
+  * Number of permutations = 870 / 10000
+  * Beta distribution parameters = 1.0486 410.6611
+  * Progress = 59.1%
+
+Processing gene [ENSG00000100142.10]
+  * Number of variants in cis = 4058
+  * Best correlation = -0.6066
+  * Number of permutations = 830 / 10000
+  * Beta distribution parameters = 1.0411 415.1629
+  * Progress = 59.4%
+
+Processing gene [ENSG00000100151.11]
+  * Number of variants in cis = 3912
+  * Best correlation = -0.5582
+  * Number of permutations = 1000 / 3275
+  * Beta distribution parameters = 1.0027 402.7369
+  * Progress = 59.6%
+
+Processing gene [ENSG00000100156.6]
+  * Number of variants in cis = 3918
+  * Best correlation = 0.5265
+  * Number of permutations = 1000 / 1763
+  * Beta distribution parameters = 1.0321 477.2975
+  * Progress = 59.8%
+
+Processing gene [ENSG00000128298.12]
+  * Number of variants in cis = 3922
+  * Best correlation = -0.5225
+  * Number of permutations = 1000 / 1717
+  * Beta distribution parameters = 1.0302 412.9079
+  * Progress = 60.0%
+
+Processing gene [ENSG00000272720.1]
+  * Number of variants in cis = 3932
+  * Best correlation = -0.4920
+  * Number of permutations = 1000 / 1171
+  * Beta distribution parameters = 1.0617 462.1839
+  * Progress = 60.2%
+
+Processing gene [ENSG00000184381.14]
+  * Number of variants in cis = 3947
+  * Best correlation = -0.5744
+  * Number of permutations = 1000 / 4590
+  * Beta distribution parameters = 1.0347 404.2785
+  * Progress = 60.4%
+
+Processing gene [ENSG00000185022.7]
+  * Number of variants in cis = 3988
+  * Best correlation = -0.5153
+  * Number of permutations = 1000 / 1515
+  * Beta distribution parameters = 0.9840 482.1494
+  * Progress = 60.6%
+
+Processing gene [ENSG00000198792.8]
+  * Number of variants in cis = 4005
+  * Best correlation = -0.5894
+  * Number of permutations = 1000 / 7620
+  * Beta distribution parameters = 1.0448 392.3664
+  * Progress = 60.9%
+
+Processing gene [ENSG00000213923.6]
+  * Number of variants in cis = 3924
+  * Best correlation = 0.7000
+  * Number of permutations = 24 / 10000
+  * Beta distribution parameters = 1.0414 352.1919
+  * Progress = 61.1%
+
+Processing gene [ENSG00000244627.1]
+  * Number of variants in cis = 3964
+  * Best correlation = -0.5575
+  * Number of permutations = 1000 / 3472
+  * Beta distribution parameters = 1.0704 308.3795
+  * Progress = 61.3%
+
+Processing gene [ENSG00000100196.6]
+  * Number of variants in cis = 3836
+  * Best correlation = -0.5519
+  * Number of permutations = 1000 / 3453
+  * Beta distribution parameters = 1.0335 332.9954
+  * Progress = 61.5%
+
+Processing gene [ENSG00000100201.14]
+  * Number of variants in cis = 3847
+  * Best correlation = 0.5131
+  * Number of permutations = 1000 / 1676
+  * Beta distribution parameters = 1.0328 308.0428
+  * Progress = 61.7%
+
+Processing gene [ENSG00000100206.5]
+  * Number of variants in cis = 3788
+  * Best correlation = -0.4974
+  * Number of permutations = 1000 / 1377
+  * Beta distribution parameters = 1.0121 354.9094
+  * Progress = 61.9%
+
+Processing gene [ENSG00000184949.11]
+  * Number of variants in cis = 3742
+  * Best correlation = 0.6315
+  * Number of permutations = 298 / 10000
+  * Beta distribution parameters = 1.0400 316.0761
+  * Progress = 62.2%
+
+Processing gene [ENSG00000100211.6]
+  * Number of variants in cis = 3749
+  * Best correlation = -0.6147
+  * Number of permutations = 540 / 10000
+  * Beta distribution parameters = 1.0500 278.4980
+  * Progress = 62.4%
+
+Processing gene [ENSG00000230912.1]
+  * Number of variants in cis = 3731
+  * Best correlation = 0.5600
+  * Number of permutations = 1000 / 3863
+  * Beta distribution parameters = 1.0462 294.7667
+  * Progress = 62.6%
+
+Processing gene [ENSG00000228274.3]
+  * Number of variants in cis = 3733
+  * Best correlation = -0.4877
+  * Number of permutations = 1000 / 1302
+  * Beta distribution parameters = 1.1039 314.5249
+  * Progress = 62.8%
+
+Processing gene [ENSG00000100216.4]
+  * Number of variants in cis = 3728
+  * Best correlation = -0.5671
+  * Number of permutations = 1000 / 4701
+  * Beta distribution parameters = 1.0607 274.9850
+  * Progress = 63.0%
+
+Processing gene [ENSG00000100221.6]
+  * Number of variants in cis = 3721
+  * Best correlation = 0.6000
+  * Number of permutations = 872 / 10000
+  * Beta distribution parameters = 1.0506 274.9939
+  * Progress = 63.2%
+
+Processing gene [ENSG00000100226.11]
+  * Number of variants in cis = 3699
+  * Best correlation = -0.6346
+  * Number of permutations = 275 / 10000
+  * Beta distribution parameters = 1.0549 289.8585
+  * Progress = 63.4%
+
+Processing gene [ENSG00000229598.1]
+  * Number of variants in cis = 3667
+  * Best correlation = -0.5799
+  * Number of permutations = 1000 / 6737
+  * Beta distribution parameters = 1.0296 341.2073
+  * Progress = 63.7%
+
+Processing gene [ENSG00000100242.11]
+  * Number of variants in cis = 3651
+  * Best correlation = -0.5293
+  * Number of permutations = 1000 / 2115
+  * Beta distribution parameters = 1.0124 344.0474
+  * Progress = 63.9%
+
+Processing gene [ENSG00000273096.1]
+  * Number of variants in cis = 3653
+  * Best correlation = -0.6257
+  * Number of permutations = 364 / 10000
+  * Beta distribution parameters = 1.0402 313.2814
+  * Progress = 64.1%
+
+Processing gene [ENSG00000230149.2]
+  * Number of variants in cis = 3652
+  * Best correlation = 0.5452
+  * Number of permutations = 1000 / 2824
+  * Beta distribution parameters = 1.0203 291.4829
+  * Progress = 64.3%
+
+Processing gene [ENSG00000225450.1]
+  * Number of variants in cis = 3652
+  * Best correlation = -0.5658
+  * Number of permutations = 1000 / 4603
+  * Beta distribution parameters = 1.0561 302.9341
+  * Progress = 64.5%
+
+Processing gene [ENSG00000272669.1]
+  * Number of variants in cis = 3650
+  * Best correlation = 0.5281
+  * Number of permutations = 1000 / 2099
+  * Beta distribution parameters = 1.0948 349.7673
+  * Progress = 64.7%
+
+Processing gene [ENSG00000273076.1]
+  * Number of variants in cis = 3651
+  * Best correlation = 0.4764
+  * Number of permutations = 1000 / 1165
+  * Beta distribution parameters = 1.0360 310.2747
+  * Progress = 64.9%
+
+Processing gene [ENSG00000100246.8]
+  * Number of variants in cis = 3617
+  * Best correlation = -0.5046
+  * Number of permutations = 1000 / 1518
+  * Beta distribution parameters = 1.1243 297.2331
+  * Progress = 65.2%
+
+Processing gene [ENSG00000221890.2]
+  * Number of variants in cis = 3584
+  * Best correlation = 0.5069
+  * Number of permutations = 1000 / 1528
+  * Beta distribution parameters = 1.0340 308.9736
+  * Progress = 65.4%
+
+Processing gene [ENSG00000183741.7]
+  * Number of variants in cis = 3583
+  * Best correlation = 0.5580
+  * Number of permutations = 1000 / 3936
+  * Beta distribution parameters = 1.0790 270.5233
+  * Progress = 65.6%
+
+Processing gene [ENSG00000179750.11]
+  * Number of variants in cis = 3594
+  * Best correlation = 0.4885
+  * Number of permutations = 1000 / 1263
+  * Beta distribution parameters = 1.0419 368.2637
+  * Progress = 65.8%
+
+Processing gene [ENSG00000244509.3]
+  * Number of variants in cis = 3617
+  * Best correlation = -0.5002
+  * Number of permutations = 1000 / 1430
+  * Beta distribution parameters = 1.0201 244.5176
+  * Progress = 66.0%
+
+Processing gene [ENSG00000243811.3]
+  * Number of variants in cis = 3623
+  * Best correlation = 0.4737
+  * Number of permutations = 1000 / 1126
+  * Beta distribution parameters = 1.0952 368.2995
+  * Progress = 66.2%
+
+Processing gene [ENSG00000128394.12]
+  * Number of variants in cis = 3633
+  * Best correlation = -0.6002
+  * Number of permutations = 888 / 10000
+  * Beta distribution parameters = 1.0393 329.7574
+  * Progress = 66.5%
+
+Processing gene [ENSG00000239713.3]
+  * Number of variants in cis = 3613
+  * Best correlation = -0.6092
+  * Number of permutations = 665 / 10000
+  * Beta distribution parameters = 1.0362 310.8214
+  * Progress = 66.7%
+
+Processing gene [ENSG00000100307.8]
+  * Number of variants in cis = 3558
+  * Best correlation = 0.5858
+  * Number of permutations = 1000 / 7757
+  * Beta distribution parameters = 1.0419 318.6659
+  * Progress = 66.9%
+
+Processing gene [ENSG00000100311.12]
+  * Number of variants in cis = 3435
+  * Best correlation = 0.5591
+  * Number of permutations = 1000 / 3912
+  * Beta distribution parameters = 1.0442 306.2447
+  * Progress = 67.1%
+
+Processing gene [ENSG00000100316.11]
+  * Number of variants in cis = 3399
+  * Best correlation = -0.4752
+  * Number of permutations = 1000 / 1177
+  * Beta distribution parameters = 1.0672 261.2307
+  * Progress = 67.3%
+
+Processing gene [ENSG00000100321.10]
+  * Number of variants in cis = 3409
+  * Best correlation = -0.5433
+  * Number of permutations = 1000 / 2919
+  * Beta distribution parameters = 1.0315 300.5958
+  * Progress = 67.5%
+
+Processing gene [ENSG00000100324.9]
+  * Number of variants in cis = 3374
+  * Best correlation = -0.5915
+  * Number of permutations = 1000 / 9653
+  * Beta distribution parameters = 1.0680 264.2183
+  * Progress = 67.7%
+
+Processing gene [ENSG00000128268.11]
+  * Number of variants in cis = 3349
+  * Best correlation = -0.4956
+  * Number of permutations = 1000 / 1472
+  * Beta distribution parameters = 0.9689 316.9493
+  * Progress = 68.0%
+
+Processing gene [ENSG00000100335.8]
+  * Number of variants in cis = 3377
+  * Best correlation = -0.4321
+  * Number of permutations = 1000 / 1032
+  * Beta distribution parameters = 1.0630 223.2903
+  * Progress = 68.2%
+
+Processing gene [ENSG00000128272.10]
+  * Number of variants in cis = 3385
+  * Best correlation = 0.5052
+  * Number of permutations = 1000 / 1625
+  * Beta distribution parameters = 0.9919 321.0861
+  * Progress = 68.4%
+
+Processing gene [ENSG00000187051.4]
+  * Number of variants in cis = 3391
+  * Best correlation = -0.5667
+  * Number of permutations = 1000 / 5255
+  * Beta distribution parameters = 1.0358 271.5078
+  * Progress = 68.6%
+
+Processing gene [ENSG00000226085.2]
+  * Number of variants in cis = 3476
+  * Best correlation = 0.4626
+  * Number of permutations = 1000 / 1126
+  * Beta distribution parameters = 1.0715 257.7711
+  * Progress = 68.8%
+
+Processing gene [ENSG00000225528.1]
+  * Number of variants in cis = 3198
+  * Best correlation = 0.4423
+  * Number of permutations = 1000 / 1062
+  * Beta distribution parameters = 1.0801 221.4680
+  * Progress = 69.0%
+
+Processing gene [ENSG00000100354.16]
+  * Number of variants in cis = 3151
+  * Best correlation = 0.5929
+  * Number of permutations = 831 / 10000
+  * Beta distribution parameters = 1.0355 251.0078
+  * Progress = 69.2%
+
+Processing gene [ENSG00000239900.7]
+  * Number of variants in cis = 2673
+  * Best correlation = 0.5621
+  * Number of permutations = 1000 / 6281
+  * Beta distribution parameters = 1.0679 174.4468
+  * Progress = 69.5%
+
+Processing gene [ENSG00000100359.16]
+  * Number of variants in cis = 2632
+  * Best correlation = 0.4846
+  * Number of permutations = 1000 / 1550
+  * Beta distribution parameters = 1.1341 155.6523
+  * Progress = 69.7%
+
+Processing gene [ENSG00000196588.10]
+  * Number of variants in cis = 2643
+  * Best correlation = 0.5120
+  * Number of permutations = 1000 / 2360
+  * Beta distribution parameters = 1.0818 170.2225
+  * Progress = 69.9%
+
+Processing gene [ENSG00000272834.1]
+  * Number of variants in cis = 2648
+  * Best correlation = 0.5523
+  * Number of permutations = 1000 / 5189
+  * Beta distribution parameters = 1.0327 162.9599
+  * Progress = 70.1%
+
+Processing gene [ENSG00000230071.2]
+  * Number of variants in cis = 2627
+  * Best correlation = 0.5350
+  * Number of permutations = 1000 / 4026
+  * Beta distribution parameters = 1.0627 156.0828
+  * Progress = 70.3%
+
+Processing gene [ENSG00000128285.4]
+  * Number of variants in cis = 2557
+  * Best correlation = 0.5684
+  * Number of permutations = 1000 / 9269
+  * Beta distribution parameters = 1.0458 121.3303
+  * Progress = 70.5%
+
+Processing gene [ENSG00000100372.10]
+  * Number of variants in cis = 2637
+  * Best correlation = -0.4690
+  * Number of permutations = 1000 / 1637
+  * Beta distribution parameters = 1.0272 116.6083
+  * Progress = 70.8%
+
+Processing gene [ENSG00000230769.1]
+  * Number of variants in cis = 2661
+  * Best correlation = 0.4461
+  * Number of permutations = 1000 / 1297
+  * Beta distribution parameters = 1.0419 125.6111
+  * Progress = 71.0%
+
+Processing gene [ENSG00000100380.8]
+  * Number of variants in cis = 2684
+  * Best correlation = 0.5230
+  * Number of permutations = 1000 / 3557
+  * Beta distribution parameters = 1.0798 99.1404
+  * Progress = 71.2%
+
+Processing gene [ENSG00000196236.8]
+  * Number of variants in cis = 2724
+  * Best correlation = 0.4375
+  * Number of permutations = 1000 / 1201
+  * Beta distribution parameters = 1.0238 129.9497
+  * Progress = 71.4%
+
+Processing gene [ENSG00000100387.8]
+  * Number of variants in cis = 2840
+  * Best correlation = 0.5162
+  * Number of permutations = 1000 / 3010
+  * Beta distribution parameters = 1.0141 102.3307
+  * Progress = 71.6%
+
+Processing gene [ENSG00000237214.2]
+  * Number of variants in cis = 2932
+  * Best correlation = -0.4627
+  * Number of permutations = 1000 / 1532
+  * Beta distribution parameters = 1.0319 109.4778
+  * Progress = 71.8%
+
+Processing gene [ENSG00000100393.9]
+  * Number of variants in cis = 2956
+  * Best correlation = 0.4774
+  * Number of permutations = 1000 / 1805
+  * Beta distribution parameters = 1.0720 108.8791
+  * Progress = 72.0%
+
+Processing gene [ENSG00000231993.1]
+  * Number of variants in cis = 3017
+  * Best correlation = 0.4275
+  * Number of permutations = 1000 / 1167
+  * Beta distribution parameters = 1.0881 96.2548
+  * Progress = 72.3%
+
+Processing gene [ENSG00000100395.10]
+  * Number of variants in cis = 3023
+  * Best correlation = 0.4060
+  * Number of permutations = 1000 / 1089
+  * Beta distribution parameters = 1.0537 76.1142
+  * Progress = 72.5%
+
+Processing gene [ENSG00000235513.1]
+  * Number of variants in cis = 3012
+  * Best correlation = 0.4912
+  * Number of permutations = 1000 / 2180
+  * Beta distribution parameters = 1.0537 96.5923
+  * Progress = 72.7%
+
+Processing gene [ENSG00000100399.11]
+  * Number of variants in cis = 2997
+  * Best correlation = -0.5293
+  * Number of permutations = 1000 / 4148
+  * Beta distribution parameters = 1.0596 97.8864
+  * Progress = 72.9%
+
+Processing gene [ENSG00000100401.15]
+  * Number of variants in cis = 2979
+  * Best correlation = -0.5326
+  * Number of permutations = 1000 / 4407
+  * Beta distribution parameters = 1.0181 97.9397
+  * Progress = 73.1%
+
+Processing gene [ENSG00000100403.10]
+  * Number of variants in cis = 3019
+  * Best correlation = 0.3999
+  * Number of permutations = 1000 / 1068
+  * Beta distribution parameters = 1.0517 80.2413
+  * Progress = 73.3%
+
+Processing gene [ENSG00000167074.10]
+  * Number of variants in cis = 3087
+  * Best correlation = 0.5325
+  * Number of permutations = 1000 / 4085
+  * Beta distribution parameters = 1.0556 105.1158
+  * Progress = 73.5%
+
+Processing gene [ENSG00000183864.4]
+  * Number of variants in cis = 3211
+  * Best correlation = 0.5111
+  * Number of permutations = 1000 / 2632
+  * Beta distribution parameters = 1.0376 99.4524
+  * Progress = 73.8%
+
+Processing gene [ENSG00000100410.3]
+  * Number of variants in cis = 3208
+  * Best correlation = -0.4981
+  * Number of permutations = 1000 / 2121
+  * Beta distribution parameters = 1.0747 110.6176
+  * Progress = 74.0%
+
+Processing gene [ENSG00000100412.11]
+  * Number of variants in cis = 3228
+  * Best correlation = 0.5677
+  * Number of permutations = 1000 / 8197
+  * Beta distribution parameters = 1.1026 96.7872
+  * Progress = 74.2%
+
+Processing gene [ENSG00000100413.12]
+  * Number of variants in cis = 3292
+  * Best correlation = -0.5657
+  * Number of permutations = 1000 / 7357
+  * Beta distribution parameters = 1.0607 133.7380
+  * Progress = 74.4%
+
+Processing gene [ENSG00000172346.10]
+  * Number of variants in cis = 3337
+  * Best correlation = -0.5794
+  * Number of permutations = 1000 / 9812
+  * Beta distribution parameters = 1.0490 136.8031
+  * Progress = 74.6%
+
+Processing gene [ENSG00000100417.7]
+  * Number of variants in cis = 3357
+  * Best correlation = 0.5774
+  * Number of permutations = 1000 / 9474
+  * Beta distribution parameters = 1.0582 139.8786
+  * Progress = 74.8%
+
+Processing gene [ENSG00000100418.7]
+  * Number of variants in cis = 3371
+  * Best correlation = -0.4551
+  * Number of permutations = 1000 / 1228
+  * Beta distribution parameters = 1.0796 125.1608
+  * Progress = 75.1%
+
+Processing gene [ENSG00000196419.8]
+  * Number of variants in cis = 3375
+  * Best correlation = -0.5366
+  * Number of permutations = 1000 / 3553
+  * Beta distribution parameters = 1.0298 151.1460
+  * Progress = 75.3%
+
+Processing gene [ENSG00000100138.9]
+  * Number of variants in cis = 3476
+  * Best correlation = -0.4839
+  * Number of permutations = 1000 / 1529
+  * Beta distribution parameters = 1.0777 126.2449
+  * Progress = 75.5%
+
+Processing gene [ENSG00000184208.10]
+  * Number of variants in cis = 3516
+  * Best correlation = 0.4835
+  * Number of permutations = 1000 / 1525
+  * Beta distribution parameters = 1.0390 143.0058
+  * Progress = 75.7%
+
+Processing gene [ENSG00000167077.8]
+  * Number of variants in cis = 3551
+  * Best correlation = 0.6136
+  * Number of permutations = 404 / 10000
+  * Beta distribution parameters = 1.0637 144.0828
+  * Progress = 75.9%
+
+Processing gene [ENSG00000100147.9]
+  * Number of variants in cis = 3689
+  * Best correlation = 0.5260
+  * Number of permutations = 1000 / 2598
+  * Beta distribution parameters = 1.1059 176.3836
+  * Progress = 76.1%
+
+Processing gene [ENSG00000184068.2]
+  * Number of variants in cis = 3696
+  * Best correlation = -0.4827
+  * Number of permutations = 1000 / 1403
+  * Beta distribution parameters = 1.1311 149.7586
+  * Progress = 76.3%
+
+Processing gene [ENSG00000198911.7]
+  * Number of variants in cis = 3732
+  * Best correlation = -0.6622
+  * Number of permutations = 85 / 10000
+  * Beta distribution parameters = 1.0820 165.8470
+  * Progress = 76.6%
+
+Processing gene [ENSG00000100162.10]
+  * Number of variants in cis = 3903
+  * Best correlation = 0.4294
+  * Number of permutations = 1000 / 1037
+  * Beta distribution parameters = 1.0384 162.1141
+  * Progress = 76.8%
+
+Processing gene [ENSG00000198951.7]
+  * Number of variants in cis = 4039
+  * Best correlation = -0.6190
+  * Number of permutations = 382 / 10000
+  * Beta distribution parameters = 1.0818 175.0736
+  * Progress = 77.0%
+
+Processing gene [ENSG00000177096.4]
+  * Number of variants in cis = 4074
+  * Best correlation = -0.4123
+  * Number of permutations = 1000 / 1019
+  * Beta distribution parameters = 1.0540 185.8082
+  * Progress = 77.2%
+
+Processing gene [ENSG00000183172.8]
+  * Number of variants in cis = 4085
+  * Best correlation = -0.5840
+  * Number of permutations = 1000 / 9021
+  * Beta distribution parameters = 1.0665 172.0444
+  * Progress = 77.4%
+
+Processing gene [ENSG00000184983.5]
+  * Number of variants in cis = 4092
+  * Best correlation = 0.6860
+  * Number of permutations = 31 / 10000
+  * Beta distribution parameters = 1.0578 170.2262
+  * Progress = 77.6%
+
+Processing gene [ENSG00000270083.1]
+  * Number of variants in cis = 4096
+  * Best correlation = -0.4717
+  * Number of permutations = 1000 / 1240
+  * Beta distribution parameters = 1.0971 167.6133
+  * Progress = 77.8%
+
+Processing gene [ENSG00000237037.5]
+  * Number of variants in cis = 4097
+  * Best correlation = 0.6431
+  * Number of permutations = 179 / 10000
+  * Beta distribution parameters = 1.0544 174.9380
+  * Progress = 78.1%
+
+Processing gene [ENSG00000213790.2]
+  * Number of variants in cis = 4126
+  * Best correlation = -0.4957
+  * Number of permutations = 1000 / 1599
+  * Beta distribution parameters = 1.0435 189.4866
+  * Progress = 78.3%
+
+Processing gene [ENSG00000205702.6]
+  * Number of variants in cis = 4173
+  * Best correlation = 0.4615
+  * Number of permutations = 1000 / 1154
+  * Beta distribution parameters = 1.0531 183.3189
+  * Progress = 78.5%
+
+Processing gene [ENSG00000100207.14]
+  * Number of variants in cis = 4187
+  * Best correlation = -0.5130
+  * Number of permutations = 1000 / 1879
+  * Beta distribution parameters = 1.0524 205.4755
+  * Progress = 78.7%
+
+Processing gene [ENSG00000182057.4]
+  * Number of variants in cis = 4379
+  * Best correlation = -0.5476
+  * Number of permutations = 1000 / 3116
+  * Beta distribution parameters = 1.0730 242.8405
+  * Progress = 78.9%
+
+Processing gene [ENSG00000233903.2]
+  * Number of variants in cis = 4393
+  * Best correlation = -0.5708
+  * Number of permutations = 1000 / 5260
+  * Beta distribution parameters = 1.0880 219.6976
+  * Progress = 79.1%
+
+Processing gene [ENSG00000273366.1]
+  * Number of variants in cis = 4395
+  * Best correlation = -0.5183
+  * Number of permutations = 1000 / 1804
+  * Beta distribution parameters = 1.1294 212.6511
+  * Progress = 79.4%
+
+Processing gene [ENSG00000229891.1]
+  * Number of variants in cis = 4504
+  * Best correlation = -0.5136
+  * Number of permutations = 1000 / 1657
+  * Beta distribution parameters = 1.0534 255.9017
+  * Progress = 79.6%
+
+Processing gene [ENSG00000189306.6]
+  * Number of variants in cis = 4643
+  * Best correlation = -0.6871
+  * Number of permutations = 35 / 10000
+  * Beta distribution parameters = 1.0540 307.3568
+  * Progress = 79.8%
+
+Processing gene [ENSG00000183569.13]
+  * Number of variants in cis = 4694
+  * Best correlation = 0.5754
+  * Number of permutations = 1000 / 4436
+  * Beta distribution parameters = 1.0655 308.9362
+  * Progress = 80.0%
+
+Processing gene [ENSG00000182841.8]
+  * Number of variants in cis = 4694
+  * Best correlation = 0.5218
+  * Number of permutations = 1000 / 1643
+  * Beta distribution parameters = 1.0645 363.9233
+  * Progress = 80.2%
+
+Processing gene [ENSG00000202058.1]
+  * Number of variants in cis = 4707
+  * Best correlation = 0.5116
+  * Number of permutations = 1000 / 1481
+  * Beta distribution parameters = 1.0769 302.9281
+  * Progress = 80.4%
+
+Processing gene [ENSG00000100227.13]
+  * Number of variants in cis = 4716
+  * Best correlation = -0.5523
+  * Number of permutations = 1000 / 2712
+  * Beta distribution parameters = 1.0125 309.6134
+  * Progress = 80.6%
+
+Processing gene [ENSG00000270022.2]
+  * Number of variants in cis = 4755
+  * Best correlation = 0.4976
+  * Number of permutations = 1000 / 1244
+  * Beta distribution parameters = 1.1186 330.6361
+  * Progress = 80.9%
+
+Processing gene [ENSG00000100243.16]
+  * Number of variants in cis = 4756
+  * Best correlation = 0.5587
+  * Number of permutations = 1000 / 3190
+  * Beta distribution parameters = 1.0525 343.9991
+  * Progress = 81.1%
+
+Processing gene [ENSG00000249222.1]
+  * Number of variants in cis = 4797
+  * Best correlation = 0.6006
+  * Number of permutations = 1000 / 9260
+  * Beta distribution parameters = 1.1236 304.7004
+  * Progress = 81.3%
+
+Processing gene [ENSG00000128274.11]
+  * Number of variants in cis = 4842
+  * Best correlation = -0.7171
+  * Number of permutations = 13 / 10000
+  * Beta distribution parameters = 1.0647 327.3648
+  * Progress = 81.5%
+
+Processing gene [ENSG00000234009.1]
+  * Number of variants in cis = 4872
+  * Best correlation = -0.5201
+  * Number of permutations = 1000 / 1578
+  * Beta distribution parameters = 1.0826 312.7279
+  * Progress = 81.7%
+
+Processing gene [ENSG00000242247.6]
+  * Number of variants in cis = 4869
+  * Best correlation = 0.6807
+  * Number of permutations = 65 / 10000
+  * Beta distribution parameters = 1.0625 328.1934
+  * Progress = 81.9%
+
+Processing gene [ENSG00000100266.13]
+  * Number of variants in cis = 4909
+  * Best correlation = 0.5765
+  * Number of permutations = 1000 / 4539
+  * Beta distribution parameters = 1.0597 351.8131
+  * Progress = 82.2%
+
+Processing gene [ENSG00000100271.12]
+  * Number of variants in cis = 5101
+  * Best correlation = -0.6092
+  * Number of permutations = 972 / 10000
+  * Beta distribution parameters = 1.0454 398.9678
+  * Progress = 82.4%
+
+Processing gene [ENSG00000100290.2]
+  * Number of variants in cis = 5193
+  * Best correlation = -0.6351
+  * Number of permutations = 455 / 10000
+  * Beta distribution parameters = 1.0495 431.1296
+  * Progress = 82.6%
+
+Processing gene [ENSG00000100294.8]
+  * Number of variants in cis = 5217
+  * Best correlation = -0.5565
+  * Number of permutations = 1000 / 2444
+  * Beta distribution parameters = 1.0717 383.8446
+  * Progress = 82.8%
+
+Processing gene [ENSG00000100300.13]
+  * Number of variants in cis = 5223
+  * Best correlation = -0.6035
+  * Number of permutations = 1000 / 7525
+  * Beta distribution parameters = 1.0342 469.3132
+  * Progress = 83.0%
+
+Processing gene [ENSG00000100304.12]
+  * Number of variants in cis = 5250
+  * Best correlation = -0.7579
+  * Number of permutations = 2 / 10000
+  * Beta distribution parameters = 1.0453 488.3243
+  * Progress = 83.2%
+
+Processing gene [ENSG00000186976.10]
+  * Number of variants in cis = 5796
+  * Best correlation = -0.5969
+  * Number of permutations = 1000 / 5756
+  * Beta distribution parameters = 1.0160 647.9857
+  * Progress = 83.4%
+
+Processing gene [ENSG00000130540.9]
+  * Number of variants in cis = 6089
+  * Best correlation = -0.6356
+  * Number of permutations = 627 / 10000
+  * Beta distribution parameters = 1.0494 703.4418
+  * Progress = 83.7%
+
+Processing gene [ENSG00000100344.6]
+  * Number of variants in cis = 6319
+  * Best correlation = -0.5560
+  * Number of permutations = 1000 / 1916
+  * Beta distribution parameters = 1.0299 651.9991
+  * Progress = 83.9%
+
+Processing gene [ENSG00000100347.10]
+  * Number of variants in cis = 6350
+  * Best correlation = -0.6797
+  * Number of permutations = 123 / 10000
+  * Beta distribution parameters = 1.0537 794.1154
+  * Progress = 84.1%
+
+Processing gene [ENSG00000188677.10]
+  * Number of variants in cis = 6352
+  * Best correlation = 0.5367
+  * Number of permutations = 1000 / 1412
+  * Beta distribution parameters = 1.0295 856.1680
+  * Progress = 84.3%
+
+Processing gene [ENSG00000138944.7]
+  * Number of variants in cis = 6426
+  * Best correlation = -0.5858
+  * Number of permutations = 1000 / 3296
+  * Beta distribution parameters = 1.0799 822.8186
+  * Progress = 84.5%
+
+Processing gene [ENSG00000188636.3]
+  * Number of variants in cis = 6558
+  * Best correlation = 0.5930
+  * Number of permutations = 1000 / 4202
+  * Beta distribution parameters = 1.0290 861.0028
+  * Progress = 84.7%
+
+Processing gene [ENSG00000186654.16]
+  * Number of variants in cis = 6701
+  * Best correlation = -0.5497
+  * Number of permutations = 1000 / 1596
+  * Beta distribution parameters = 1.0810 680.2233
+  * Progress = 84.9%
+
+Processing gene [ENSG00000226328.2]
+  * Number of variants in cis = 6479
+  * Best correlation = -0.6414
+  * Number of permutations = 567 / 10000
+  * Beta distribution parameters = 1.0235 892.4837
+  * Progress = 85.2%
+
+Processing gene [ENSG00000273243.1]
+  * Number of variants in cis = 6438
+  * Best correlation = 0.5944
+  * Number of permutations = 1000 / 4332
+  * Beta distribution parameters = 1.0325 969.2772
+  * Progress = 85.4%
+
+Processing gene [ENSG00000093000.14]
+  * Number of variants in cis = 6426
+  * Best correlation = -0.5190
+  * Number of permutations = 1000 / 1166
+  * Beta distribution parameters = 1.1002 752.2637
+  * Progress = 85.6%
+
+Processing gene [ENSG00000273353.1]
+  * Number of variants in cis = 6381
+  * Best correlation = 0.4947
+  * Number of permutations = 1000 / 1039
+  * Beta distribution parameters = 1.0592 774.4941
+  * Progress = 85.8%
+
+Processing gene [ENSG00000100364.14]
+  * Number of variants in cis = 6366
+  * Best correlation = -0.5451
+  * Number of permutations = 1000 / 1552
+  * Beta distribution parameters = 1.0168 842.5078
+  * Progress = 86.0%
+
+Processing gene [ENSG00000100376.7]
+  * Number of variants in cis = 6227
+  * Best correlation = 0.8269
+  * Number of permutations = 0 / 10000
+  * Beta distribution parameters = 1.0493 804.0450
+  * Progress = 86.2%
+
+Processing gene [ENSG00000128408.7]
+  * Number of variants in cis = 6065
+  * Best correlation = 0.6024
+  * Number of permutations = 1000 / 6078
+  * Beta distribution parameters = 1.0736 641.2635
+  * Progress = 86.5%
+
+Processing gene [ENSG00000077942.13]
+  * Number of variants in cis = 6097
+  * Best correlation = 0.5262
+  * Number of permutations = 1000 / 1281
+  * Beta distribution parameters = 1.0601 780.1669
+  * Progress = 86.7%
+
+Processing gene [ENSG00000130638.11]
+  * Number of variants in cis = 6098
+  * Best correlation = 0.5348
+  * Number of permutations = 1000 / 1422
+  * Beta distribution parameters = 1.0873 597.3556
+  * Progress = 86.9%
+
+Processing gene [ENSG00000188064.5]
+  * Number of variants in cis = 5758
+  * Best correlation = -0.5378
+  * Number of permutations = 1000 / 1613
+  * Beta distribution parameters = 1.0473 675.2046
+  * Progress = 87.1%
+
+Processing gene [ENSG00000273145.1]
+  * Number of variants in cis = 5728
+  * Best correlation = -0.6232
+  * Number of permutations = 764 / 10000
+  * Beta distribution parameters = 1.0352 608.3007
+  * Progress = 87.3%
+
+Processing gene [ENSG00000231711.2]
+  * Number of variants in cis = 5651
+  * Best correlation = -0.6758
+  * Number of permutations = 93 / 10000
+  * Beta distribution parameters = 1.0552 636.1149
+  * Progress = 87.5%
+
+Processing gene [ENSG00000182257.5]
+  * Number of variants in cis = 5688
+  * Best correlation = 0.5729
+  * Number of permutations = 1000 / 2995
+  * Beta distribution parameters = 1.0344 561.7455
+  * Progress = 87.7%
+
+Processing gene [ENSG00000273289.1]
+  * Number of variants in cis = 5672
+  * Best correlation = -0.4658
+  * Number of permutations = 1000 / 1016
+  * Beta distribution parameters = 1.0727 512.2994
+  * Progress = 88.0%
+
+Processing gene [ENSG00000241990.1]
+  * Number of variants in cis = 5667
+  * Best correlation = 0.4791
+  * Number of permutations = 1000 / 1034
+  * Beta distribution parameters = 1.0861 649.2367
+  * Progress = 88.2%
+
+Processing gene [ENSG00000231010.1]
+  * Number of variants in cis = 5657
+  * Best correlation = 0.5806
+  * Number of permutations = 1000 / 3751
+  * Beta distribution parameters = 1.0245 638.4205
+  * Progress = 88.4%
+
+Processing gene [ENSG00000235159.1]
+  * Number of variants in cis = 5666
+  * Best correlation = 0.4964
+  * Number of permutations = 1000 / 1112
+  * Beta distribution parameters = 1.0650 497.6559
+  * Progress = 88.6%
+
+Processing gene [ENSG00000197182.8]
+  * Number of variants in cis = 5674
+  * Best correlation = 0.5224
+  * Number of permutations = 1000 / 1349
+  * Beta distribution parameters = 1.0494 522.5065
+  * Progress = 88.8%
+
+Processing gene [ENSG00000186951.12]
+  * Number of variants in cis = 5621
+  * Best correlation = -0.6257
+  * Number of permutations = 674 / 10000
+  * Beta distribution parameters = 1.0464 599.0185
+  * Progress = 89.0%
+
+Processing gene [ENSG00000205643.6]
+  * Number of variants in cis = 5626
+  * Best correlation = 0.5183
+  * Number of permutations = 1000 / 1277
+  * Beta distribution parameters = 1.0121 692.9065
+  * Progress = 89.2%
+
+Processing gene [ENSG00000075234.12]
+  * Number of variants in cis = 5544
+  * Best correlation = 0.7476
+  * Number of permutations = 4 / 10000
+  * Beta distribution parameters = 1.0269 594.6445
+  * Progress = 89.5%
+
+Processing gene [ENSG00000075218.14]
+  * Number of variants in cis = 5513
+  * Best correlation = 0.5716
+  * Number of permutations = 1000 / 3074
+  * Beta distribution parameters = 1.0766 502.3942
+  * Progress = 89.7%
+
+Processing gene [ENSG00000100416.8]
+  * Number of variants in cis = 5524
+  * Best correlation = 0.5685
+  * Number of permutations = 1000 / 2937
+  * Beta distribution parameters = 1.1061 538.2038
+  * Progress = 89.9%
+
+Processing gene [ENSG00000075275.12]
+  * Number of variants in cis = 5495
+  * Best correlation = -0.6094
+  * Number of permutations = 1000 / 8467
+  * Beta distribution parameters = 1.0413 554.5722
+  * Progress = 90.1%
+
+Processing gene [ENSG00000075240.12]
+  * Number of variants in cis = 5349
+  * Best correlation = -0.5538
+  * Number of permutations = 1000 / 2271
+  * Beta distribution parameters = 1.0608 527.6787
+  * Progress = 90.3%
+
+Processing gene [ENSG00000100422.9]
+  * Number of variants in cis = 5313
+  * Best correlation = -0.5739
+  * Number of permutations = 1000 / 3254
+  * Beta distribution parameters = 1.0380 638.9958
+  * Progress = 90.5%
+
+Processing gene [ENSG00000260708.1]
+  * Number of variants in cis = 5396
+  * Best correlation = -0.6918
+  * Number of permutations = 49 / 10000
+  * Beta distribution parameters = 1.0332 578.6501
+  * Progress = 90.8%
+
+Processing gene [ENSG00000054611.9]
+  * Number of variants in cis = 5395
+  * Best correlation = 0.5573
+  * Number of permutations = 1000 / 2342
+  * Beta distribution parameters = 1.0953 465.8254
+  * Progress = 91.0%
+
+Processing gene [ENSG00000224715.1]
+  * Number of variants in cis = 5877
+  * Best correlation = -0.4914
+  * Number of permutations = 1000 / 1054
+  * Beta distribution parameters = 1.0771 567.3581
+  * Progress = 91.2%
+
+Processing gene [ENSG00000219438.4]
+  * Number of variants in cis = 8090
+  * Best correlation = -0.6202
+  * Number of permutations = 1000 / 7382
+  * Beta distribution parameters = 1.0333 1046.8415
+  * Progress = 91.4%
+
+Processing gene [ENSG00000100425.14]
+  * Number of variants in cis = 7073
+  * Best correlation = -0.6114
+  * Number of permutations = 1000 / 6814
+  * Beta distribution parameters = 1.0768 765.8038
+  * Progress = 91.6%
+
+Processing gene [ENSG00000100426.6]
+  * Number of variants in cis = 6681
+  * Best correlation = 0.5359
+  * Number of permutations = 1000 / 1357
+  * Beta distribution parameters = 1.0483 682.3137
+  * Progress = 91.8%
+
+Processing gene [ENSG00000182858.9]
+  * Number of variants in cis = 6503
+  * Best correlation = 0.5999
+  * Number of permutations = 1000 / 5330
+  * Beta distribution parameters = 1.0290 854.3841
+  * Progress = 92.0%
+
+Processing gene [ENSG00000184164.10]
+  * Number of variants in cis = 6412
+  * Best correlation = -0.6046
+  * Number of permutations = 1000 / 6130
+  * Beta distribution parameters = 1.0881 670.2082
+  * Progress = 92.3%
+
+Processing gene [ENSG00000198355.4]
+  * Number of variants in cis = 6139
+  * Best correlation = -0.6108
+  * Number of permutations = 1000 / 7570
+  * Beta distribution parameters = 1.0388 710.1464
+  * Progress = 92.5%
+
+Processing gene [ENSG00000100427.11]
+  * Number of variants in cis = 5460
+  * Best correlation = 0.5362
+  * Number of permutations = 1000 / 1594
+  * Beta distribution parameters = 1.0669 666.3181
+  * Progress = 92.7%
+
+Processing gene [ENSG00000073146.11]
+  * Number of variants in cis = 5326
+  * Best correlation = -0.6271
+  * Number of permutations = 697 / 10000
+  * Beta distribution parameters = 1.0169 655.7360
+  * Progress = 92.9%
+
+Processing gene [ENSG00000073150.9]
+  * Number of variants in cis = 4760
+  * Best correlation = -0.6016
+  * Number of permutations = 1000 / 7091
+  * Beta distribution parameters = 1.0307 575.8034
+  * Progress = 93.1%
+
+Processing gene [ENSG00000170638.5]
+  * Number of variants in cis = 4693
+  * Best correlation = -0.5421
+  * Number of permutations = 1000 / 1807
+  * Beta distribution parameters = 1.0703 468.9415
+  * Progress = 93.3%
+
+Processing gene [ENSG00000273188.1]
+  * Number of variants in cis = 4664
+  * Best correlation = 0.5124
+  * Number of permutations = 1000 / 1250
+  * Beta distribution parameters = 1.0511 596.2325
+  * Progress = 93.5%
+
+Processing gene [ENSG00000273253.1]
+  * Number of variants in cis = 4610
+  * Best correlation = 0.5340
+  * Number of permutations = 1000 / 1662
+  * Beta distribution parameters = 1.0495 604.2544
+  * Progress = 93.8%
+
+Processing gene [ENSG00000073169.9]
+  * Number of variants in cis = 4610
+  * Best correlation = -0.5889
+  * Number of permutations = 1000 / 5239
+  * Beta distribution parameters = 1.0427 615.7556
+  * Progress = 94.0%
+
+Processing gene [ENSG00000272836.1]
+  * Number of variants in cis = 4598
+  * Best correlation = 0.5224
+  * Number of permutations = 1000 / 1396
+  * Beta distribution parameters = 1.0812 506.8047
+  * Progress = 94.2%
+
+Processing gene [ENSG00000273137.1]
+  * Number of variants in cis = 4592
+  * Best correlation = -0.4854
+  * Number of permutations = 1000 / 1075
+  * Beta distribution parameters = 1.0350 513.6318
+  * Progress = 94.4%
+
+Processing gene [ENSG00000128159.7]
+  * Number of variants in cis = 4554
+  * Best correlation = -0.5187
+  * Number of permutations = 1000 / 1365
+  * Beta distribution parameters = 1.1209 466.6464
+  * Progress = 94.6%
+
+Processing gene [ENSG00000100429.13]
+  * Number of variants in cis = 4407
+  * Best correlation = 0.6080
+  * Number of permutations = 1000 / 9469
+  * Beta distribution parameters = 1.0625 510.9556
+  * Progress = 94.8%
+
+Processing gene [ENSG00000188130.9]
+  * Number of variants in cis = 4381
+  * Best correlation = -0.5723
+  * Number of permutations = 1000 / 3452
+  * Beta distribution parameters = 1.0818 476.1606
+  * Progress = 95.1%
+
+Processing gene [ENSG00000185386.10]
+  * Number of variants in cis = 4283
+  * Best correlation = 0.5014
+  * Number of permutations = 1000 / 1218
+  * Beta distribution parameters = 1.0037 541.6705
+  * Progress = 95.3%
+
+Processing gene [ENSG00000196576.10]
+  * Number of variants in cis = 4252
+  * Best correlation = -0.5421
+  * Number of permutations = 1000 / 1972
+  * Beta distribution parameters = 1.0456 454.4841
+  * Progress = 95.5%
+
+Processing gene [ENSG00000205593.7]
+  * Number of variants in cis = 4092
+  * Best correlation = -0.5782
+  * Number of permutations = 1000 / 4762
+  * Beta distribution parameters = 1.0071 513.3081
+  * Progress = 95.7%
+
+Processing gene [ENSG00000100239.11]
+  * Number of variants in cis = 3925
+  * Best correlation = -0.5018
+  * Number of permutations = 1000 / 1265
+  * Beta distribution parameters = 1.1419 288.1606
+  * Progress = 95.9%
+
+Processing gene [ENSG00000100241.16]
+  * Number of variants in cis = 3459
+  * Best correlation = 0.5647
+  * Number of permutations = 1000 / 3710
+  * Beta distribution parameters = 1.0482 322.4382
+  * Progress = 96.1%
+
+Processing gene [ENSG00000128165.7]
+  * Number of variants in cis = 3318
+  * Best correlation = 0.4656
+  * Number of permutations = 1000 / 1103
+  * Beta distribution parameters = 1.0491 308.4049
+  * Progress = 96.3%
+
+Processing gene [ENSG00000100258.13]
+  * Number of variants in cis = 3254
+  * Best correlation = -0.5331
+  * Number of permutations = 1000 / 2229
+  * Beta distribution parameters = 1.0330 285.2415
+  * Progress = 96.6%
+
+Processing gene [ENSG00000025770.14]
+  * Number of variants in cis = 3237
+  * Best correlation = 0.4524
+  * Number of permutations = 1000 / 1050
+  * Beta distribution parameters = 1.0069 297.9377
+  * Progress = 96.8%
+
+Processing gene [ENSG00000130489.8]
+  * Number of variants in cis = 3187
+  * Best correlation = 0.6007
+  * Number of permutations = 927 / 10000
+  * Beta distribution parameters = 1.0309 300.5861
+  * Progress = 97.0%
+
+Processing gene [ENSG00000272821.1]
+  * Number of variants in cis = 3180
+  * Best correlation = -0.5267
+  * Number of permutations = 1000 / 1997
+  * Beta distribution parameters = 1.0559 329.1139
+  * Progress = 97.2%
+
+Processing gene [ENSG00000025708.8]
+  * Number of variants in cis = 3172
+  * Best correlation = 0.6518
+  * Number of permutations = 169 / 10000
+  * Beta distribution parameters = 1.0419 307.3651
+  * Progress = 97.4%
+
+Processing gene [ENSG00000177989.9]
+  * Number of variants in cis = 3163
+  * Best correlation = 0.5851
+  * Number of permutations = 1000 / 6850
+  * Beta distribution parameters = 1.0864 254.0559
+  * Progress = 97.6%
+
+Processing gene [ENSG00000130487.4]
+  * Number of variants in cis = 3132
+  * Best correlation = -0.5458
+  * Number of permutations = 1000 / 2778
+  * Beta distribution parameters = 1.0314 310.4929
+  * Progress = 97.8%
+
+Processing gene [ENSG00000217442.3]
+  * Number of variants in cis = 3124
+  * Best correlation = -0.5139
+  * Number of permutations = 1000 / 1734
+  * Beta distribution parameters = 1.0413 294.7178
+  * Progress = 98.1%
+
+Processing gene [ENSG00000205560.8]
+  * Number of variants in cis = 3090
+  * Best correlation = 0.6499
+  * Number of permutations = 167 / 10000
+  * Beta distribution parameters = 1.0660 280.6197
+  * Progress = 98.3%
+
+Processing gene [ENSG00000100288.15]
+  * Number of variants in cis = 3063
+  * Best correlation = -0.5778
+  * Number of permutations = 1000 / 6065
+  * Beta distribution parameters = 1.0265 297.5771
+  * Progress = 98.5%
+
+Processing gene [ENSG00000205559.3]
+  * Number of variants in cis = 3051
+  * Best correlation = -0.6240
+  * Number of permutations = 448 / 10000
+  * Beta distribution parameters = 1.0555 273.1841
+  * Progress = 98.7%
+
+Processing gene [ENSG00000008735.10]
+  * Number of variants in cis = 3007
+  * Best correlation = 0.5669
+  * Number of permutations = 1000 / 4521
+  * Beta distribution parameters = 1.0940 260.0765
+  * Progress = 98.9%
+
+Processing gene [ENSG00000100299.13]
+  * Number of variants in cis = 2939
+  * Best correlation = 0.5091
+  * Number of permutations = 1000 / 1582
+  * Beta distribution parameters = 1.0644 257.0145
+  * Progress = 99.1%
+
+Processing gene [ENSG00000251322.3]
+  * Number of variants in cis = 2764
+  * Best correlation = -0.5269
+  * Number of permutations = 1000 / 2198
+  * Beta distribution parameters = 1.0016 248.5207
+  * Progress = 99.4%
+
+Processing gene [ENSG00000213683.3]
+  * Number of variants in cis = 2568
+  * Best correlation = -0.4679
+  * Number of permutations = 1000 / 1163
+  * Beta distribution parameters = 1.0609 247.9525
+  * Progress = 99.6%
+
+Processing gene [ENSG00000184319.11]
+  * Number of variants in cis = 2562
+  * Best correlation = -0.5697
+  * Number of permutations = 1000 / 5848
+  * Beta distribution parameters = 1.0358 264.5606
+  * Progress = 99.8%
+
+Processing gene [ENSG00000079974.13]
+  * Number of variants in cis = 2547
+  * Best correlation = 0.5338
+  * Number of permutations = 1000 / 2493
+  * Beta distribution parameters = 1.0362 220.1043
+  * Progress = 100.0%
+
+Running time: 349 seconds
+Tue May 31 19:50:00 PDT 2016
