@@ -1126,10 +1126,11 @@ subl 160517_run_RNAseqQC.sh
 
 # 16/05/19:
 # combine all RPKMs:
+cd /srv/persistent/bliu2/HCASMC_eQTL/scripts
 mkdir ../processed_data/160519_rpkm/
 wd=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
 
-tail -n +3 $wd/$sample/report/genes.rpkm.gct | cut -f1-2 > ../processed_data/160519_rpkm/combined.rpkm
+tail -n +3 $wd/1020301/report/genes.rpkm.gct | cut -f1-2 > ../processed_data/160519_rpkm/combined.rpkm
 samples=($(ls -d $wd/*/))
 
 for sample in ${samples[@]};do
@@ -1156,17 +1157,22 @@ plink --vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic
 # find genotype PCs: 
 # Bruna shared script to call genotype PCs through slack:
 mkdir ../figures/160519_genotype_PCA
-subl 160519_genotype_PCA.R
+subl 160519_genotype_PCA.R 
+
+# create sample_info directory and sample_list.txt:
+mkdir /srv/persistent/bliu2/HCASMC_eQTL/data/sample_info
+ln /srv/persistent/bliu2/HCASMC_eQTL/processed_data/rna_wgs_match.reduced_050616.xlsx /srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx
+
+# subset to 52 individuals with RNAseq sample:
+subl 160519_subset_genotype_PCs.R
+Rscript 160519_subset_genotype_PCs.R \
+	../processed_data/160519_genotype_PCA/genotype_pcs.tsv \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx \
+	../processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv
+
 # seems that 1020301 is an outlier? It has low heterozygosity rate (from the plink/seq analysis)
 
 # 16/05/20
-# 11:52am
-# 
-
-
-# look at WGS unique mapping rate for 1020301. 
-
-
 # 3:07pm
 # On 16/05/19 I showed that sample 9052004 (Stanford 2nd round sequencing) is an outlier. 
 # Here we analyze the dASE version of 9052004. 
@@ -1198,7 +1204,7 @@ subl 160520_calc_sample_correlation.R
 Rscript 160520_calc_sample_correlation.R
 
 
-# 160526
+# 16/05/26
 # setup: 
 scripts=./160526
 mkdir $scripts
@@ -1226,6 +1232,245 @@ mkdir -p ../figures/160526/detect_WGS_contamination/
 subl $scripts/plot_verifyBAMID_result.R
 
 
-# 160527
+# 16/05/27
+# setup
+scripts=./160527
+mkdir $scripts
+processed_data=../processed_data/160527
+mkdir $processed_data
+
+# On 16/05/19 I performed RNAseq correlation analysis and 
+# showed that 9052004 and 9070202 are outliers
+# I replaced 9052004 with the dASE version on 16/05/20 and
+# Today I replaced 9070202 with 90702_Nextseq
+# Instead of writing new scripts, I instead changed my scripts on 16/05/19
+mv /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/9070202  /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/.9070202
+mv /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/9070202_Nextseq  /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/9070202
+
+# move logs to a folder: 
+mkdir /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/.logs
+mv /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/*.log /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/logs
+
+
+
+# create a folder for rpkm files:
+rpkm=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/rpkm
+mkdir $rpkm
+
+# copy rpkm files to the rpkm folder: 
+subl 160527/copy_rpkm.sh
+bash 160527/copy_rpkm.sh
+vim ../data/rnaseq2/rpkm/9070202/genes.rpkm # changed 9070202_Nextseq to 9070202 (Voodoo :-)
+
+
+# combine all rpkm into one file: 
+subl $scripts/combine_rpkm.sh
+bash $scripts/combine_rpkm.sh
+
+
+# filter >=10 individuals with >0.1 RPKM
+subl $scripts/filter_rpkm.R
+Rscript $scripts/filter_rpkm.R 0.1 10 $processed_data/combined.rpkm $processed_data/combined.filter.rpkm
+
+
+
 #--- run PEER correction -----
-# 
+# subset to top 10000 genes: 
+subl $scripts/subset_top_genes.R
+Rscript $scripts/subset_top_genes.R $processed_data/combined.filter.rpkm $processed_data/combined.filter.top10000.rpkm 10000
+
+# quantile normalize rpkm against other samples and 
+# quantile normalize rpkm for each gene: 
+subl $scripts/normalize_rpkm.R
+Rscript $scripts/normalize_rpkm.R $processed_data/combined.filter.top10000.rpkm $processed_data/combined.filter.top10000.norm.rpkm
+
+# transpose rpkm: 
+subl $scripts/transpose_rpkm.R 
+Rscript $scripts/transpose_rpkm.R $processed_data/combined.filter.top10000.norm.rpkm $processed_data/combined.filter.top10000.norm.t.rpkm
+
+
+
+# The data matrix is assumed to have N rows and G columns, where N is the number of samples, and G is the number of genes:
+# an example input file is at /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160527/Whole_Blood.rpkm.log2.ztrans.txt
+subl $scripts/get_peer_correction.Extended.R
+subl $scripts/GetPeerExtended.sh 
+bash $scripts/GetPeerExtended.sh $processed_data/combined.filter.top10000.norm.t.rpkm $processed_data
+
+
+# 16/05/30
+# setup:
+cd /srv/persistent/bliu2/HCASMC_eQTL/scripts
+scripts=./160530/
+mkdir $scripts
+processed_data=../processed_data/160530/
+mkdir $processed_data
+figures=../figures/160530/
+mkdir $figures
+
+# prepare covariates: 
+# top three genotype PCs
+# 15 PEER factors 
+# gender
+# example: /mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/eqtl_data/eQTLInputFiles/covariates/
+subl $scripts/combine_covariates.R 
+Rscript $scripts/combine_covariates.R \
+	--genotype_pc=../processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv \
+	--peer=../processed_data/160527/factors.tsv \
+	--sample_info=/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx \
+	--output=$processed_data/covariates.tsv \
+	--gender_encoding=numerical
+
+
+# prepare genotype data
+# filter minor allele frequency 0.05: 
+bcftools view \
+	--min-af 0.05 --max-af 0.95 \
+	-Ov -o ../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf \
+	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.vcf
+
+bcftools query -H \
+	-S ../data/joint2/sample_list.txt \
+	-f '%CHROM\_%POS\_%REF\_%ALT[\t%DS]\n' \
+	-o $processed_data/dosage.tsv \
+	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf
+
+cp $processed_data/dosage.tsv $processed_data/dosage.tmp
+
+sed -e "s/# \[1\]CHROM_\[2\]POS_\[3\]REF_\[4\]ALT/id/" \
+	-e "s/\[[[:digit:]]\+\]//g" -e "s/:DS//g" \
+	$processed_data/dosage.tmp > $processed_data/dosage.tsv
+rm $processed_data/dosage.tmp
+
+# prepare expression data: 
+ln ../processed_data/160527/combined.filter.rpkm $processed_data/combined.filter.rpkm
+Rscript 160527/normalize_rpkm.R $processed_data/combined.filter.rpkm $processed_data/combined.filter.norm.rpkm
+
+
+# prepare genotype location: 
+cp 031_gen_snps_loc.R $scripts/gen_snps_loc.R
+subl $scripts/gen_snps_loc.R
+Rscript $scripts/gen_snps_loc.R $processed_data/dosage.tsv $processed_data/genotype_loc.txt
+
+
+# prepare gene location: 
+cp 031_gen_gene_loc.R $scripts/gen_gene_loc.R
+subl $scripts/gen_gene_loc.R
+Rscript $scripts/gen_gene_loc.R /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf $processed_data/gene_loc.txt
+
+
+# run matrix eQTL:
+cp 160516_matrix_eQTL.R $scripts/run_matrix_eQTL.R
+subl $scripts/run_matrix_eQTL.R
+Rscript $scripts/run_matrix_eQTL.R \
+	$processed_data/dosage.tsv \
+	$processed_data/genotype_loc.txt \
+	$processed_data/combined.filter.norm.rpkm \
+	$processed_data/gene_loc.txt \
+	$processed_data/covariates.tsv \
+	$processed_data
+
+
+# make qqplot and histogram of p-value distribution: 
+mkdir ../figures/160530
+Rscript $scripts/qqplot_pvalue.R ../processed_data/160530/cis.txt ../figures/160530/
+
+
+#------ run fastQTL --------
+# prepare genotype data: 
+bgzip /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf && tabix -p vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.gz
+bcftools annotate -Oz -o /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.gz
+tabix -p vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz
+
+# prepare expression data: 
+Rscript $scripts/gen_bed.R \
+	$processed_data/gene_loc.txt \
+	$processed_data/combined.filter.norm.rpkm \
+	$processed_data/combined.filter.norm.bed
+bgzip $processed_data/combined.filter.norm.bed
+tabix -p bed $processed_data/combined.filter.norm.bed.gz
+
+# prepare covariates: 
+Rscript $scripts/combine_covariates.R \
+	--genotype_pc=../processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv \
+	--peer=../processed_data/160527/factors.tsv \
+	--sample_info=/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx \
+	--output=$processed_data/covariates.fastqtl.tsv \
+	--gender_encoding=letter
+bgzip $processed_data/covariates.fastqtl.tsv
+
+
+
+
+# run fastqtl with 1000 to 10000 permutations: 
+n=0
+for i in {1..22}; do 
+n=$(($n+1))
+if [[ n -gt 10 ]]; then
+	wait
+	n=0
+fi 
+bash $scripts/run_fastqtl.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz \
+	$processed_data/combined.filter.norm.bed.gz \
+	$processed_data/covariates.fastqtl.tsv.gz \
+	$processed_data/fastqtl.chr$i.txt.gz \
+	chr$i \
+	1000 \
+	10000 > $processed_data/run_fastqtl.chr$i.log &
+done 
+
+# merge all results: 
+zcat $processed_data/fastqtl.chr{1..22}.txt.gz > $processed_data/fastqtl.txt
+
+
+# make histogram and qqplot of fastqtl nominal p-values:
+Rscript $scripts/qqplot_fastqtl_pvalue.R $processed_data/fastqtl.txt $figures/fastqtl_histogram.pdf $figures/fastqtl_qqplot.pdf
+
+
+# run fastqtl with 10000 to 100000 permutations: 
+n=0
+for i in {1..22}; do 
+n=$(($n+1))
+if [[ n -gt 10 ]]; then
+	wait
+	n=0
+fi 
+bash $scripts/run_fastqtl.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz \
+	$processed_data/combined.filter.norm.bed.gz \
+	$processed_data/covariates.fastqtl.tsv.gz \
+	$processed_data/fastqtl.chr$i.perm100000.txt.gz \
+	chr$i \
+	10000 \
+	100000 > $processed_data/run_fastqtl.chr$i.perm100000.log &
+done
+zcat $processed_data/fastqtl.chr{1..22}.perm100000.txt.gz > $processed_data/fastqtl.perm100000.txt
+
+# make histogram and qqplot of fastqtl nominal p-values:
+Rscript $scripts/qqplot_fastqtl_pvalue.R $processed_data/fastqtl.perm100000.txt $figures/fastqtl_histogram.perm100000.pdf $figures/fastqtl_qqplot.perm100000.pdf
+
+
+# compare 10000 with 100000 permutations:
+Rscript $scripts/compare_10000_100000_permutations.R $processed_data/fastqtl.txt $processed_data/fastqtl.perm100000.txt $figures/compare_10000_100000_permutations.pdf
+# 10000 and 100000 permutations shows high correlation
+
+
+# adjust p-values:
+Rscript $scripts/fastqtl_pvalue_corrections.R $processed_data/fastqtl.txt $processed_data/fastqtl.padj.txt 
+
+
+# find optimal number of PEER factors: 
+$processed_data/covariates.fastqtl.tsv.gz
+
+#------- Interpret eGenes -------
+# num eGenes discovered by FDR: 
+Rscript $scripts/plot_num_egene_by_fdr.R $processed_data/fastqtl.padj.txt $figures/num_egenes_by_fdr.pdf 
+
+
+# investigate the top 5 eGenes:
+Rscript $scripts/plot_expression_vs_genotype.R \
+	$processed_data/combined.filter.norm.rpkm \
+	$processed_data/dosage.tsv \
+	$processed_data/covariates.tsv \
+	$processed_data/fastqtl.padj.txt \
+	$figures

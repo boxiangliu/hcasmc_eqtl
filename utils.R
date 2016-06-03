@@ -1,6 +1,14 @@
 library(stringr)
 library(cowplot)
 library(data.table)
+#------ 160527 -----
+#' inverse rank normalization
+getInverseNormal <- function(x){
+	x <- as.numeric(x)
+	xx2<-qnorm((rank(x,na.last = "keep") - 0.5) / sum(!is.na(x)))
+	return(xx2)
+}
+
 #------ 30_compare_9052004_samples.R ------
 #' make pairs upper panel show correlation:
 #' taken from help file of pairs()
