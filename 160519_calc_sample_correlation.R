@@ -55,5 +55,5 @@ D=(mean_cor-overall_mean_cor)/mad
 
 # plot:
 to_plot=data.frame(sample=names(D),D=D)
-p=ggplot(to_plot,aes(x=sample,y=D))+geom_point()+theme(axis.text.x=element_text(angle=90,vjust=0.5,hjust=1))+background_grid(major = "x", minor = "x")
+p=ggplot(to_plot,aes(x=sample,y=D))+geom_point()+theme(axis.text.x=element_text(angle=90,vjust=0.5,hjust=1))+background_grid(major = "x", minor = "x")+geom_hline(yintercept=-5,color='red',linetype=2)
 save_plot(paste0(figure_path,'D_statistic.pdf'),p,base_width=8,base_height=8)

@@ -8,6 +8,8 @@
 
 # paths:
 figure_path='../figures/160519_genotype_PCA/'
+output_file='../processed_data/160519_genotype_PCA/genotype_pcs.tsv'
+
 
 # source("http://bioconductor.org/biocLite.R")
 # biocLite("gdsfmt")
@@ -33,7 +35,7 @@ sample_sheet=readWorksheet(loadWorkbook("../processed_data/rna_wgs_match.reduced
 caucasian_sample=sample_sheet[sample_sheet$Genomic_Ethnicity=='Caucasian','DNA']
 
 
-# HWE: 
+# HWE filter (1e-6): 
 hwe_pval=snpgdsHWE(genofile, sample.id=caucasian_sample, snp.id=NULL, with.id=TRUE)
 pass_hwe=hwe_pval$snp.id[which(hwe_pval$pvalue>=1e-6)]
 
@@ -45,6 +47,7 @@ snpset.id <- unlist(snpset)
 
 # Run pca
 pca <- snpgdsPCA(genofile, snp.id=snpset.id, maf=0.05, num.thread=2)
+
 
 
 #Plot PCA:
@@ -67,3 +70,9 @@ lbls <- paste("PC", 1:5, "\n", format(pc.percent[1:5], digits=2), "%", sep="")
 pairs(pca$eigenvect[,1:5], labels=lbls, col=as.integer(tab$pop))
 dev.off()
 
+
+# write genotype PCs:
+genotype_pcs=t(pca$eigenvect)
+colnames(genotype_pcs)=pca$sample.id
+rownames(genotype_pcs)=paste0("C",seq(nrow(genotype_pcs)))
+write.table(genotype_pcs,file=output_file,quote=F,sep='\t',row.names=T,col.names=T)
