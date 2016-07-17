@@ -763,6 +763,10 @@ done
 # download the genetic map: 
 wget http://bochet.gcc.biostat.washington.edu/beagle/genetic_maps/plink.GRCh37.map.zip
 
+# download panel file:
+wget http://bochet.gcc.biostat.washington.edu/beagle/1000_Genomes_phase3_v5a/integrated_call_samples_v3.20130502.ALL.panel 
+
+
 # 11:21pm
 # read the BEAGLE genotype imputation paper (AJHJ 2016)
 # takeaway is beagle, impute2 and minimac3 have similar accuracy but 
@@ -938,10 +942,16 @@ mv recalibrated_biallelic_SNP.beagle.chr* beagle_no_ref
 # change chromosome names from "chr*" to "*":
 wd=../data/joint2/
 for i in $(seq 1 22) X Y M; do 
-echo "chr$i $i" >> $wd/old_to_new_chrom_name.txt
+if [[ $i=="M" ]]; then 
+	echo "chrM MT" >> $wd/hg19_to_GRCh37.txt
+else 
+	echo "chr$i $i" >> $wd/hg19_to_GRCh37.txt
+fi
 done
 screen -S change_chrom_name
-bcftools annotate --rename-chrs $wd/old_to_new_chrom_name.txt -Ov -o $wd/recalibrated_biallelic_SNP.pass.GRCh37.vcf $wd/recalibrated_biallelic_SNP.pass.vcf
+bcftools annotate --rename-chrs $wd/hg19_to_GRCh37.txt -Ov -o $wd/recalibrated_biallelic_SNP.pass.GRCh37.vcf $wd/recalibrated_biallelic_SNP.pass.vcf
+
+
 # beagle with reference panel:
 screen -S beagle_with_ref
 java=/srv/persistent/bliu2/tools/jre1.8.0_91/bin/java
@@ -963,7 +973,11 @@ mkdir ../processed_data/160515_beagle_QC
 mkdir ../figures/160515_beagle_QC/
 cat $wd/recalibrated_biallelic_SNP.beagle.vcf | grep -v "^#" | awk 'BEGIN {FS="\t|;|="; OFS="\t"; print "CHROM","POS","AR2","DR2","AF"} {print $1,$2,$9,$11,$13}' >  ../processed_data/160515_beagle_QC/recalibrated_biallelic_SNP.r2.tsv
 subl beagle_QC.R
-Rscript beagle_QC.R
+Rscript beagle_QC.R \
+	-input=../processed_data/160515_beagle_QC/recalibrated_biallelic_SNP.r2.tsv \
+	-figure_dir=../figures/160515_beagle_QC/
+
+
 # reference on how to calculate genotype R-squared: http://ingenoveritas.net/compare-true-and-imputed-genotypes-by-calculating-r-squared/
 
 
@@ -1121,7 +1135,7 @@ CreateSequenceDictionary=/software/picard-tools/1.92/CreateSequenceDictionary.ja
 java -jar $CreateSequenceDictionary R=/srv/persistent/bliu2/shared/genomes/hg19/hg19.fa O=/srv/persistent/bliu2/shared/genomes/hg19/hg19.dict
 
 # run RNAseq-QC: 
-subl 160517_run_RNAseqQC.sh
+subl 160517_run_RNAseQC.sh
 
 
 # 16/05/19:
@@ -1211,6 +1225,7 @@ mkdir $scripts
 processed_data=../processed_data/160526
 mkdir $processed_data
 
+
 #--- sample contamination ----
 # make sample file for each ethnicity:
 dir1=../processed_data/160526/detect_WGS_contamination
@@ -1252,10 +1267,10 @@ mkdir /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/.logs
 mv /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/*.log /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/logs
 
 
-
 # create a folder for rpkm files:
 rpkm=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/rpkm
 mkdir $rpkm
+
 
 # copy rpkm files to the rpkm folder: 
 subl 160527/copy_rpkm.sh
@@ -1299,13 +1314,10 @@ bash $scripts/GetPeerExtended.sh $processed_data/combined.filter.top10000.norm.t
 
 # 16/05/30
 # setup:
-cd /srv/persistent/bliu2/HCASMC_eQTL/scripts
 scripts=./160530/
-mkdir $scripts
 processed_data=../processed_data/160530/
-mkdir $processed_data
 figures=../figures/160530/
-mkdir $figures
+mkdir $scripts $processed_data $figures
 
 # prepare covariates: 
 # top three genotype PCs
@@ -1318,7 +1330,7 @@ Rscript $scripts/combine_covariates.R \
 	--peer=../processed_data/160527/factors.tsv \
 	--sample_info=/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx \
 	--output=$processed_data/covariates.tsv \
-	--gender_encoding=numerical
+	--gender_coding=numerical
 
 
 # prepare genotype data
@@ -1348,7 +1360,6 @@ Rscript 160527/normalize_rpkm.R $processed_data/combined.filter.rpkm $processed_
 
 # prepare genotype location: 
 cp 031_gen_snps_loc.R $scripts/gen_snps_loc.R
-subl $scripts/gen_snps_loc.R
 Rscript $scripts/gen_snps_loc.R $processed_data/dosage.tsv $processed_data/genotype_loc.txt
 
 
@@ -1358,16 +1369,25 @@ subl $scripts/gen_gene_loc.R
 Rscript $scripts/gen_gene_loc.R /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf $processed_data/gene_loc.txt
 
 
+# find optimum number of PEER factors:
+mkdir $processed_data/find_optimum_num_PEER_factors_matrixeqtl
+bash $scripts/find_optimal_num_PEER_factors_matrix_eQTL.sh 
+bash $scripts/run_count_num_sig_association.sh 
+Rscript $scripts/plot_num_eqtl_vs_cov.R \
+	$processed_data/find_optimum_num_PEER_factors_matrixeqtl/num_eqtls_vs_cov.fdr.txt \
+	$figures/num_eqtls_vs_cov.fdr.pdf
+
+
 # run matrix eQTL:
 cp 160516_matrix_eQTL.R $scripts/run_matrix_eQTL.R
-subl $scripts/run_matrix_eQTL.R
-Rscript $scripts/run_matrix_eQTL.R \
-	$processed_data/dosage.tsv \
-	$processed_data/genotype_loc.txt \
-	$processed_data/combined.filter.norm.rpkm \
-	$processed_data/gene_loc.txt \
-	$processed_data/covariates.tsv \
-	$processed_data
+# Rscript $scripts/run_matrix_eQTL.R \
+# 	$processed_data/dosage.tsv \
+# 	$processed_data/genotype_loc.txt \
+# 	$processed_data/combined.filter.norm.rpkm \
+# 	$processed_data/gene_loc.txt \
+# 	$processed_data/covariates.tsv \
+# 	$processed_data/
+# Use $processed_data/find_optimum_num_PEER_factors_matrixeqtl/pc3.peer8.2.cis.txt
 
 
 # make qqplot and histogram of p-value distribution: 
@@ -1381,6 +1401,7 @@ bgzip /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.b
 bcftools annotate -Oz -o /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.gz
 tabix -p vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz
 
+
 # prepare expression data: 
 Rscript $scripts/gen_bed.R \
 	$processed_data/gene_loc.txt \
@@ -1389,16 +1410,33 @@ Rscript $scripts/gen_bed.R \
 bgzip $processed_data/combined.filter.norm.bed
 tabix -p bed $processed_data/combined.filter.norm.bed.gz
 
+
 # prepare covariates: 
 Rscript $scripts/combine_covariates.R \
 	--genotype_pc=../processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv \
 	--peer=../processed_data/160527/factors.tsv \
 	--sample_info=/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx \
 	--output=$processed_data/covariates.fastqtl.tsv \
-	--gender_encoding=letter
+	--gender_coding=letter
 bgzip $processed_data/covariates.fastqtl.tsv
 
 
+# run fastqtl nominal pass:
+n=0
+for i in {1..22}; do 
+n=$(($n+1))
+if [[ n -gt 10 ]]; then
+	wait
+	n=0
+fi 
+bash $scripts/run_fastqtl.nominal.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz \
+	$processed_data/combined.filter.norm.bed.gz \
+	$processed_data/find_optimum_num_PEER_factors/covariates.fastqtl.pc3.peer8.tsv.gz \
+	$processed_data/fastqtl_nominal/fastqtl.chr$i.pc3.peer8.txt.gz \
+	chr$i > $processed_data/fastqtl_nominal/run_fastqtl.chr$i.log &
+done 
+zcat $processed_data/fastqtl_nominal/fastqtl.chr{1..22}.pc3.peer8.txt.gz > $processed_data/fastqtl_nominal/fastqtl.allpairs.pc3.peer8.txt
 
 
 # run fastqtl with 1000 to 10000 permutations: 
@@ -1413,14 +1451,14 @@ bash $scripts/run_fastqtl.sh \
 	/srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz \
 	$processed_data/combined.filter.norm.bed.gz \
 	$processed_data/covariates.fastqtl.tsv.gz \
-	$processed_data/fastqtl.chr$i.txt.gz \
+	$processed_data/fastqtl_10000_perm/fastqtl.chr$i.txt.gz \
 	chr$i \
 	1000 \
-	10000 > $processed_data/run_fastqtl.chr$i.log &
+	10000 > $processed_data/fastqtl_10000_perm/run_fastqtl.chr$i.log &
 done 
 
 # merge all results: 
-zcat $processed_data/fastqtl.chr{1..22}.txt.gz > $processed_data/fastqtl.txt
+zcat $processed_data/fastqtl_10000_perm/fastqtl.chr{1..22}.txt.gz > $processed_data/fastqtl.txt
 
 
 # make histogram and qqplot of fastqtl nominal p-values:
@@ -1439,28 +1477,39 @@ bash $scripts/run_fastqtl.sh \
 	/srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz \
 	$processed_data/combined.filter.norm.bed.gz \
 	$processed_data/covariates.fastqtl.tsv.gz \
-	$processed_data/fastqtl.chr$i.perm100000.txt.gz \
+	$processed_data/fastqtl_100000_perm/fastqtl.chr$i.perm100000.txt.gz \
 	chr$i \
 	10000 \
-	100000 > $processed_data/run_fastqtl.chr$i.perm100000.log &
+	100000 > $processed_data/fastqtl_100000_perm/run_fastqtl.chr$i.perm100000.log &
 done
-zcat $processed_data/fastqtl.chr{1..22}.perm100000.txt.gz > $processed_data/fastqtl.perm100000.txt
+zcat $processed_data/fastqtl_100000_perm/fastqtl.chr{1..22}.perm100000.txt.gz > $processed_data/fastqtl_100000_perm/fastqtl.perm100000.txt
 
 # make histogram and qqplot of fastqtl nominal p-values:
-Rscript $scripts/qqplot_fastqtl_pvalue.R $processed_data/fastqtl.perm100000.txt $figures/fastqtl_histogram.perm100000.pdf $figures/fastqtl_qqplot.perm100000.pdf
+Rscript $scripts/qqplot_fastqtl_pvalue.R $processed_data/fastqtl_100000_perm/fastqtl.perm100000.txt $figures/fastqtl_histogram.perm100000.pdf $figures/fastqtl_qqplot.perm100000.pdf
 
 
 # compare 10000 with 100000 permutations:
-Rscript $scripts/compare_10000_100000_permutations.R $processed_data/fastqtl.txt $processed_data/fastqtl.perm100000.txt $figures/compare_10000_100000_permutations.pdf
+Rscript $scripts/compare_10000_100000_permutations.R $processed_data/fastqtl_10000_perm/fastqtl.txt $processed_data/fastqtl_100000_perm/fastqtl.perm100000.txt $figures/compare_10000_100000_permutations.pdf
 # 10000 and 100000 permutations shows high correlation
 
 
 # adjust p-values:
-Rscript $scripts/fastqtl_pvalue_corrections.R $processed_data/fastqtl.txt $processed_data/fastqtl.padj.txt 
+Rscript $scripts/fastqtl_pvalue_corrections.R $processed_data/fastqtl_10000_perm/fastqtl.txt $processed_data/fastqtl_10000_perm/fastqtl.padj.txt 
 
 
-# find optimal number of PEER factors: 
-$processed_data/covariates.fastqtl.tsv.gz
+# find optimal number of PEER factors:
+mkdir $processed_data/find_optimum_num_PEER_factors/
+bash $scripts/find_optimal_num_PEER_factors.sh
+Rscript $scripts/plot_num_egene_vs_cov.R $figures/num_egene_vs_cov.pdf
+
+
+# How does our discover compare with GTEx: 
+Rscript $scripts/plot_num_egenes_vs_sample_size.R \
+	$processed_data/gtex.v6p.egenes.summary.txt \
+	$processed_data/find_optimum_num_PEER_factors/fastqtl.pc4.peer8.padj.txt \
+	$figures/num_egenes_vs_sample_size.pdf
+
+
 
 #------- Interpret eGenes -------
 # num eGenes discovered by FDR: 
@@ -1474,3 +1523,662 @@ Rscript $scripts/plot_expression_vs_genotype.R \
 	$processed_data/covariates.tsv \
 	$processed_data/fastqtl.padj.txt \
 	$figures
+
+
+#----- trans eQTL -------
+# run matrix eQTL to map trans eQTL:
+covariates=$processed_data/find_optimum_num_PEER_factors_matrixeqtl/covariates.matrixeqtl.pc3.peer8.tsv
+Rscript $scripts/run_matrix_eQTL.R \
+	$processed_data/dosage.tsv \
+	$processed_data/genotype_loc.txt \
+	$processed_data/combined.filter.norm.rpkm \
+	$processed_data/gene_loc.txt \
+	$covariates \
+	$processed_data/cutoff0.05. \
+	0 \
+	0.05
+
+
+# prepare data for Sherlock:
+mkdir $processed_data/sherlock
+awk 'BEGIN {OFS="\t"} {print $2,$1,$5}' $processed_data/trans.txt > $processed_data/sherlock/trans.sherlock.txt
+awk 'BEGIN {OFS="\t"} {print $2,$1,$5}' $processed_data/trans.txt > $processed_data/sherlock/trans.sherlock.txt
+zcat $processed_data/find_optimum_num_PEER_factors_matrixeqtl/pc3.peer8.2.cis.txt.gz | awk 'BEGIN {OFS="\t"} {print $2,$1,$5}' > $processed_data/sherlock/cis.sherlock.txt
+
+# 16/06/03:
+# setup: 
+scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160603
+processed_data=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603
+figures=/srv/persistent/bliu2/HCASMC_eQTL/figures/160603
+mkdir $scripts $processed_data $figures
+
+
+# copy dASE RNAseq alignements from valk: 
+bash $scripts/copy_rnaseq_from_valk.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments/sample_list.txt
+
+# rename dASE RNAseq samples: 
+bash $scripts/rename_rnaseq_samples.sh \
+	$scripts/rename_rnaseq_samples.map.txt \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments/
+
+# run RNAseQC: 
+cp 160517_run_RNAseQC.sh 160603/run_RNAseQC.sh
+bash $scripts/run_RNAseQC.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments
+
+
+# combine rpkms from each sample to two files,
+# one for fbs and one for sf samples 
+cp 160527/combine_rpkm.sh $scripts
+bash $scripts/combine_rpkm.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/rpkm \
+	$processed_data/rpkm
+
+
+# copy rpkm to the rpkm folder:
+bash $scripts/copy_rpkm.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/rpkm
+
+
+# prepare GTEx and hcasmc rpkm files (all genes): 
+mkdir $processed_data/rpkm
+bash $scripts/prepare_gtex_rpkm.sh $processed_data/rpkm
+ln ../processed_data/160527/combined.rpkm $processed_data/rpkm/hcasmc.rpkm
+
+
+# combine GTEx and HCASMC rpkm files: 
+# subset to > 0.1 rpkm > 10 individuals: 
+# log2(x+2) transform
+Rscript $scripts/combine_and_filter_rpkm.R \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/sample_list.txt \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined \
+	0.1 \
+	10 
+
+# hierarchical clustering:
+Rscript $scripts/hclust.R \
+	-rpkm=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.rpkm \
+	-coldata=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.col \
+	-figure=/srv/persistent/bliu2/HCASMC_eQTL/figures/160603/hclust.pdf
+
+# multidimensional scaling (2D):
+Rscript $scripts/mds.R \
+	-rpkm=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.rpkm \
+	-coldata=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.col \
+	-tissue_names=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160603/collapsed_tissue_names.txt \
+	-figure=/srv/persistent/bliu2/HCASMC_eQTL/figures/160603/mds.2.pdf
+
+# multidimensional scaling (3D).
+# Since rgl is not installed on durga, the script needs to be run locally. 
+# Rscript $scripts/mds.3D.R \
+# 	-rpkm=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.rpkm \
+# 	-coldata=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.col \
+# 	-tissue_names=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160603/collapsed_tissue_names.txt \
+# 	-figure=/srv/persistent/bliu2/HCASMC_eQTL/figures/160603/
+
+# 16/06/04:
+# setup:
+scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160604_phasing
+processed_data=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing
+figures=/srv/persistent/bliu2/HCASMC_eQTL/figures/160604_phasing
+mkdir $scripts $processed_data $figures
+
+
+# convert hg19 coordinate to GRCh37 coordinate:
+bash $scripts/convert_chrom_names.sh \
+	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.vcf \
+	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.vcf \
+	../data/joint2/hg19_to_GRCh37.txt
+bgzip ../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.vcf && tabix -p vcf ../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.vcf.gz
+
+# subset vcf to first chrom, pos, ref, alt: 
+bash $scripts/subset_vcf_to_first_4_col.sh \
+	/srv/persistent/bliu2/tools/beagle/reference/chr22.1kg.phase3.v5a.vcf.gz \
+	$processed_data/chr22.1kg.phase3.v5a.txt & 
+
+bash $scripts/subset_vcf_to_first_4_col.sh \
+	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.vcf \
+	$processed_data/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.txt &
+
+# check variants in VCF and reference are on the same strand:
+Rscript compare_vcf_with_reference.scratch.R
+
+
+# make a list of non-european samples:
+Rscript $scripts/make_list_of_non_caucasian_samples.hcasmc.R \
+	../processed_data/rna_wgs_match.reduced_050616.xlsx \
+	$processed_data/non_caucasian.hcasmc.txt
+bash $scripts/make_list_of_non_EUR_samples.1kg.sh \
+	/srv/persistent/bliu2/tools/beagle/reference/integrated_call_samples_v3.20130502.ALL.panel \
+	$processed_data/non_caucasian.1kg.txt
+cat $processed_data/non_caucasian.1kg.txt $processed_data/non_caucasian.hcasmc.txt > $processed_data/non_caucasian.txt
+
+
+# run comform-gt: 
+mkdir $processed_data/conform_gt/
+for i in {1..22} X; do
+bash $scripts/run_conform_gt.sh \
+	/srv/persistent/bliu2/tools/beagle/reference/chr$i.1kg.phase3.v5a.vcf.gz \
+	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.vcf.gz \
+	$i \
+	$processed_data/conform_gt/mod.chr$i \
+	$processed_data/non_caucasian.txt &
+done
+
+# Beagle phasing with reference:
+mkdir $processed_data/phased/
+n=0
+for i in $(seq 1 22);do
+bash $scripts/run_beagle_phasing.sh \
+	$processed_data/conform_gt/mod.chr$i.vcf.gz \
+	$processed_data/phased/phased.chr$i \
+	/srv/persistent/bliu2/tools/beagle/reference/chr$i.1kg.phase3.v5a.vcf.gz \
+	/srv/persistent/bliu2/tools/beagle/reference/plink.chr$i.GRCh37.map \
+	$i &
+n=$(($n+1))
+if [[ $n -gt 10 ]]; then wait; n=0; fi
+done
+
+
+# merge vcf: 
+bcftools concat -Oz -o $processed_data/phased/phased.vcf.gz $processed_data/phased/phased.{1..22}.vcf.gz
+
+# convert GRCh37 to hg19: 
+bash $scripts/convert_chrom_names.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_no_ref/phased_no_ref.vcf.gz \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_no_ref/phased_no_ref.hg19.vcf \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/joint2/GRCh37_to_hg19.txt
+
+
+# Beagle phasing without reference: 
+mkdir $processed_data/phased_no_ref/
+n=0
+for i in $(seq 1 22);do
+bash $scripts/run_beagle_phasing_without_reference.sh \
+	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.vcf.gz \
+	$processed_data/phased_no_ref/phased_no_ref.chr$i \
+	/srv/persistent/bliu2/tools/beagle/reference/plink.chr$i.GRCh37.map \
+	$i &
+n=$(($n+1))
+if [[ $n -gt 10 ]]; then wait; n=0; fi
+done
+
+# merge vcf:
+for i in {1..22}; do tabix -p vcf $processed_data/phased_no_ref/phased_no_ref.chr$i.vcf.gz; done
+bcftools concat -Oz -o $processed_data/phased_no_ref/phased_no_ref.vcf.gz $processed_data/phased_no_ref/phased_no_ref.chr{1..22}.vcf.gz
+
+
+# 16/06/14
+# setup: 
+scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160614
+processed_data=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160614
+figures=/srv/persistent/bliu2/HCASMC_eQTL/figures/160614
+mkdir $scripts $processed_data $figures
+
+
+# generate read counts: 
+cp htseq_count.sh $scripts/
+bash $scripts/htseq_count.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments \
+	$scripts/htseq.eqtl.sample_list.txt \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/read_count
+
+bash $scripts/htseq_count.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments \
+	$scripts/htseq.dase.sample_list.txt \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/read_count
+
+
+# get read count from RNAseQC output: 
+Rscript $scripts/rnaseqc_count.R \
+	-input=$scripts/rnaseqc_count.sample_dirs.eqtl.txt
+
+Rscript $scripts/rnaseqc_count.R \
+	-input=$scripts/rnaseqc_count.sample_dirs.dase.txt
+
+
+# merge rnaseqc output: 
+Rscript $scripts/merge_rnaseqc_output.R \
+	-input=$scripts/merge_rnaseqc_output.eqtl.txt \
+	-output=$processed_data/rnaseqc.hcasmc_eqtl.reads.gct
+Rscript $scripts/merge_rnaseqc_output.R \
+	-input=$scripts/merge_rnaseqc_output.dase.txt \
+	-output=$processed_data/rnaseqc.hcasmc_dase.reads.gct
+
+
+ # differential expression against fibroblast: 
+ Rscript $scripts/DESeq2.fibroblast.R
+
+
+# 16/06/15: 
+# setup: 
+scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160615
+processed_data=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615
+figures=/srv/persistent/bliu2/HCASMC_eQTL/figures/160615
+mkdir $scripts $processed_data $figures
+
+
+# download GWAS p-values: 
+wget -P $processed_data/gwas http://www.cardiogramplusc4d.org/media/cardiogramplusc4d-consortium/data-downloads/cad.additive.Oct2015.pub.zip
+wget -P $processed_data/gwas http://www.cardiogramplusc4d.org/media/cardiogramplusc4d-consortium/data-downloads/cad.recessive.Oct2015.pub.zip
+wget -P $processed_data/gwas http://www.cardiogramplusc4d.org/media/cardiogramplusc4d-consortium/data-downloads/mi.additive.Oct2015.pub.zip
+
+
+# get top eQTLs from HCASMC:
+Rscript $scripts/get_top_eqtls.hcasmc.R \
+-input=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160530/find_optimum_num_PEER_factors/fastqtl.pc3.peer8.padj.txt \
+-output=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/compare_hcasmc_and_gtex2/HCASMC.txt \
+-fdr=0.1
+
+
+# get top eQTLs from GTEx tissue:
+bash $scripts/run_get_top_eqtls.gtex.sh \
+	346 \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/compare_hcasmc_and_gtex2/
+
+
+# get top GWAS hits:
+Rscript $scripts/get_top_gwas.R \
+-input=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/gwas/cad.add.160614.website.txt \
+-output=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/compare_hcasmc_and_gtex2/GWAS.txt \
+-alpha=1e-7
+
+
+# calculate the LD between GWAS and eQTL hits:
+mkdir /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/LD2
+bash $scripts/calculate_ld.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/compare_hcasmc_and_gtex2 \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/LD2
+
+
+# plot the number of significant LD variants: 
+cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/compare_hcasmc_and_gtex2/*.txt > /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/compare_hcasmc_and_gtex2/combined.txt
+
+
+# run GWAS eQTL LD analysis: 
+fdrs=(0.05 0.1 0.2 0.3)
+alphas=(1e-8 1e-7 1e-6 1e-5)
+
+for fdr in ${fdrs[@]}; do
+for alpha in ${alphas[@]}; do
+echo $fdr 
+echo $alpha
+bash $scripts/run_gwas_eqtl_ld_analysis.sh \
+$fdr \
+$processed_data/compare_hcasmc_and_gtex_fdr${fdr} \
+$alpha \
+$processed_data/LD_fdr${fdr}_alpha${alpha}
+done 
+done 
+
+
+# run GWAS eQTL LD analysis using D': 
+fdrs=(0.05 0.1 0.2 0.3)
+
+for fdr in ${fdrs[@]}; do
+echo $fdr 
+bash $scripts/run_gwas_eqtl_ld_analysis.gwas_dp0.8.sh \
+$fdr \
+$processed_data/compare_hcasmc_and_gtex_fdr${fdr} \
+/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/gwas/CARDIOGRAMplusC4DleadSNPsplusSNPsLD.Dprime0.8 \
+$processed_data/LD_fdr${fdr}_dprime0.8
+done
+
+
+# 16/06/18: 
+# setup: 
+scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160618
+processed_data=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160618
+figures=/srv/persistent/bliu2/HCASMC_eQTL/figures/160618
+mkdir $scripts $processed_data $figures
+
+# format GWAS file for Sherlock:
+bash $scripts/format_gwas_for_sherlock.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/gwas/cad.add.160614.website.txt \
+	$processed_data/sherlock/cad.add.sherlock.txt 
+
+
+# calculate standard deviation (sd) of gene expression:
+Rscript $scripts/calculate_sdY.R \
+	-expression=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160530/combined.filter.norm.rpkm \
+	-covariate=../processed_data/160530/find_optimum_num_PEER_factors_matrixeqtl/covariates.matrixeqtl.pc3.peer8.tsv \
+	-output=$processed_data/rpkm_sd.pc3.peer8.txt
+
+# run coloc: 
+# TBA
+
+# 16/06/24:
+scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160624
+mkdir $scripts
+
+
+# 16/06/27:
+scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160627
+processed_data=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160627
+figures=/srv/persistent/bliu2/HCASMC_eQTL/figures/160627
+mkdir $scripts $processed_data $figures
+
+
+# run leafcutter:
+bash $scripts/run_bam2junc.sh
+python /srv/persistent/bliu2/tools/leafcutter/clustering/leafcutter_cluster.py \
+	-j /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/juncfiles.txt \
+	-r /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/leafcutter/ \
+	-o leafcutter
+
+
+# normalize: 
+Rscript $scripts/normalize.R \
+	-leafcutter=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/leafcutter/leafcutter_perind.counts.gz
+	-figure=$figures/intron_missingness_rate.pdf
+	-output=$processed_data/leafcutter.norm.tsv
+
+
+# transpose splicing levelings: 
+Rscript /srv/persistent/bliu2/HCASMC_eQTL/scripts/160527/transpose_rpkm.R \
+	$processed_data/leafcutter.norm.tsv \
+	$processed_data/leafcutter.norm.t.tsv
+
+
+# find peer factors: 
+bash /srv/persistent/bliu2/HCASMC_eQTL/scripts/160527/GetPeerExtended.sh \
+	$processed_data/leafcutter.norm.t.tsv \
+	$processed_data/
+
+
+# prepare covariates: 
+Rscript /srv/persistent/bliu2/HCASMC_eQTL/scripts/160530/combine_covariates.R \
+	--genotype_pc=../processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv \
+	--peer=$processed_data/factors.tsv \
+	--sample_info=/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx \
+	--output=$processed_data/covariates.fastqtl.tsv \
+	--gender_coding=letter
+bgzip $processed_data/covariates.fastqtl.tsv
+
+
+# convert splicing level to bed format: 
+Rscript $scripts/leafcutter2bed.R \
+	-leafcutter=$processed_data/leafcutter.norm.tsv \
+	-bed=$processed_data/leafcutter.norm.bed
+bgzip $processed_data/leafcutter.norm.bed
+tabix -p bed $processed_data/leafcutter.norm.bed.gz
+
+
+# 16/06/28:
+scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160628/
+processed_data=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160628/
+figures=/srv/persistent/bliu2/HCASMC_eQTL/figures/160628/
+mkdir $scripts $processed_data $figures
+
+
+# filter for biallelic variants:
+wd=/srv/persistent/bliu2/HCASMC_eQTL/data/joint3
+ln /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_variants.pass.vcf.gz /srv/persistent/bliu2/HCASMC_eQTL/data/joint3/recalibrated_variants.pass.vcf.gz
+bcftools view -m2 -M2 -Ov -o $wd/recalibrated_biallelic_variants.pass.vcf $wd/recalibrated_variants.pass.vcf.gz
+
+
+# beagle imputation without reference: 
+bash $scripts/run_beagle_impute.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/joint3/recalibrated_biallelic_variants.pass.vcf \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/joint3/recalibrated_biallelic_variants.beagle
+
+
+# post-imputation beagle QC:
+cat /srv/persistent/bliu2/HCASMC_eQTL/data/joint3/recalibrated_biallelic_variants.beagle.vcf | \
+	grep -v "^#" | \
+	awk 'BEGIN {FS="\t|;|="; OFS="\t"; print "CHROM","POS","AR2","DR2","AF"} {print $1,$2,$9,$11,$13}' > \
+	$processed_data/recalibrated_biallelic_SNP.r2.tsv
+Rscript beagle_QC.R \
+	-input=$processed_data/recalibrated_biallelic_SNP.r2.tsv \
+	-figure_dir=$figures
+
+
+# update sample names:
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/joint3
+ln /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/old_to_new_sample_name.txt /srv/persistent/bliu2/HCASMC_eQTL/data/joint3/old_to_new_sample_name.txt 
+bcftools reheader -s old_to_new_sample_name.txt -o recalibrated_biallelic_variants.beagle.rename.vcf recalibrated_biallelic_variants.beagle.vcf
+
+
+# filter for variants with dosage R2 >= 0.8:
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/joint3
+bcftools view -e 'INFO/DR2<0.8' -o recalibrated_biallelic_variants.beagle.rename.dr2.vcf recalibrated_biallelic_variants.beagle.rename.vcf
+
+
+# hwe filtering:
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/joint3
+ln /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/caucasian_for_hwe.txt /srv/persistent/bliu2/HCASMC_eQTL/data/joint3/caucasian_for_hwe.txt
+grep -v "IMP" recalibrated_biallelic_variants.beagle.rename.dr2.vcf > recalibrated_biallelic_variants.beagle.rename.dr2.2.vcf
+vcftools --vcf recalibrated_biallelic_variants.beagle.rename.dr2.2.vcf --keep caucasian_for_hwe.txt --hardy --out hwe_pval
+rm recalibrated_biallelic_SNP.beagle.rename.dr2.2.vcf
+
+# select sites with hwe > 1e-6:
+tail -n +2 hwe_pval.hwe | awk 'BEGIN{OFS="\t"} {if ($6 >= 1e-6) print $1,$2}' > pass_hwe.txt
+bcftools view -T pass_hwe.txt -Ov -o recalibrated_biallelic_variants.beagle.rename.dr2.hwe.vcf recalibrated_biallelic_variants.beagle.rename.dr2.vcf
+
+
+# filter for MAF > 0.05:
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/joint3
+bcftools view \
+	--min-af 0.05 --max-af 0.95 \
+	-Ov -o recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf \
+	recalibrated_biallelic_variants.beagle.rename.dr2.hwe.vcf
+
+
+# change ID: 
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/joint3
+bcftools annotate -Oz \
+	-o recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf.id.gz \
+	--set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' \
+	recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf
+tabix -p vcf recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf.id.gz
+
+
+# 16/06/29:
+scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160629/
+processed_data=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160629/
+figures=/srv/persistent/bliu2/HCASMC_eQTL/figures/160629/
+mkdir $scripts $processed_data $figures
+
+
+# nominal pass with normalized splicing levels 100kb window: 
+bash $scripts/run_fastqtl.nominal.wrap.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/joint3/recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf.id.gz \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160627/leafcutter.norm.bed.gz \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160627/covariates.fastqtl.tsv.gz \
+	$processed_data/sqtl.nominal.allpairs.normal.1e5.txt \
+	"--normal --window 1e5"
+
+
+# make qqplot and histogram of nominal p-values:
+cp 160530/qqplot_pvalue.R $scripts/qqplot_pvalue.R
+Rscript $scripts/qqplot_pvalue.R \
+	$processed_data/sqtl.nominal.allpairs.txt \
+	$figures/qqplot.normal.1e5.pdf \
+	$figures/histogram.normal.1e5.pdf
+
+
+# adjust p-values:
+cp 160530/fastqtl_pvalue_corrections.R $scripts/fastqtl_nominal_pvalue_corrections.R
+Rscript $scripts/fastqtl_nominal_pvalue_corrections.R $processed_data/sqtl.nominal.allpairs.normal.1e5.txt $processed_data/sqtl.nominal.allpairs.normal.1e5.padj.txt 
+
+
+# diagnose p-value inflation: 
+Rscript /srv/persistent/bliu2/HCASMC_eQTL/scripts/160629/diagnostic_p_value_dist.R
+
+
+# plot number of significant sqtl vs distance: 
+Rscript $scripts/plot_sqtl_vs_distance.R \
+	-sqtl_file=$processed_data/sqtl.nominal.allpairs.normal.1e5.padj.txt \
+	-all_sqtl_fig=$figures/num_sig_sqtl_vs_dist.pdf \
+	-intronic_sqtl_fig=$figures/num_sig_sqtl_within_intron_vs_dist.pdf
+
+
+# visualize bam coverage:
+parallel -j5 "bash $scripts/160629/bam2bw.sh {}" :::: /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/sample_list.txt
+
+
+# 16/07/05:
+# permutation to calibrate model. 
+scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/
+processed_data=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/
+figures=/srv/persistent/bliu2/HCASMC_eQTL/figures/
+mkdir $scripts/160705 $processed_data/160705 $figures/160705
+
+
+# permute individual labels in intron level file:
+Rscript permute_phenotype.R \
+	-input=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160627/leafcutter.norm.bed.gz
+	-output=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160705/leafcutter.norm.perm.bed
+
+
+# run fastqtl on permuted data:
+bgzip /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160705/leafcutter.norm.perm.bed
+tabix -p bed /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160705/leafcutter.norm.perm.bed.gz
+bash $scripts/160629/run_fastqtl.nominal.wrap.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/joint3/recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf.id.gz \
+	$processed_data/160705/leafcutter.norm.perm.bed.gz \
+	$processed_data/160627/covariates.fastqtl.tsv.gz \
+	$processed_data/160705/sqtl.nominal.allpairs.normal.1e5.perm.txt \
+	"--normal --window 1e5"
+
+# make qqplot and histogram: 
+Rscript $scripts/160629/qqplot_pvalue.R \
+	$processed_data/160705/sqtl.nominal.allpairs.normal.1e5.perm.txt \
+	$figures/160705/sqtl.perm.qqplot.pdf \
+	$figures/160705/sqtl.perm.histogram.pdf
+	
+
+
+# run model with only genotype PCs and genders as covariates:
+zcat $processed_data/160627/covariates.fastqtl.tsv.gz | grep -v "InferredCov" | bgzip > $processed_data/160705/covariates.pc.gender.fastqtl.tsv.gz
+
+bash $scripts/160629/run_fastqtl.nominal.wrap.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/joint3/recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf.id.gz \
+	$processed_data/160705/leafcutter.norm.perm.bed.gz \
+	$processed_data/160705/covariates.pc.gender.fastqtl.tsv.gz \
+	$processed_data/160705/sqtl.nominal.allpairs.normal.1e5.perm.noPEER.txt \
+	"--normal --window 1e5"
+
+Rscript $scripts/160629/qqplot_pvalue.R \
+	$processed_data/160705/sqtl.nominal.allpairs.normal.1e5.perm.noPEER.txt \
+	$figures/160705/sqtl.perm.qqplot.noPEER.pdf \
+	$figures/160705/sqtl.perm.histogram.noPEER.pdf
+	
+
+# run model with PEER factor obtained from top 10000 introns: 
+# subset top introns: 
+Rscript get_top_introns.R \
+	-ratio_file=$processed_data/160627/leafcutter.norm.tsv
+	-count_file=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/leafcutter/leafcutter_perind_numers.counts.gz
+	-output_file=$processed_data/160705/leafcutter.norm.top10000.tsv
+
+# transpose splicing levelings: 
+Rscript /srv/persistent/bliu2/HCASMC_eQTL/scripts/160527/transpose_rpkm.R \
+	$processed_data/160705/leafcutter.norm.top10000.tsv \
+	$processed_data/160705/leafcutter.norm.top10000.t.tsv
+
+# find peer factors: 
+bash /srv/persistent/bliu2/HCASMC_eQTL/scripts/160527/GetPeerExtended.sh \
+	$processed_data/160705/leafcutter.norm.top10000.t.tsv \
+	$processed_data/160705/
+
+# prepare covariates: 
+Rscript /srv/persistent/bliu2/HCASMC_eQTL/scripts/160530/combine_covariates.R \
+	--genotype_pc=../processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv \
+	--peer=$processed_data/160705/factors.tsv \
+	--sample_info=/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx \
+	--output=$processed_data/160705/covariates.top10000.fastqtl.tsv \
+	--gender_coding=letter
+bgzip $processed_data/160705/covariates.top10000.fastqtl.tsv
+
+# map sQTLs with PEER factors estimated with top 10000 introns: 
+bash $scripts/160629/run_fastqtl.nominal.wrap.sh \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/joint3/recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf.id.gz \
+	$processed_data/160705/leafcutter.norm.perm.bed.gz \
+	$processed_data/160705/covariates.top10000.fastqtl.tsv.gz \
+	$processed_data/160705/sqtl.nominal.allpairs.normal.1e5.perm.top10000.txt \
+	"--normal --window 1e5"
+
+# make qqplot and histogram:
+Rscript $scripts/160629/qqplot_pvalue.R \
+	$processed_data/160705/sqtl.nominal.allpairs.normal.1e5.perm.top10000.txt \
+	$figures/160705/sqtl.perm.qqplot.top10000.pdf \
+	$figures/160705/sqtl.perm.histogram.top10000.pdf
+
+
+# map sQTLs with 3,6,9,12,15 PEER factors (obtained from top 10000 introns):
+cp $scripts/160530/find_optimal_num_PEER_factors.sh $scripts/160705/find_optimal_num_PEER_factors.sh
+bash $scripts/160705/find_optimal_num_PEER_factors.sh
+
+
+# 160708: 
+# run WASP correction
+mkdir $scripts/160708 $processed_data/160708 $figures/160708
+
+# copy WASP scripts: 
+cp /srv/persistent/bliu2/dase_method/scripts/*WASP* $scripts/160708/
+
+
+# split multiallelic variants into biallelic records: 
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/joint3
+bcftools norm \
+	-f /srv/persistent/bliu2/shared/genomes/hg19/hg19.fa \
+	-m -any \
+	-Oz -o recalibrated_variants.pass.norm.split.vcf.gz \
+	recalibrated_variants.pass.vcf.gz
+
+
+# generate WASP SNP files: 
+python $scripts/160708/generate_WASP_SNP_files.py \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/joint3/recalibrated_variants.pass.norm.split.vcf.gz \
+	$processed_data/160708/WASP_SNPs/
+
+
+# find intersecting SNPs: 
+python $scripts/160708/WASP_find_intersecting_snps.py \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/ \
+	sample_list.txt
+
+
+# WASP remap:
+# construct table with two columns:
+# column 1: genome for pass2 on valk
+# column 2: sample directory on durga
+bash $scripts/160708/WASP_remap.sh
+
+
+
+# 160715:
+# obj: DE between HCASMC and GTEx
+# setup:
+mkdir $scripts/160715 $processed_data/160715 $figures/160715
+
+
+# copy tissue names to HCASMC data directory: 
+mkdir $data/gtex
+cp /users/joed3/GTExCisEqtls/data/gtex.v6p.eqtl.tissues.txt $data/gtex
+
+
+# link gtex v6p eQTL data to HCASMC data directory: 
+ln -s /mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/eqtl_updated_annotation $data/gtex/v6p
+ln -s /mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/sample_annotations/ $data/gtex
+
+
+# subsample GTEx tissues for DE, only include tissues with 
+# more than 52 individuals:
+cp /srv/persistent/bliu2/gtexciseqtls/subsampling/subsample.lists.by.tissue.R $scripts/160715/
+mkdir $data/gtex/v6p/subsampling
+Rscript $scripts/160715/subsample.lists.by.tissue.bl.R -size=10 # create lists of samples to inlude in the subsets.
+Rscript $scripts/160715/subsample.R # actually do the subsampling
+
+
+# merge HCASMC samples into one dataframe: 
+bash $scripts/160715/combine_read_counts.sh
+
+
+# DESeq with one-way ANOVA model:
+cp /srv/persistent/bliu2/HCASMC_eQTL/scripts/160614/DSEeq2.fibroblast.R $scripts/160715/find_housekeeping_genes.R 
+Rscript $scripts/160715/find_housekeeping_genes.R 

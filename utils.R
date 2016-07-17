@@ -1,6 +1,21 @@
 library(stringr)
 library(cowplot)
 library(data.table)
+#------ 160715 -----
+#' decompose a gct count file:
+#' a gct count files' first and second columns are ENSEMBL ID and gene name
+#' @return res (list) with three elements: count, col_data and row_data 
+decompose_gct=function(gct){
+	gct=as.data.frame(gct)
+	row_data=gct[,1:2]
+	col_data=data.frame(sample=colnames(gct[,-c(1,2)]))
+	count=gct[,-c(1,2)]
+	rownames(count)=gct[,1]
+	res=list(count=count,col_data=col_data,row_data=row_data)
+	return(res)
+}
+
+
 #------ 160527 -----
 #' inverse rank normalization
 getInverseNormal <- function(x){

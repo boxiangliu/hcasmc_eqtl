@@ -1,0 +1,9 @@
+# the intronReport file has less lines than rpkm file, 
+# this script determines whether missing lines corresponds to zero reads/rpkm. [Answer=Yes] 
+setwd('/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/102901/report')
+count=fread('102901/102901.metrics.tmp.txt.intronReport.txt',header=T)
+rpkm=fread('genes.rpkm.gct',header=T)
+count2=count[,.(Transcript,Exon_Reads)]
+rpkm2=rpkm[,c('Name','102901'),with=F]
+merged=merge(count2,rpkm2,by.x='Transcript',by.y='Name',all=T)
+all(merged[is.na(merged$Exon_Reads),'102901',with=F]==0)

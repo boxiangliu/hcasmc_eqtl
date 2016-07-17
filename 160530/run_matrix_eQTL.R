@@ -17,15 +17,21 @@ snps_location_file_name=args[2]
 expression_file_name=args[3]
 gene_location_file_name=args[4]
 covariates_file_name=args[5]
-output_dir=args[6]
-
+output_prefix=args[6]
+if (length(args)>6){
+	cis_pval_cutoff=as.numeric(args[7])
+	trans_pval_cutoff=as.numeric(args[8])
+} else {
+	cis_pval_cutoff=1
+	trans_pval_cutoff=0
+}
 # path:
 # SNP_file_name='../processed_data/160516_genotype/chr22.genotype.maf.txt'
 # snps_location_file_name='../processed_data/160516_genotype/chr22.genotype_loc.maf.txt'
 # expression_file_name='../processed_data/031_prepare_matrix_eQTL_expression/expression.txt'
 # gene_location_file_name='../processed_data/031_gen_gene_loc/gene_loc.txt'
 # covariates_file_name=""
-# output_dir='../processed_data/160516_genotype/'
+# output_prefix='../processed_data/160516_genotype/'
 
 
 # specify model:
@@ -33,13 +39,13 @@ useModel = modelLINEAR
 
 
 # Output file name
-output_file_name_cis = paste(output_dir,'cis.txt',sep="");
-output_file_name_tra = paste(output_dir,'trans.txt',sep="");
+output_file_name_cis = paste(output_prefix,'cis.txt',sep="");
+output_file_name_tra = paste(output_prefix,'trans.txt',sep="");
 
 
 # Only associations significant at this level will be saved
-pvOutputThreshold_cis = 1;
-pvOutputThreshold_tra = 0;
+pvOutputThreshold_cis = cis_pval_cutoff;
+pvOutputThreshold_tra = trans_pval_cutoff;
 
 
 # specify that the covariance matrix is a multiple of identity
@@ -108,9 +114,16 @@ noFDRsaveMemory = FALSE);
 
 
 
+
 # make Q-Q plot for cis eqtl: 
-pdf(paste0(output_dir,'/cis_eqtl_qqplot.pdf'))
-qqunif(me$cis$eqtls$pvalue)
-dev.off()
+# pdf(paste0(output_prefix,'cis_eqtl_qqplot.pdf'))
+# qqunif(me$cis$eqtls$pvalue)
+# dev.off()
+
+# make histogram: 
+# pdf(paste0(output_prefix,'cis_eqtl_hist.pdf'))
+# hist(me$cis$eqtls$pvalue,xlab='p-value',main='')
+# dev.off()
+
 
 

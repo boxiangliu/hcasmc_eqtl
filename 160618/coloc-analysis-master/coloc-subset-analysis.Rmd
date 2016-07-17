@@ -1,0 +1,441 @@
+---
+title: "Coloc Analysis"
+author: "Tyler Shimko"
+date: "January 14, 2015"
+output: html_document
+---
+
+# GTEx cis-eQTL Colocalization Analysis
+
+Tyler Shimko
+January 14, 2015
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(data.table)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(GenomicRanges)
+library(broom)
+library(MASS)
+library(doMC)
+library(dplyr)
+```
+
+The Genotype-Tissue Expression (GTEx) project aims to develop and refine the methods used to identify expression quantitative trait loci (eQTL) in different tissues throughout the human body. The goal of my subproject was to estimate the extent to which the eQTLs found for the same gene in different tissues actually share an underlying causal variant. In order to tackle this problem, I used the R package coloc to retrieve posterior probabilities for the hypothesis that a single gene shares underlying causal variants affecting expression level across two tissues.
+
+## Estimating Colocalization
+
+	Given the eQTL mapping for a single gene in two different tissues, the two different tissue-gene pairs can confirm any one, and only one, of the following hypotheses:
+
+- H0: No association with either trait				
+- H1: Association with trait 1, not with trait 2
+- H2: Association with trait 2, not with trait 1
+- H3: Association with trait 1 and trait 2, two independent SNPs
+- H4: Association with trait 1 and trait 2, one shared SNP
+
+	The coloc package contains a function, `coloc.abf()`, that allows all five posterior probabilities to be calculated for a gene in two different tissues. The input for this function includes the p-values for all mapping SNPs in the region, the minor allele frequencies for each SNP, and the number of individuals sampled for the mapping in each tissue. The p-values for each mapping SNP were output from the MatrixeQTL pipeline constructed by Nikki Teran in the Fall of 2015. As of the time of this writing the MatrixeQTL files used for colocalization analysis are located in `/srv/scratch/tshimko/analysis/tmp_subset/`. Nikki downsampled the number of individuals in each tissue to the point at which all tissues would have the same number of individuals for the mapping. Each tissue in the subset population is represented by 57 individuals chosen at random from the caucasian subpopulation for that tissue. The specific individual GTEx IDs used in Nikki’s pipeline can be found in `/srv/scratch/tshimko/subset_lists`. The minor allele frequencies were calculated from the original GTEx VCF file by first selecting the individuals in the population representing a specific tissue, then using the `-freq` flag to calculate allele frequencies. The calculated MAFs for each gene-tissue pair are located in `/srv/scratch/tshimko/meta/MAF_subset/`. 
+	Using the above inputs, the colocalization posterior probabilities can be calculated using for every gene-tissue/tissue combination using a custom R script located at `/srv/scratch/tshimko/analysis/coloc-analysis`. This script binds all of the inputs into a data frame in R and uses dplyr to calculate the probabilities for each hypothesis for each gene between two tissues. The output from this script is stored in `/srv/scratch/tshimko/results/subset`and contains the gene examined, the tissues being compared, the SNP ID for the SNP with the highest posterior probability of shared causality, the SNP’s H4 posterior probability value, the number of SNPs compared in the gene +/- 1Mb region mapped, and the posterior probabilities for all 5 hypotheses outlined above.
+
+## Analysis of eQTL causative SNP colocalization
+
+*Aim: To determine the relationships between tissues with respect to shared causal variants and the relationships of those underlying causal variants to different genomic regions, as definied by epigenetic marks.*
+
+We can get a feel for the prevalence of cross-tissue sharing by looking at the overall percentage of comparisons that coloc has determined likely share an underlying causal variant. This is calculated by first reading in all of the results from the various coloc analyses performed previously. The eQTL results input for these coloc analyses were derived from subsets (57 individuals) for each tissue. The output from each coloc analysis constituted a single file for each pairwise combination of tissues, with one set of posterior probabilities for all of the hypotheses returned for each gene examined. These files were concatenated and serve as the input for this analysis. In this chunk, I read in the results from the coloc comparisons, determine which hypothesis for sharing is most likely (i.e. which posterior probability is greatest), and then add in a binary variable to state whether the hypothesis of interest (H4, both gene/tissue paris likely share an underlying causal variant) is most likely.
+
+```{r message=FALSE}
+# Read in the concatenated coloc output file
+colocs <- fread("/srv/scratch/tshimko/results/subset/all_colocs.txt")
+```
+
+```{r message=FALSE, warning=FALSE}
+# Gather all of the hypothesis columns into one key, value pair and keep only the
+# hypothesis with the highest posterior probability
+
+colocs2 <- gather(colocs, hypothesis, pp, pp.H0:pp.H4)
+colocs2 <- colocs2 %>% group_by(tissue1, tissue2, gene) %>% filter(pp == max(pp))
+
+# registerDoMC(cores = 20)
+# colocs2 <- foreach(i = split(colocs2, f = colocs2$tissue1), .combine = rbind) %dopar% {i %>% group_by(tissue1, tissue2, gene) %>% filter(pp == max(pp))}
+# saveRDS(colocs3, file = "colocs2_parallel.Rds")
+
+# colocs2 <- readRDS("../colocs2_dplyr.Rds")
+
+# Read in the expression file
+expression <- fread("/srv/scratch/tshimko/analysis/ExpressionData/median_expression_subset.txt") %>% data.frame(.)
+
+expression1 <- expression %>% rename_(tissue1 = "tissue", median_rpkm_tissue1 = "median_rpkm")
+expression2 <- expression %>% rename_(tissue2 = "tissue", median_rpkm_tissue2 = "median_rpkm")
+
+# Join in the expression data for both tissue 1 and tissue 2
+colocs2 <- left_join(colocs2, expression1)
+colocs2 <- left_join(colocs2, expression2)
+
+# Read in TSS
+tss <- fread("/srv/scratch/tshimko/analysis/tss_info/tss_positions.txt")
+tss <- rename(tss, chrom = V1, position = V2, TSS_pos = V3, gene = V4) %>% select(gene, TSS_pos)
+
+# Bind in TSS
+colocs2 <- left_join(colocs2, tss)
+
+# Set a boolean stating whether h4 is the most likely for each tissue combiantion, gene pairing
+colocs2$h4 <- ifelse(colocs2$hypothesis == "pp.H4", 1, 0)
+save(colocs2, file = "colocs2.Rda")
+```
+
+## Examining pairwise sharing of causal variants between tissues
+
+We can compare sharing by plotting a heatmap of the proportion of genes sharing an underlying causal variant between any pairwise combination of tissues (mean value of the H4 column).
+
+```{r fig.width=12, fig.height=10}
+# Compute percentage sharing for each pair of tissues
+sharing <- colocs2 %>% group_by(tissue1, tissue2) %>% summarise(percshared = mean(h4))
+
+# Make the matrix to order the variables by heirarchecal clustering
+sharing_mat <- sharing %>% spread(tissue2, percshared) %>% data.frame(.)
+rownames(sharing_mat) <- sharing_mat$tissue1
+sharing_mat <- sharing_mat %>% select(-tissue1) %>% as.matrix(.)
+
+# Cluster on the matrix to set the ordering of the heatmap
+distances <- dist(sharing_mat)
+clustering <- hclust(distances)
+sharing$tissue1 <- factor(sharing$tissue1, levels = unique(sharing$tissue1)[clustering$order])
+sharing$tissue2 <- factor(sharing$tissue2, levels = unique(sharing$tissue1)[clustering$order])
+
+# Plot the heatmap
+ggplot(sharing, aes(tissue2, tissue1)) +
+  geom_tile(aes(fill = percshared)) +
+  scale_fill_gradient(name = "Proportion\nof genes sharing\ncausal variant", low = "yellow", high = "blue") +
+  theme(axis.text.x=element_text(angle=-45, hjust = 0)) +
+  xlab("Tissue 2") +
+  ylab("Tissue 1") + 
+  ggtitle("Percentage of Causal Variant Sharing\nfor all Pairwise Tissue Comparisons")
+```
+
+In the heatmap, we can see the formation of several different clusters. Most notably are the brain cluster, in the upper right hand corner of the heatmap, and the fact that the whole blood sample is most different from all other tissues sampled.
+
+### Sharing is inversely correlated with expression level in both tissues
+
+If we plot the same heatmap, but filter out any comparison where the median RPKM value for either tissue is below 5, we see that the the proportion of sharing between all of the tissues decreases.
+
+```{r fig.width=12, fig.height=10}
+plot_rpkm_cutoff <- function(cutoff) {
+  # Calculate cross-tissue sharing
+  sharing <- as.data.table(colocs2)
+  sharing2 <- sharing[median_rpkm_tissue1 > cutoff]
+  sharing3 <- sharing2[median_rpkm_tissue2 > cutoff]
+  sharing4 <- sharing3[, mean(h4), by = "tissue1,tissue2"] %>% rename_(percshared = "V1") %>% as.data.frame(.)
+  
+  # Make the matrix to order the variables by heirarchecal clustering
+  sharing_mat <- sharing4 %>% spread(tissue2, percshared) %>% data.frame(.)
+  rownames(sharing_mat) <- sharing_mat$tissue1
+  sharing_mat <- sharing_mat %>% select(-tissue1) %>% as.matrix(.)
+  
+  # Cluster on the matrix to set the ordering of the heatmap
+  distances <- dist(sharing_mat)
+  clustering <- hclust(distances)
+  sharing4$tissue1 <- factor(sharing4$tissue1, levels = unique(sharing4$tissue1)[clustering$order])
+  sharing4$tissue2 <- factor(sharing4$tissue2, levels = unique(sharing4$tissue1)[clustering$order])
+  
+  # Plot the heatmap
+  ggplot(sharing4, aes(tissue2, tissue1)) +
+    geom_tile(aes(fill = percshared)) +
+    scale_fill_gradient(low = "yellow", high = "blue", limits = c(0, .018)) +
+    theme(axis.text.x=element_text(angle=-45, hjust = 0)) +
+    xlab("Tissue 2") +
+    ylab("Tissue 1") + 
+    ggtitle(paste0("Percentage of Causal Variant Sharing\nfor all Pairwise Tissue Comparisons\nMedian RPKM Threshold = ", cutoff))
+}
+
+plot_rpkm_cutoff(5)
+```
+
+By fitting a linear model for the `h4` variable (boolean indicating sharing at the gene level) to the expression in both compared tissues as well as the interaction term between the two, we can see that this relationship is, in fact significant.
+
+```{r}
+h4_by_expression <- lm(h4~median_rpkm_tissue1*median_rpkm_tissue2, data = colocs2)
+summary(h4_by_expression)
+```
+
+Independently, the median expression levels in both tissue 1 and tissue 2 are significant; however, the interaction between these two terms is not. Additionally, the low R^2 value of this model indicates that the expression levels can only explain a tiny proportion of the variablility in sharing.
+
+## Epigenetic marks and their relationship to causal variant shring
+
+To examine whether specific epigenetic marks (annotations from the Roadmap Epigenomics project) are associated with increased sharing, we will include in the dataset the Roadmap annotations for both the SNPs with the maximum -log10(p) as well as the SNPs with the highest H4 posterior probability. We will then build a model to determine whether the distibution of these annotations has any predictive power over whether two tissues are likely to be shared.
+
+```{r message=FALSE, warning=FALSE}
+# Read in the eQTL data, to get the snp with the max -log10(p)
+eqtl <- fread("/srv/scratch/tshimko/analysis/subset_eGenes/all_eQTL.txt") %>%
+  as.data.frame(.)
+
+# Make 2 data frames, one for each tissue so the positions of the peak
+# SNPs can be accounted for in each tissue
+eqtl_tissue1 <- eqtl %>% dplyr::rename(tissue1 = tissue, snp = snps) %>% dplyr::select(tissue1, gene, snp)
+eqtl_tissue2 <- eqtl %>% dplyr::rename(tissue2 = tissue, snp = snps) %>% dplyr::select(tissue2, gene, snp)
+
+# Read in and tidy up the tissue matching file from Roadmap
+roadmap_tissues <- read.csv("/srv/scratch/tshimko/roadmap/RoadmapTissueMatch.csv", stringsAsFactors=FALSE)
+roadmap_tissues1 <- roadmap_tissues %>% separate(GTExTissue, into = paste0("tissue", 1:3), sep = ", ") %>% 
+  gather(tissue_no, GTExTissue, tissue1:tissue3) %>% filter(relevant == 1) %>% select(ERID, GTExTissue) %>%
+  rename(tissue1 = GTExTissue, ERID1 = ERID)
+roadmap_tissues2 <- roadmap_tissues1 %>% rename(tissue2 = tissue1, ERID2 = ERID1)
+
+# Join in the max -log10(p) SNPs from the eQTL data set
+# This leaves us with 3 snps, the one with the highest H4 posterior,
+# and the max -log10(p) over the range in each tissue
+all_shared_with_snps <- left_join(colocs2, eqtl_tissue1, by = c("tissue1", "gene"))
+all_shared_with_snps <- left_join(all_shared_with_snps, eqtl_tissue2, by = c("tissue2", "gene"))
+all_shared_with_snps <- left_join(all_shared_with_snps, roadmap_tissues1, by = "tissue1")
+all_shared_with_snps <- left_join(all_shared_with_snps, roadmap_tissues2, by = "tissue2")
+
+# Expand the snp names to get information about the prosition and size
+expanded <- all_shared_with_snps %>%
+  separate(snp.x, into = c("chrom.x", "pos.x", "ref.x", "alt.x", "junk.x"), sep = "_") %>%
+  separate(snp.y, into = c("chrom.y", "pos.y", "ref.y", "alt.y", "junk.y"), sep = "_") %>%
+  separate(snp, into = c("chrom.z", "pos.z", "ref.z", "alt.z", "junk.z"), sep = "_") %>%
+  dplyr::select(-junk.x, -junk.y, -junk.z)
+
+# Remove rows for which the chromosome is NA (not in one of the joined data sets)
+all_expanded <- expanded %>% filter(!is.na(chrom.x), !is.na(chrom.y), !is.na(chrom.z))
+
+# Get a column for the distance between the peak SNPs in the two tissues 
+all_expanded <- all_expanded %>% dplyr::mutate(peak_dist = abs(as.numeric(pos.y)-as.numeric(pos.z)),
+                                               dist_to_tss1 = abs(as.numeric(pos.y)-as.numeric(TSS_pos)),
+                                               dist_to_tss2 = abs(as.numeric(pos.z)-as.numeric(TSS_pos)))
+
+# Summarize the distances between the peak p-value in the two mappings
+summary(all_expanded$peak_dist)
+```
+
+Most of the peak SNPs between any two combinations of tissues are relatively close (under 100 kb). However, the maximum distance between any two peak SNPs is substantial (1.982 Mb).
+
+```{r}
+# Generate linear models, modeling sharing by the distance between the peaks
+summary(lm(h4~peak_dist, data = all_expanded))
+summary(glm(h4~peak_dist, data = all_expanded, family = "binomial"))
+```
+
+As expected, sharing can be modeled by the distance between the two peak SNPs. If the peak SNPs are farther apart, the two gene/tissue combinations are less likely to be called colocalized by coloc. However, this model only explains 9% of the variance.
+
+```{r message=FALSE, warning=FALSE}
+# Read in the 25 state features from the Roadmap project
+features <- fread("/srv/scratch/tshimko/roadmap/25state/roadmap_features_tissue.bed")
+
+# Transpose all of the features in genomic ranges
+features <- GRanges(seqnames = features$V1,
+                    ranges = IRanges(start = features$V2,
+                                     end = features$V3),
+                    type = features$V4,
+                    tissue = features$V5)
+
+# Transpose all of the eQTL SNPs into genomic ranges
+shared_snps_max_tissue1 <- GRanges(seqnames = paste0("chr", all_expanded$chrom.y),
+                       ranges = IRanges(start = as.numeric(all_expanded$pos.y),
+                                        width = sapply(all_expanded$alt.y, str_length)),
+                       gene = all_expanded$gene,
+                       tissue1 = all_expanded$tissue1,
+                       tissue2 = all_expanded$tissue2,
+                       ref = all_expanded$ref.y,
+                       alt = all_expanded$alt.y,
+                       h4 = all_expanded$h4,
+                       median_rpkm_tissue1 = all_expanded$median_rpkm_tissue1,
+                       median_rpkm_tissue2 = all_expanded$median_rpkm_tissue2,
+                       peak_dist = all_expanded$peak_dist,
+                       dist_to_tss1 = all_expanded$dist_to_tss1,
+                       dist_to_tss2 = all_expanded$dist_to_tss2,
+                       ERID1 = all_expanded$ERID1,
+                       ERID2 = all_expanded$ERID2)
+
+shared_snps_max_tissue2 <- GRanges(seqnames = paste0("chr", all_expanded$chrom.z),
+                       ranges = IRanges(start = as.numeric(all_expanded$pos.z),
+                                        width = sapply(all_expanded$alt.z, str_length)),
+                       gene = all_expanded$gene,
+                       tissue1 = all_expanded$tissue1,
+                       tissue2 = all_expanded$tissue2,
+                       ref = all_expanded$ref.z,
+                       alt = all_expanded$alt.z,
+                       h4 = all_expanded$h4,
+                       median_rpkm_tissue1 = all_expanded$median_rpkm_tissue1,
+                       median_rpkm_tissue2 = all_expanded$median_rpkm_tissue2,
+                       peak_dist = all_expanded$peak_dist,
+                       dist_to_tss1 = all_expanded$dist_to_tss1,
+                       dist_to_tss2 = all_expanded$dist_to_tss2,
+                       ERID1 = all_expanded$ERID1,
+                       ERID2 = all_expanded$ERID2)
+
+# Transpose all of the max H4 posterior SNPs into genomic ranges
+shared_snps_coloc <- GRanges(seqnames = paste0("chr", all_expanded$chrom.x),
+                       ranges = IRanges(start = as.numeric(all_expanded$pos.x),
+                                        width = sapply(all_expanded$alt.x, str_length)),
+                       gene = all_expanded$gene,
+                       tissue1 = all_expanded$tissue1,
+                       tissue2 = all_expanded$tissue2,
+                       ref = all_expanded$ref.x,
+                       alt = all_expanded$alt.x,
+                       snp.pp.H4 = all_expanded$snp.pp.H4,
+                       nsnps = all_expanded$nsnps,
+                       h4 = all_expanded$h4,
+                       median_rpkm_tissue1 = all_expanded$median_rpkm_tissue1,
+                       median_rpkm_tissue2 = all_expanded$median_rpkm_tissue2,
+                       peak_dist = all_expanded$peak_dist,
+                       dist_to_tss1 = all_expanded$dist_to_tss1,
+                       dist_to_tss2 = all_expanded$dist_to_tss2,
+                       ERID1 = all_expanded$ERID1,
+                       ERID2 = all_expanded$ERID2)
+
+
+# Get the summary of all of the posterior probabilities for sharing
+# of the individual SNPs
+summary(all_expanded$snp.pp.H4)
+
+# Get the summary of all of the posterior probabilities for sharing
+# of the individual SNPs where the genes in the two tissues are likely
+# to share an underlying causal SNP
+summary(all_expanded$snp.pp.H4[all_expanded$h4 == 1])
+```
+
+I now have genomic ranges objects for all of the max posterior probability H4 SNPs as well as the max eQTL SNPs for both tissue 1 and tissue 2. However, since the posterior probability distribution for H4 for the individual SNPs is skewed low, I will not explore the annotations for these SNPs any further. I will continue by examining the distributions of annotations assigned by the calls in the Roadmap project and their relationship to cross-tissue sharing. 
+
+```{r}
+# Merge the max -log10(p) SNPs to see which genomic features were hit
+max_snps_in_features_tissue1 <- subsetByOverlaps(shared_snps_max_tissue1, features)
+hits <- findOverlaps(shared_snps_max_tissue1, features) %>% as.data.frame(.)
+idx <- hits$subjectHits
+values <- as.character(mcols(features)$type[idx])
+hits <- data.frame(hits, feature = values)
+hits <- hits %>% group_by(queryHits, feature) %>% summarize(count = n()) %>% spread(feature, count, fill = 0) %>% select(-queryHits)
+mcols(max_snps_in_features_tissue1) <- data.frame(mcols(max_snps_in_features_tissue1), hits)
+
+max_snps_in_features_tissue2 <- subsetByOverlaps(shared_snps_max_tissue2, features)
+hits <- findOverlaps(shared_snps_max_tissue2, features) %>% as.data.frame(.)
+idx <- hits$subjectHits
+values <- as.character(mcols(features)$type[idx])
+hits <- data.frame(hits, feature = values)
+hits <- hits %>% group_by(queryHits, feature) %>% summarize(count = n()) %>% spread(feature, count, fill = 0) %>% select(-queryHits)
+mcols(max_snps_in_features_tissue2) <- data.frame(mcols(max_snps_in_features_tissue2), hits)
+
+features_tissue1 <- mcols(max_snps_in_features_tissue1) %>% as.data.frame(.) %>% 
+  select(gene,
+         tissue1,
+         tissue2,
+         h4,
+         peak_dist,
+         dist_to_tss1,
+         dist_to_tss2,
+         median_rpkm_tissue1,
+         median_rpkm_tissue2,
+         10:34)
+
+features_tissue2 <- mcols(max_snps_in_features_tissue2) %>% as.data.frame(.) %>% 
+  select(gene,
+         tissue1,
+         tissue2,
+         h4,
+         peak_dist,
+         dist_to_tss1,
+         dist_to_tss2,
+         median_rpkm_tissue1,
+         median_rpkm_tissue2,
+         10:34)
+
+all_annotated <- inner_join(features_tissue1, features_tissue2, by = c("gene",
+                                                                       "tissue1",
+                                                                       "tissue2",
+                                                                       "h4",
+                                                                       "median_rpkm_tissue1",
+                                                                       "median_rpkm_tissue2",
+                                                                       "peak_dist",
+                                                                       "dist_to_tss1",
+                                                                       "dist_to_tss2"))
+
+annotated_variables <- all_annotated %>% select(4:ncol(all_annotated))
+annotated_model <- lm(h4~., data = annotated_variables)
+summary(annotated_model)
+
+tidy_model <- broom::tidy(annotated_model)
+kable(tidy_model)
+
+tidy_sig <- tidy_model %>% filter(p.value < .05)
+kable(tidy_sig)
+
+# Add a term for the correlation between expression values
+correlations <- all_annotated %>% group_by(tissue1, tissue2) %>% summarize(cor = cor(median_rpkm_tissue1, median_rpkm_tissue2))
+
+all_annotated_cor <- left_join(all_annotated, correlations) %>% mutate(h4adj = h4/cor)
+annotated_variables <- all_annotated_cor %>% select(5:57, 59)
+annotated_model <- lm(h4adj~., data = annotated_variables)
+summary(annotated_model)
+```
+
+Next, examined the same relationships for the matched annotations. Matches for the tissue types were assigned by Joe Davis. 
+
+```{r}
+# Tissue-matched annotations for SNP in tissue 1
+max_snps_in_features_tissue1 <- subsetByOverlaps(shared_snps_max_tissue1, features)
+mcols(max_snps_in_features_tissue1)$row <- 1:nrow(mcols(max_snps_in_features_tissue1))
+hits <- findOverlaps(shared_snps_max_tissue1, features) %>% as.data.frame(.) %>% rename(row = queryHits)
+idx <- hits$subjectHits
+feature_tissue1 <- as.character(mcols(features)$type[idx])
+ERID1 <- as.character(mcols(features)$tissue[idx])
+hits <- data.frame(hits, ERID1, feature_tissue1) %>% select(row, ERID1, feature_tissue1)
+max_snps_in_features_tissue1 <- as.data.frame(mcols(max_snps_in_features_tissue1))
+max_snps_in_features_matched_tissue1 <- inner_join(max_snps_in_features_tissue1, hits, by = c("row", "ERID1"))
+
+# Tissue-matched annotations for SNP in tissue 2
+max_snps_in_features_tissue2 <- subsetByOverlaps(shared_snps_max_tissue2, features)
+mcols(max_snps_in_features_tissue2)$row <- 1:nrow(mcols(max_snps_in_features_tissue2))
+hits <- findOverlaps(shared_snps_max_tissue2, features) %>% as.data.frame(.) %>% rename(row = queryHits)
+idx <- hits$subjectHits
+feature_tissue2 <- as.character(mcols(features)$type[idx])
+ERID2 <- as.character(mcols(features)$tissue[idx])
+hits <- data.frame(hits, ERID2, feature_tissue2) %>% select(row, ERID2, feature_tissue2)
+max_snps_in_features_tissue2 <- as.data.frame(mcols(max_snps_in_features_tissue2))
+max_snps_in_features_matched_tissue2 <- inner_join(max_snps_in_features_tissue2, hits, by = c("row", "ERID2"))
+
+matched_annotations <- inner_join(max_snps_in_features_matched_tissue1, max_snps_in_features_matched_tissue2)
+correlations <- matched_annotations %>% group_by(tissue1, tissue2) %>% summarize(cor = cor(median_rpkm_tissue1, median_rpkm_tissue2))
+matched_annotations <- left_join(matched_annotations, correlations)
+matched_annotations$same <- with(matched_annotations, feature_tissue1 == feature_tissue2)
+```
+
+Finally, I fit a model that in which the fraction of sharing (mean H4 across all tissues) is calculated for each gene. Then, using the genotype annotation for SNP with the highest -log10(p), I implement a simple voting system and each gene-H4 pair is assigned the most common annotation for that pairing. I then fit a linear of the sharing (mean H4) ~ the feature annotations. I then visualize this by plotting the intercept term as a vertical red line, blue lines connecting the estimates for the coeffecient of each annotation to the intercept, and asterisks to denote which of the terms are significant.
+
+```{r kable}
+vote <- function(vec) {
+  df <- as.data.frame(table(vec))
+  winner <- df[which.max(df$Freq), 1]
+  return(winner)
+}
+
+test2 <- matched_annotations %>% group_by(gene) %>% summarize(h4 = mean(h4),
+                                                     feature = vote(feature_tissue1))
+
+model <- tidy(lm(test2$h4~test2$feature))
+
+print(model)
+
+model$term[1] <- "Intercept"
+model$term[2:25] <- sapply(model$term[2:25], function(x) {
+  strsplit(x, "_")[[1]][2]
+})
+
+model$sig <- ifelse(model$p.value < .05, '*', '')
+
+model$term <- factor(model$term, levels = model$term[order(model$estimate)])
+
+model_noint <- model %>% filter(term != "Intercept")
+
+intercept <- model[model$term == "Intercept", "estimate"]
+
+ggplot(data = model_noint, aes(x = term, y = intercept + estimate)) +
+  geom_hline(yintercept = intercept) +
+  geom_segment(aes(x = term, y = intercept, xend = term, yend = intercept + estimate), color = 'red') +
+  geom_point() +
+  geom_text(aes(x = term, y = intercept + estimate + .011, label = sig), color = 'blue', size = 10) +
+  ylab("Estimate") +
+  xlab("Roadmap Annotation") +
+  ggtitle("Sharing Between Tissues on a Per Gene Basis\nModeled by Most Common Roadmap Annotation") +
+  coord_flip()
+```
+
+In general, enhancer-related annotations decrease the mean H4 while promoter-related terms increase the mean H4. However, only the terms with the most positive coeffecient estimates are significant.

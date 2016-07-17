@@ -8,10 +8,15 @@
 library(cowplot)
 library(data.table)
 library(dplyr)
+library(R.utils)
 
 # paths:
-input_file='../processed_data/160515_beagle_QC/recalibrated_biallelic_SNP.r2.tsv'
-figure_path='../figures/160515_beagle_QC/'
+args=commandArgs(T,T)
+input_file=args$input
+figure_path=args$figure_dir
+
+# input_file='../processed_data/160515_beagle_QC/recalibrated_biallelic_SNP.r2.tsv'
+# figure_path='../figures/160515_beagle_QC/'
 
 # read input: 
 input=fread(input_file,header=T)
