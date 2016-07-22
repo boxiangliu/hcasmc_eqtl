@@ -39,7 +39,7 @@ def merge(bams, merged):
 	print "[ merge ] %s finished."%merged
 
 def sort(bam):
-	cmd = "samtools sort %s %s"%(bam, bam.replace('bam','sorted'))
+	cmd = "samtools sort -o %s %s"%(bam.replace('bam','sorted.bam'),bam)
 	call(cmd)
 	print "[ sort ] %s finished."%bam
 

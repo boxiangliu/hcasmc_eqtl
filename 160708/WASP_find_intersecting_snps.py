@@ -28,7 +28,7 @@ def WASPfindIntersectingSNPs(bam, SNP_file_directory='/srv/persistent/bliu2/HCAS
 	else: 
 		mode = ''
 
-	cmd = 'python %s/find_intersecting_snps.py %s %s %s'%(WASP_mapping, mode, bam, SNP_file_directory)
+	cmd = 'python %s/find_intersecting_snps.py %s %s %s > %s.log'%(WASP_mapping, mode, bam, SNP_file_directory, bam)
 	call(cmd)
 
 	print "[ WASPfindIntersectingSNPs ] %s finished."%bam
@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
 	# find intersecting snps: 
 	pool = Pool(processes = len(sample_dirs))
-	bams = pool.map(copy, sample_dirs, 4) # from secondPass.Aligned.sortedByCoord.out.bam to wasp.bam
-	pool.map(WASPfindIntersectingSNPs, bams, 4)
+	bams = pool.map(copy, sample_dirs) # from secondPass.Aligned.sortedByCoord.out.bam to wasp.bam
+	pool.map(WASPfindIntersectingSNPs, bams)
 
 	reportDone()

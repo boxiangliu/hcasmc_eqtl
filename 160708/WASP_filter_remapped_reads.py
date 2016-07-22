@@ -1,4 +1,6 @@
 from multiprocessing import Pool
+import sys
+sys.path.append('/srv/persistent/bliu2/HCASMC_eQTL/scripts')
 from utils import *
 
 def WASPfilterRemappedReads(params, paired_end = True):
@@ -40,6 +42,6 @@ if __name__ == '__main__':
 	# filter remapped reads:
 	params = [("%s/%s"%(sample_dir,'wasp.to.remap.bam'),"%s/%s"%(sample_dir,'wasp.remapped.Aligned.out.bam')) for sample_dir in sample_dirs]
 	pool = Pool(processes = len(sample_dirs))
-	pool.map(WASPfilterRemappedReads, params)
+	pool.map(WASPfilterRemappedReads, params, 3)
 
 	reportDone()

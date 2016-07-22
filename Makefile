@@ -2016,9 +2016,14 @@ Rscript $scripts/plot_sqtl_vs_distance.R \
 	-intronic_sqtl_fig=$figures/num_sig_sqtl_within_intron_vs_dist.pdf
 
 
-# visualize bam coverage:
+# create bedgraph and bigwig files:
 parallel -j5 "bash $scripts/160629/bam2bw.sh {}" :::: /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/sample_list.txt
 
+
+# merge all bigwig files: 
+/software/ucsc_tools/3.0.9/bigWigMerge \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/bigwig/*/Aligned.out.sorted.rg.uniq.bw \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/bigwig/merged.bedGraph 
 
 # 16/07/05:
 # permutation to calibrate model. 
@@ -2142,6 +2147,10 @@ python $scripts/160708/WASP_find_intersecting_snps.py \
 	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/ \
 	sample_list.txt
 
+# delete this after WASP finishes: 
+# python $scripts/160708/WASP_find_intersecting_snps.py \
+# 	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/ \
+# 	sample_list.2.txt
 
 # WASP remap:
 # construct table with two columns:
@@ -2149,6 +2158,9 @@ python $scripts/160708/WASP_find_intersecting_snps.py \
 # column 2: sample directory on durga
 bash $scripts/160708/WASP_remap.sh
 
+
+# WASP filter remapped reads: 
+python $scripts/160708/WASP_filter_remapped_reads.py $data/rnaseq2/alignments sample_list.2.txt 
 
 
 # 160715:
@@ -2167,12 +2179,22 @@ ln -s /mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/eqt
 ln -s /mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/sample_annotations/ $data/gtex
 
 
-# subsample GTEx tissues for DE, only include tissues with 
-# more than 52 individuals:
+# subsample GTEx tissues for DE:
 cp /srv/persistent/bliu2/gtexciseqtls/subsampling/subsample.lists.by.tissue.R $scripts/160715/
 mkdir $data/gtex/v6p/subsampling
 Rscript $scripts/160715/subsample.lists.by.tissue.bl.R -size=10 # create lists of samples to inlude in the subsets.
-Rscript $scripts/160715/subsample.R # actually do the subsampling
+
+# perform subsampling on read counts: 
+Rscript $scripts/160715/subsample.R \
+	-input='/srv/persistent/bliu2/HCASMC_eQTL/data/gtex/v6p/v6p_All_Tissues_read_counts_FOR_QC_ONLY.gct' \
+	-pattern='*.10.txt' \
+	-output_suffix='count' # actually do the subsampling
+
+# perform subsampling on rpkm:
+Rscript $scripts/160715/subsample.R \
+	-input='/srv/persistent/bliu2/HCASMC_eQTL/data/gtex/v6p/v6p_All_Tissues_gene_rpkm_FOR_QC_ONLY.gct' \
+	-pattern='*.10.txt' \
+	-output_suffix='rpkm'
 
 
 # merge HCASMC samples into one dataframe: 

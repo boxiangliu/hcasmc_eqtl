@@ -16,3 +16,7 @@ Rscript $scripts/160708/convert_excel_to_txt.R \
 
 # run STAR: 
 bash $scripts/160708/WASP_remap.core.sh /srv/persistent/bliu2/HCASMC_eQTL/scripts/160708/WASP_remap.sample_list.4.txt
+
+# rerun for failed samples: 
+grep -e "1020301" -e "1448" -e "2105" -e "3003" /srv/persistent/bliu2/HCASMC_eQTL/scripts/160708/WASP_remap.sample_list.4.txt > /srv/persistent/bliu2/HCASMC_eQTL/scripts/160708/WASP_remap.sample_list.5.txt
+bash $scripts/160708/WASP_remap.core.sh /srv/persistent/bliu2/HCASMC_eQTL/scripts/160708/WASP_remap.sample_list.5.txt

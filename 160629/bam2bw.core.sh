@@ -15,7 +15,7 @@ CHROMS='/srv/persistent/bliu2/shared/genomes/hg19.chrom.sizes'
 
 # variables:
 multiplier=`echo "(1 / $DEPTH) * 1000000" | bc -l`
-bedgraph=$OUT_PREFIX.begGraph
+bedgraph=$OUT_PREFIX.bedGraph
 bigwig=$OUT_PREFIX.bw
 
 
