@@ -15,14 +15,14 @@ def WASPfilterRemappedReads(params, paired_end = True):
 
 	output_bam = to_remap_bam.replace('to.remap.bam','remap.keep.bam')
 	to_remap_num = to_remap_bam.replace('to.remap.bam',"to.remap.num.gz")
-	cmd = "python %s/filter_remapped_reads.py %s %s %s %s %s"%(WASP_mapping, mode, to_remap_bam, remapped_bam, output_bam, to_remap_num)
-	call(cmd)
+	# cmd = "python %s/filter_remapped_reads.py %s %s %s %s %s"%(WASP_mapping, mode, to_remap_bam, remapped_bam, output_bam, to_remap_num)
+	# call(cmd)
 
 	# merge, sort and index:		
 	keep_bam = to_remap_bam.replace('to.remap.bam','keep.bam')
 	remap_keep_bam = to_remap_bam.replace('to.remap.bam','remap.keep.bam')
 	merged_bam =  to_remap_bam.replace('to.remap.bam','keep.merged.bam')
-	merge([keep_bam, remap_keep_bam], merged_bam)
+	# merge([keep_bam, remap_keep_bam], merged_bam)
 	
 	sort(merged_bam)
 

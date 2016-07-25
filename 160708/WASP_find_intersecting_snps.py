@@ -28,7 +28,7 @@ def WASPfindIntersectingSNPs(bam, SNP_file_directory='/srv/persistent/bliu2/HCAS
 	else: 
 		mode = ''
 
-	cmd = 'python %s/find_intersecting_snps.py %s %s %s > %s.log'%(WASP_mapping, mode, bam, SNP_file_directory, bam)
+	cmd = 'python %s/find_intersecting_snps.py %s %s %s 2> %s.log'%(WASP_mapping, mode, bam, SNP_file_directory, bam)
 	call(cmd)
 
 	print "[ WASPfindIntersectingSNPs ] %s finished."%bam

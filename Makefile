@@ -1863,7 +1863,8 @@ mkdir $scripts $processed_data $figures
 
 
 # run leafcutter:
-bash $scripts/run_bam2junc.sh
+bash $scripts/run_bam2junc.sh 
+
 python /srv/persistent/bliu2/tools/leafcutter/clustering/leafcutter_cluster.py \
 	-j /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/juncfiles.txt \
 	-r /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/leafcutter/ \
@@ -2021,9 +2022,8 @@ parallel -j5 "bash $scripts/160629/bam2bw.sh {}" :::: /srv/persistent/bliu2/HCAS
 
 
 # merge all bigwig files: 
-/software/ucsc_tools/3.0.9/bigWigMerge \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/bigwig/*/Aligned.out.sorted.rg.uniq.bw \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/bigwig/merged.bedGraph 
+bash merge_bigwig.sh 
+
 
 # 16/07/05:
 # permutation to calibrate model. 
@@ -2147,10 +2147,6 @@ python $scripts/160708/WASP_find_intersecting_snps.py \
 	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/ \
 	sample_list.txt
 
-# delete this after WASP finishes: 
-# python $scripts/160708/WASP_find_intersecting_snps.py \
-# 	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/ \
-# 	sample_list.2.txt
 
 # WASP remap:
 # construct table with two columns:
@@ -2160,7 +2156,11 @@ bash $scripts/160708/WASP_remap.sh
 
 
 # WASP filter remapped reads: 
-python $scripts/160708/WASP_filter_remapped_reads.py $data/rnaseq2/alignments sample_list.2.txt 
+python $scripts/160708/WASP_filter_remapped_reads.py $data/rnaseq2/alignments sample_list.txt 
+
+
+# clean up: 
+bash $scripts/160708/cleanup.sh
 
 
 # 160715:
@@ -2203,4 +2203,16 @@ bash $scripts/160715/combine_read_counts.sh
 
 # DESeq with one-way ANOVA model:
 cp /srv/persistent/bliu2/HCASMC_eQTL/scripts/160614/DSEeq2.fibroblast.R $scripts/160715/find_housekeeping_genes.R 
-Rscript $scripts/160715/find_housekeeping_genes.R 
+Rscript $scripts/160715/find_housekeeping_genes.R
+
+
+
+#### 160724:
+# obj: re-map sQTL using WASP files:
+# setup: 
+mkdir $scripts/160724 $figures/160724 $processed_data/160724
+
+# run leafcutter: 
+cp $scripts/160627/run_bam2junc.sh $scripts/160724/
+
+bash $scripts/160724/run_bam2junc.sh

@@ -37,7 +37,7 @@ master_row_data=res$row_data
 
 
 gtex_files=list.files('/srv/persistent/bliu2/HCASMC_eQTL/data/gtex/v6p/subsampling',pattern='*.10.count',recursive=T,full.name=T)
-for (gtex_file in gtex_files){
+for (gtex_file in gtex_files[1:2]){
 	tissue=str_replace(basename(gtex_file),'_subsample.10.count','')
 	message(tissue)
 	count=read.table(gtex_file,header=T,check.names=F)
@@ -66,7 +66,7 @@ for (gtex_file in gtex_files){
 	master_col_data=rbind(master_col_data,col_data)
 	master_count=data.frame(master_count,count,check.names=F)
 }
-
+head(master_count)
 
 # create DESeq dataset: 
 dds=DESeqDataSetFromMatrix(countData = as.matrix(master_count),colData=master_col_data,design=~tissue)
@@ -284,7 +284,7 @@ write.table(hk_genes,'/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160715/hk
 # plot a housekeeping gene: 
 hk_gene_exp=master_count[rownames(master_count)==as.character(hk_genes[1,1]),]
 stopifnot(master_col_data$sample==colnames(hk_gene_exp))
-pdf('/srv/persistent/bliu2/HCASMC_eQTL/figures/160715/read_counts_for_hk_gene.pdf')
+pdf('/srv/persistent/bliu2/HCASMC_eQTL/figures/160715/read_counts_for_hk_gene.txt')
 to_plot=data.frame(tissue=master_col_data$tissue,rpkm=unlist(hk_gene_exp))
 ggplot(to_plot,aes(tissue,rpkm))+geom_boxplot()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
 dev.off()

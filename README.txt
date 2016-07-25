@@ -8,7 +8,7 @@
 - 160614 differential expression
 - 160615 GWAS overlap 
 - 160618 colocalization
-- 
+- 160627 sQTL
 
 
 
@@ -201,6 +201,14 @@ beagle_QC.R
 # 160708
 # WASP correction
 
+
+#### splicing QTLs (sQTLs)
+#### 160629
+(TBD) Leafcutter sQTL analysis
+One of the top sIntrons for the SMAD3 loci is de novo. We visualized the loci by displaying RNAseq coverage summed across all samples on UCSC browser (figures/160629/smad3_loci_denovo_intron_RNAseq_coverage.png). The de novo intron is supported by some, but not much, RNAseq coverage. One sample, 1020301, does not show coverage in support of the de novo intron. One could suspect that this sample possesses a variant that favors against this intron. 
+
+
+
 #### HCASMC specific genes 
 #### 160715
 subsample.list.by.tissue.bl.R subsampled 10 individuals for each tissue and wrote the individuals to one txt file per tissue. 
@@ -224,6 +232,10 @@ An alternative approach is to set a minimum threshold on the expression value an
 identified 3391 housekeeping genes. Two examples of housekeeping and non-housekeeping genes are in figures/160715/{read_counts_for_hk_gene.pdf,read_counts_for_non_hk_gene.pdf}
 
 
+RUVSeq was used to correct for the unwanted hidden variables. Removing 20 hidden factors were sufficient, as the relative log expression for each sample is distributed with ~0 mean and similar variances (/srv/persistent/bliu2/HCASMC_eQTL/figures/160715/rle_and_pca_after_ruv.*.pdf)
+
+
+HCASMC specific gene were found using a rank based statistic described as follows. Given a list L1 of N numbers 1:N and a second list L2 of n numbers, the test calculates the probability that the maximum member of an arbitrary list of lengh n is less than the maximum memeber of the list L2. In particular, p=choose(max(L),n)/choose(N,n). P-values using permuted dataset shows that the test is well-calibrated (/srv/persistent/bliu2/HCASMC_eQTL/figures/160715/qqplot_pvalues.pdf)After BH adjustment, 123 genes are statistically significant at FDR 5%. 
 
 
 
