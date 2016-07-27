@@ -6,7 +6,7 @@
 library(gap)
 library(qvalue)
 library(DESeq2)
-
+library(gplots)
 
 # function:
 #' rank values by row or column
@@ -56,22 +56,16 @@ residuals=read.table('/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160715/re
 
 
 # get ranks of residuals: 
-ranks=getRank(residuals,dimension=1)
+ranks=getRank(-residuals,dimension=1)
 
 
-# read col_data:
-load('../processed_data/160715/find_housekeeping_genes.RData')
-col_data=as.data.frame(colData(dds)[,c('sample','tissue')])
-
-
-# write col_data:
-write.table(col_data,file='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160715/col_data.txt',quote=F,row.names=F,sep="\t")
+# load col_data:
+col_data=read.table('/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160715/col_data.txt',header=T)
 
 
 # get ranks of HCASMC samples for each gene:
 idx=which(col_data$tissue=='HCASMC')
 rank_max=apply(ranks[,idx],1,max)
-
 
 
 # get p-values:
@@ -100,6 +94,7 @@ dev.off()
 
 # get q-values:
 padjust=p.adjust(pvalue,method='BH')
+sum(padjust<0.05) # 5151
 
 
 # output pvalues:
