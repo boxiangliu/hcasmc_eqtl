@@ -60,7 +60,7 @@ dev.off()
 # run RUVg:
 hk_genes=read.table('/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160715/hk_genes.txt',header=T)
 
-for (k in 1:200){
+for (k in seq(5,50,5)) {
 	set1=RUVg(set, as.character(hk_genes$Name), k=k)
 	pdf(sprintf('/srv/persistent/bliu2/HCASMC_eQTL/figures/160715/rle_and_pca_after_ruv.%s.pdf',k))
 	plotRLE(set1, outline=FALSE, ylim=c(-4, 4), col=pal[color])
@@ -77,19 +77,11 @@ stopifnot(test10@phenoData@data$W_1==test20@phenoData@data$W_1)
 stopifnot(test10@phenoData@data$W_10==test20@phenoData@data$W_10)
 
 
-# perform differential expression and examine the p-value distribution:
-n_factors=20
-formula=as.formula(paste0("~tissue+",paste("W",1:n_factors,sep="_",collapse="+")))
-dds=DESeqDataSetFromMatrix(countData = counts(set1),colData = pData(set1)[,1:(n_factors+1)],design=formula)
-reduced=as.formula(paste0("~",paste("W",1:n_factors,sep="_",collapse="+")))
-dds=DESeq(dds, test="LRT", reduced=reduced,parallel=T)
-
-
 # obtain residuals: 
 set1=RUVg(set, as.character(hk_genes$Name), k=50)
 counts=counts(set1)
 covs=pData(set1)
-residuals=getResiduals(counts,covs[,2:21])
+residuals=getResiduals(counts,covs[,2:21]) # using the first 20 factors
 
 
 # output residuals: 
