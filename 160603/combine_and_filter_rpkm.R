@@ -19,27 +19,33 @@ num_indv_threshold=args[4]
 input_list=scan(input_list_file,what=character()) 
 
 
-# read inputs:
+# read and combine rpkm files:
 combined_rpkm=data.frame()
 col_data=data.frame()
 for (input in input_list){
 	message('reading ',input)
 	tissue=input %>% basename() %>% str_replace('_Analysis.v6p.FOR_QC_ONLY.rpkm','')
 
+	# read a rpkm file: 
 	rpkm=fread(input,header=T)
 	stopifnot(length(unique(rpkm$Name))==length(rpkm$Name)) # sanity check
 
+	# if this rpkm file is the first being read: 
 	if (ncol(combined_rpkm)==0){
 		row_data=rpkm$Name
-		rpkm[,Name:=NULL]
+		rpkm[,Name:=NULL] 
 		combined_rpkm=rpkm
 		col_data=data.frame(sample=colnames(rpkm),tissue=tissue)
-	} else {
+	} 
+	# if this rpkm file is not the first being read: 
+	else {
+		# make the row orders of this rpkm dataframe consistent with previous rpkm dataframes: 
 		if (!all(rpkm$Name==row_data)) {
 			stopifnot(setequal(rpkm$Name,row_data))
 			idx=match(row_data,rpkm$Name)
 			rpkm=rpkm[idx,]
 		}
+		# merge the rpkm dataframe with previous rpkm dataframes:
 		stopifnot(rpkm$Name==row_data)
 		rpkm[,Name:=NULL]
 		combined_rpkm=cbind(combined_rpkm,rpkm)
