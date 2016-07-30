@@ -10,18 +10,8 @@ register(MulticoreParam(40))
 library('DESeq2')
 
 # functions:
-#' subsample a gct dataframe 
-#' @param size (integer) the number of samples to keep
-#' @return subsampled gct dataframe 
-subsample_gct=function(gct,size,seed=1){
-	set.seed(seed)
-	gct=as.data.frame(gct)
-	samples=colnames(gct)[-c(1,2)]
-	selected_samples=sample(samples,size)
-	selected_samples=c(colnames(gct)[c(1,2)],selected_samples)
-	gct=gct[,selected_samples]
-	return(gct)
-}
+# all moved to utils.R 
+
 
 # read input:
 hcasmc_file='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160715/combined.count'
