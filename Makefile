@@ -2206,6 +2206,20 @@ cp /srv/persistent/bliu2/HCASMC_eQTL/scripts/160614/DSEeq2.fibroblast.R $scripts
 Rscript $scripts/160715/find_housekeeping_genes.R
 
 
+# find housekeeping genes by thresholding on mean and variance:
+Rscript $scripts/160715/find_housekeeping_genes.2.R
+
+
+# correct out unwanted variation:
+Rscript $scripts/160715/ruvseq.R
+
+
+# find HCASMC specific genes: 
+Rscript $scripts/160715/find_hcasmc_specific_genes.R
+
+
+# correct out unwanted variation, using size factor corrected counts as input: 
+Rscript $scripts/160715/ruvseq.2.R
 
 #### 160724:
 # obj: re-map sQTL using WASP files:
@@ -2216,3 +2230,16 @@ mkdir $scripts/160724 $figures/160724 $processed_data/160724
 cp $scripts/160627/run_bam2junc.sh $scripts/160724/
 
 bash $scripts/160724/run_bam2junc.sh
+
+#### 160729:
+# run t-SNE visualization
+# setup: 
+mkdir $scripts/160729 $figures/160729 $processed_data/160729
+
+# create a combined RPKM file of HCASMC and GTEx samples: 
+cp $scripts/160603/combine_and_filter_rpkm.R $scripts/160729/combine_and_filter_rpkm.R
+Rscript $scripts/160729/combine_and_filter_rpkm.R \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/sample_list.txt \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160729/combined \
+	0.1 \
+	0.8

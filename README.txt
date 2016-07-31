@@ -208,6 +208,19 @@ beagle_QC.R
 One of the top sIntrons for the SMAD3 loci is de novo. We visualized the loci by displaying RNAseq coverage summed across all samples on UCSC browser (figures/160629/smad3_loci_denovo_intron_RNAseq_coverage.png). The de novo intron is supported by some, but not much, RNAseq coverage. One sample, 1020301, does not show coverage in support of the de novo intron. One could suspect that this sample possesses a variant that favors against this intron. 
 
 
+#### 2D visualization (MDS, t-SNE)
+#### 160603 MDS 
+TBA 
+
+#### 160729 t-SNE
+t-SNE is a low-dimensional visualization method that preserves the distance of closely related points. 
+
+# combine_and_filter_rpkm.R
+Genes were filtered with RPKM value > 0.1 in at least 80% of the samples. Genes that passes the filter are log transformed after an offset of 1. This resulted in gene expression profiles from a total of 16,383 genes. 
+# tsne.2.R
+The mean of each gene are normalized to zero. We performed the Barnes-Hut version of t-SNE using a perplexity of 30 (default) and no preprocessing with PCA. The optimization procedure of t-SNE does not guarantee the that the final 2D visualization represent the global optimum. Therefore, we performed 1000 iterations and present the one with the lowest cost function. In this 2D visualization, HCP and HCM (serum fed and serum starved) overlaps each other. They are surrounded by fibroblast, heart, artery, stomach, pancreas, and muscle. (figures/160729/tsne.seed.25.pdf)
+
+
 
 #### HCASMC specific genes 
 #### 160715
@@ -222,22 +235,60 @@ find_housekeeping_genes.R found ~9,435 not differentially expressed across tissu
 Eisenberg and Levanon reported 3804 housekeeping genes across 16 human tissues. They also provided a narrow list of 11 highly uniform genes.  The plot figures/160715/read_counts_across_tissue_for_housing_keeping_genes_by_Levanon.pdf shows that some of reported housekeeping genes may not be uniformly expressed. 
 
 
+# find_house_keeping_gene.R
 To select bona fide invariant housekeeping gene, we employ a equivalence testing procedure in an ANOVA framework. However, since ANOVA assumes samples are normally distribution with equal variances, we needed to transform the data. Among log(x), sqrt(x), x^(2/3) and variance stabilizing transformations, the first and last performed the best in making the distribution symmetric (figures/160715/compare_transformations.pdf). In terms of decompling variance from the mean, the last performed the best(figures/160715/mean_vs_variance.pdf). The figure figures/160715/expression_by_tissue_raw_count_vs_vsn.pdf shows pre and post variance stabilizating transformation. It is difficult to judge whether the variances are more constant, but expression outliers has smaller effects after VSN. In addition, the mean variance dependency has been reduced. The equivalence test is implemented in equivalence.R. The testing procedure follows chapter 7 of the book testing_statistical_hypotheses_of_equivalence_and_noninferiority. However, I did not carry on with this approach since I do not fully understand it. 
 
 
+# find_housekeeping_gene.2.R
 An alternative approach is to set a minimum threshold on the expression value and a maximum threshold on the expression variance (as described in Levanon et al). These following filters: 
 (i) expression observed in all tissues; 
 (ii) low variance over tissues: standard-deviation [log2(RPKM)]<1;
 (iii) no log2(rpkm) differed from the averaged by 1 (twofold) or more
-identified 3391 housekeeping genes. Two examples of housekeeping and non-housekeeping genes are in figures/160715/{read_counts_for_hk_gene.pdf,read_counts_for_non_hk_gene.pdf}
+identified 3391 housekeeping genes. Two examples of housekeeping and non-housekeeping genes are in figures/160715/{read_counts_for_hk_gene.pdf,read_counts_for_non_hk_gene.pdf} 
 
 
-RUVSeq was used to correct for the unwanted hidden variables. Removing 20 hidden factors were sufficient, as the relative log expression for each sample is distributed with ~0 mean and similar variances (/srv/persistent/bliu2/HCASMC_eQTL/figures/160715/rle_and_pca_after_ruv.*.pdf)
+# ruvseq.R
+RUVSeq was used to correct for the unwanted hidden variables. The housekeeping genes selected using mean and variance threshold were used as control genes. Raw read counts (not corrected with size factors) was used as input to RUVSeq. Removing 20 hidden factors were sufficient, as the relative log expression for each sample is distributed with ~0 mean and similar variances (/srv/persistent/bliu2/HCASMC_eQTL/figures/160715/rle_and_pca_after_ruv.*.pdf)
 
 
-HCASMC specific gene were found using a rank based statistic described as follows. Given a list L1 of N numbers 1:N and a second list L2 of n numbers, the test calculates the probability that the maximum member of an arbitrary list of lengh n is less than the maximum memeber of the list L2. In particular, p=choose(max(L),n)/choose(N,n). P-values using permuted dataset shows that the test is well-calibrated (/srv/persistent/bliu2/HCASMC_eQTL/figures/160715/qqplot_pvalues.pdf)After BH adjustment, 123 genes are statistically significant at FDR 5%. 
+# find_hcasmc_specific_genes.R
+The residuals from ruvseq.R was used as input. HCASMC specific gene were found using a rank based statistic described as follows. Given a list L1 of N numbers 1:N and a second list L2 of n numbers, the test calculates the probability that the maximum member of an arbitrary list of lengh n is less than the maximum memeber of the list L2. In particular, p=choose(max(L),n)/choose(N,n). P-values using permuted dataset shows that the test is well-calibrated (/srv/persistent/bliu2/HCASMC_eQTL/figures/160715/qqplot_pvalues.pdf)After BH adjustment, 5151 genes are statistically significant at FDR 5%. However, most of these genes does not make biological sense. For instance, many top hits are olfactory receptor genes (OR6C65, OR8H3), which should not be expressed in HCASMC at all. On the other hand, known HCASMC specific such as MYH10 has insignificant p-value (see processed_data/160715/hcasmc_specific_genes.txt). The unexpected pattern indicates that there may have been overcorrection. To address this, one can try regressing against less unwanted factors, or leaving out the top unwanted factors as these may capture true biological variation. 
 
 
+# ruvseq.2.R
+I also tried using size factor corrected counts as input to RUVSeq. I rerun find_hcasmc_specific_gene.R using the residuals from ruvseq.2.R (results not saved) and the results were similar to ruvseq.R. This analysis eliminated library size as the reason for the unexpected results from find_hcasmc_specific_genes.R. 
+
+
+# find_hcasmc_specific_genes.2.R 
+Previously overcorrection was suspect for the unexpected result from find_hcasmc_specific_genes.R. To test this hypothesis, I used the extreme case of no RUVSeq correction at all. Using size factor corrected read counts, all synthetic HCASMC genes (CALD1, VIM, MYH10, TPM4, RBP1) are significant hits. The top hits includes the following: 
+
+               gene_id      gene_name       pvalue      padjust
+1   ENSG00000067208.10           EVI5 3.331360e-21 1.673360e-18
+2    ENSG00000105825.7          TFPI2 3.331360e-21 1.673360e-18
+3    ENSG00000130508.6           PXDN 3.331360e-21 1.673360e-18
+4   ENSG00000133657.10        ATP13A3 3.331360e-21 1.673360e-18
+5    ENSG00000134901.8         KDELC1 3.331360e-21 1.673360e-18
+6   ENSG00000150093.14          ITGB1 3.331360e-21 1.673360e-18
+7   ENSG00000164291.12           ARSK 3.331360e-21 1.673360e-18
+8    ENSG00000172380.5          GNG12 3.331360e-21 1.673360e-18
+9   ENSG00000173950.11         XXYLT1 3.331360e-21 1.673360e-18
+10   ENSG00000179172.7       HNRNPCL1 3.331360e-21 1.673360e-18
+
+EVI5 is ecotropic viral integration site 5. Most likely, this gene is upregulated due to Bovine serum virus. 
+TFPI2 is Tissue Factor Pathway Inhibitor 2. Upregulation of TFPI2 is observed in the study "The expression of tissue factor and tissue factor pathway inhibitor in aortic smooth muscle cells is up-regulated in synthetic compared to contractile phenotype."
+PXDN is Peroxidasin which is part of extracellular matrix secretion. 
+ATP13A3 is a P-type ATPase which transport a variety of cations across the membrane. This is counter-intuitive since synthetic smooth muscle does not need to transport Ca2+. 
+
+The plot figures/160715/heatmap.2.pdf shows that HCASCM specific genes separates HCASMC from the other tissues. 
+
+# GSEA analysis
+GSEA analysis shows that HCASMC specific genes are enriched in 
+1. MYC targets
+2. unfolded protein response
+3. protein secretion
+4. epithelial mesenchymal transition 
+5. mTORC1 signaling (protein synthesis)
+Enriched pathways are shown in figures/160715/gsea_enriched_pathways.png
 
 # TO READ:
 1. WGCNA paper
