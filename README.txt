@@ -251,7 +251,7 @@ identified 3391 housekeeping genes. Two examples of housekeeping and non-houseke
 RUVSeq was used to correct for the unwanted hidden variables. The housekeeping genes selected using mean and variance threshold were used as control genes. Raw read counts (not corrected with size factors) was used as input to RUVSeq. Removing 20 hidden factors were sufficient, as the relative log expression for each sample is distributed with ~0 mean and similar variances (/srv/persistent/bliu2/HCASMC_eQTL/figures/160715/rle_and_pca_after_ruv.*.pdf)
 
 
-# find_hcasmc_specific_genes.R
+# find_hcasmc_specific_genes.R (with RUVSeq correction)
 The residuals from ruvseq.R was used as input. HCASMC specific gene were found using a rank based statistic described as follows. Given a list L1 of N numbers 1:N and a second list L2 of n numbers, the test calculates the probability that the maximum member of an arbitrary list of lengh n is less than the maximum memeber of the list L2. In particular, p=choose(max(L),n)/choose(N,n). P-values using permuted dataset shows that the test is well-calibrated (/srv/persistent/bliu2/HCASMC_eQTL/figures/160715/qqplot_pvalues.pdf)After BH adjustment, 5151 genes are statistically significant at FDR 5%. However, most of these genes does not make biological sense. For instance, many top hits are olfactory receptor genes (OR6C65, OR8H3), which should not be expressed in HCASMC at all. On the other hand, known HCASMC specific such as MYH10 has insignificant p-value (see processed_data/160715/hcasmc_specific_genes.txt). The unexpected pattern indicates that there may have been overcorrection. To address this, one can try regressing against less unwanted factors, or leaving out the top unwanted factors as these may capture true biological variation. 
 
 
@@ -259,7 +259,7 @@ The residuals from ruvseq.R was used as input. HCASMC specific gene were found u
 I also tried using size factor corrected counts as input to RUVSeq. I rerun find_hcasmc_specific_gene.R using the residuals from ruvseq.2.R (results not saved) and the results were similar to ruvseq.R. This analysis eliminated library size as the reason for the unexpected results from find_hcasmc_specific_genes.R. 
 
 
-# find_hcasmc_specific_genes.2.R 
+# find_hcasmc_specific_genes.2.R (no RUVSeq correction)
 Previously overcorrection was suspect for the unexpected result from find_hcasmc_specific_genes.R. To test this hypothesis, I used the extreme case of no RUVSeq correction at all. Using size factor corrected read counts, all synthetic HCASMC genes (CALD1, VIM, MYH10, TPM4, RBP1) are significant hits. The top hits includes the following: 
 
                gene_id      gene_name       pvalue      padjust
@@ -290,9 +290,15 @@ GSEA analysis shows that HCASMC specific genes are enriched in
 5. mTORC1 signaling (protein synthesis)
 Enriched pathways are shown in figures/160715/gsea_enriched_pathways.png
 
+
+# find_hcasmc_specific_genes.3.R
+To understand whether each gene co-expression cluster correspond to any pathway, we performed hierarchical clustering using the top HCASMC-specific genes (FDR<1e-3, 4266 genes). A set of genes is assigned a cluster if the root of such cluster has height greater than or equal to the height of the root of the whole tree divided by 1.15 (note that this cutoff is ad hoc). A total of 4 clusters are formed, as shown in figures/160715/heatmap.3.pdf. PANTHER pathway analysis returned pathways specific to each of the 4 clusters (result stored in processed_data/160715/panther_hcasmc_specific_genes.{webarchive,txt}). Each gene cluster is enriched in multiple pathways. Note that the number of cluster can be tuned to maximize the number of discovered enriched pathways. However, I would like to discuss the current result before performing parameter tuning. 
+
+
+#### DE between serum-fed and serum-starved HCASMC
+
+
 # TO READ:
 1. WGCNA paper
 2. Sazonova (2015) Plos Genetics
-3. iPSC eQTL paper
-4. leaf cutter
 

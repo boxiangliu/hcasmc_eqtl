@@ -101,7 +101,6 @@ mycl1=mycl1%>%dplyr::rename(gene_name=Description)
 mycl1=mycl1%>%arrange(cluster)
 
 
-
 # output each cluster to a different file: 
 for (i in 1:max(mycl)) {
 	# subset to genes in cluster i: 

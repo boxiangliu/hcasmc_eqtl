@@ -2243,3 +2243,20 @@ Rscript $scripts/160729/combine_and_filter_rpkm.R \
 	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160729/combined \
 	0.1 \
 	0.8
+
+# perform t-SNE: 
+Rscript $scripts/160729/tsne.2.R
+
+
+#### 160801: 
+# differential expression between serum-fed and serum-starved HCASMC cell lines: 
+# setup: 
+mkdir $scripts/160801 $figures/160801 $processed_data/160801
+
+
+# combine read counts: 
+cp $scripts/160715/combine_read_counts.sh $scripts/160801/
+bash $scripts/160801/combine_read_counts.sh
+mv $processed_data/160801/combined.count $processed_data/160801/rnaseq_dase.combined.count
+
+cp /srv/persistent/bliu2/dase/scripts/de_and_db/deseq2.HCASMC_rnaseq_sfFbs_allReps.r $scripts/160801/
