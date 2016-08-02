@@ -4,6 +4,7 @@ library(gap)
 library(gplots)
 source('/srv/persistent/bliu2/HCASMC_eQTL/scripts/utils.R')
 
+
 # read col_data:
 load('../processed_data/160715/find_housekeeping_genes.RData')
 col_data=as.data.frame(colData(dds)[,c('sample','tissue')])
@@ -14,10 +15,10 @@ residuals=counts(dds,normalized=T)
 
 
 # get ranks of residuals: 
-ranks=getRank(-residuals,dimension=1)
+ranks=getRank(-residuals,dimension=1) # takes a minute
 
 
-# get ranks of HCASMC samples for each gene:
+# for each gene, get the lowest rank for HCASMC samples for that gene:
 idx=which(col_data$tissue=='HCASMC')
 rank_max=apply(ranks[,idx],1,max)
 
@@ -57,8 +58,6 @@ output=data.frame(gene_id=names(pvalue),pvalue=pvalue,padjust=padjust)
 output=merge(output,temp,by='gene_id')
 setcolorder(output,c('gene_id','gene_name','pvalue','padjust'))
 output=output%>%arrange(pvalue)
-head(output,100)
-plot(unlist(residuals[str_detect(rownames(residuals),'ENSG00000205328.2'),]))
 
 
 
@@ -88,9 +87,9 @@ write.table(output,file='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160715
 
 # output the rank for GSEA:
 set.seed(2)
-ranks=data.frame(output$gene_name,rank=rank(-output$padjust,ties.method='random'))
+ranks=data.frame(gene_name=output$gene_name,rank=rank(-output$padjust,ties.method='random'))
 write.table(ranks,file='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160715/hcasmc_specific_genes.rank.2.rnk',quote=F,row.names=F,sep='\t')
-
+write.table(ranks%>%dplyr::select(gene_name),file='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160715/hcasmc_specific_genes.rank.2.gene_name_only.rnk',quote=F,row.names=F,sep='\t')
 
 # make heatmap of gene expression profiles: 
 # head(output)
