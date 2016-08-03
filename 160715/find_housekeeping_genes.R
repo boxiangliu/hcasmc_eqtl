@@ -6,7 +6,7 @@
 # library:
 source('/srv/persistent/bliu2/HCASMC_eQTL/scripts/utils.R')
 library("BiocParallel")
-register(MulticoreParam(40))
+register(MulticoreParam(20))
 library('DESeq2')
 
 # functions:
@@ -27,7 +27,7 @@ master_row_data=res$row_data
 
 
 gtex_files=list.files('/srv/persistent/bliu2/HCASMC_eQTL/data/gtex/v6p/subsampling',pattern='*.10.count',recursive=T,full.name=T)
-for (gtex_file in gtex_files[1:2]){
+for (gtex_file in gtex_files){
 	tissue=str_replace(basename(gtex_file),'_subsample.10.count','')
 	message(tissue)
 	count=read.table(gtex_file,header=T,check.names=F)
@@ -56,7 +56,7 @@ for (gtex_file in gtex_files[1:2]){
 	master_col_data=rbind(master_col_data,col_data)
 	master_count=data.frame(master_count,count,check.names=F)
 }
-head(master_count)
+# head(master_count)
 
 # create DESeq dataset: 
 dds=DESeqDataSetFromMatrix(countData = as.matrix(master_count),colData=master_col_data,design=~tissue)
