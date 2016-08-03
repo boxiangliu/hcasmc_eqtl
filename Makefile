@@ -2221,6 +2221,19 @@ Rscript $scripts/160715/find_hcasmc_specific_genes.R
 # correct out unwanted variation, using size factor corrected counts as input: 
 Rscript $scripts/160715/ruvseq.2.R
 
+
+# find HCASMC specific genes (without RUVSeq correction):
+Rscript $scripts/160715/find_hcasmc_specific_genes.2.R
+
+
+# GSEA 
+# GSEA analysis
+
+
+# HCASMC specific gene biclustering: 
+Rscript $scripts/160715/find_hcasmc_specific_genes.3.R
+
+
 #### 160724:
 # obj: re-map sQTL using WASP files:
 # setup: 
@@ -2259,4 +2272,5 @@ cp $scripts/160715/combine_read_counts.sh $scripts/160801/
 bash $scripts/160801/combine_read_counts.sh
 mv $processed_data/160801/combined.count $processed_data/160801/rnaseq_dase.combined.count
 
-cp /srv/persistent/bliu2/dase/scripts/de_and_db/deseq2.HCASMC_rnaseq_sfFbs_allReps.r $scripts/160801/
+cp /srv/persistent/bliu2/dase/scripts/de_and_db/deseq2.HCASMC_rnaseq_sfFbs_allReps.r \
+	$scripts/160801/DESeq2_HCASMC_SF_vs_FBS.R
