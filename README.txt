@@ -296,6 +296,37 @@ To understand whether each gene co-expression cluster correspond to any pathway,
 
 
 #### DE between serum-fed and serum-starved HCASMC
+#### 160801:
+# DESeq2_HCASMC_SF_vs_FBS.R 
+To test the effect of bovine serum exposure to HCASMC gene expression, I performed differential expression analysis with the DESeq2 package. Using 1% FDR, a total of 2472 genes are differentially expressed, among with 1380 are upregulated and 1092 are downregulated upon serum treatment (figures/160801/HCASMC_SF_vs_FBS.pdf). The top differentially expressed genes falls into the category of cell cycle regulators (e.g. CDC20, NEK2, SPC25, DLGAP5, MYBL2), platelet activeation and inflammatory response (KIF20A), inhibition of apoptosis (MYBL2) and ubiquitination (UBE2C). 
+
+
+# GSEA analysis:
+To understand which pathways are perturbed upon serum stimulation, I performed GSEA analysis using the following 4 gene sets: 
+1. Hallmark 
+2. Cononical pathways (including BioCarta and KEGG)
+3. Gene ontology Molecular function
+4. Gene ontology Biological process 
+5. Transcription factor binding
+
+In the hallmark gene sets, pathways activated in the FBS condition includes cell cycle regulation, and protein secretion. 
+Pathways activated in the SF condition is more convoluted: they include 
+1. coagulation
+2. heme metabolism (erythroblast differentiation)
+3. myogenesis 
+4. angiogenesis 
+5. inflammatary response
+
+
+In the conanical pathway gene set, the FBS sets are enriched in the following pathways: 
+1. mitotic pathways
+2. cardiac muscle, smooth muscle contraction (strange?)
+
+the SF set are enriched with the following pathways: 
+1. Notch signalling 
+2. circadian expression
+3. SMAD2/3 signaling etc 
+
 
 
 # TO READ:

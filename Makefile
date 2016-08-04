@@ -2226,6 +2226,8 @@ Rscript $scripts/160715/ruvseq.2.R
 Rscript $scripts/160715/find_hcasmc_specific_genes.2.R
 
 
+# find HCASMC specific genes using DESeq contrast: 
+cp $scripts/160715/find_housekeeping_genes.R $scripts/160715/find_hcasmc_specific_genes.3.R
 # GSEA 
 # GSEA analysis
 
