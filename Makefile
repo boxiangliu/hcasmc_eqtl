@@ -2273,6 +2273,74 @@ mkdir $scripts/160801 $figures/160801 $processed_data/160801
 cp $scripts/160715/combine_read_counts.sh $scripts/160801/
 bash $scripts/160801/combine_read_counts.sh
 mv $processed_data/160801/combined.count $processed_data/160801/rnaseq_dase.combined.count
-
 cp /srv/persistent/bliu2/dase/scripts/de_and_db/deseq2.HCASMC_rnaseq_sfFbs_allReps.r \
 	$scripts/160801/DESeq2_HCASMC_SF_vs_FBS.R
+Rscript $scripts/160801/DESeq2_HCASMC_SF_vs_FBS.R
+
+
+# get residuals by regression out "batch":
+Rscript $scripts/160801/DESeq2_HCASMC_residuals.R
+
+
+# GSEA enrichment analysis: 
+# no script.
+
+
+#### 160805:
+# map eQTLs with fastQTL:
+# setup: 
+mkdir $scripts/160805 $processed_data/160805 $figures/160805
+
+
+# find the best combination of genotype PCs and PEER factors:
+cp $scripts/160629/run_fastqtl.nominal.wrap.sh $scripts/160805
+cp $scripts/160530/find_optimal_num_PEER_factors.sh $scripts/160805
+bash $scripts/160805/find_optimal_num_PEER_factors.sh 
+cp $scripts/160530/plot_num_egene_vs_cov.R $scripts/160805/
+Rscript $scripts/160805/plot_num_egene_vs_cov.R
+
+
+
+# create covariate file: 
+Rscript $scripts/160530/combine_covariates.R \
+	--genotype_pc=$processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv \
+	--peer=$processed_data/160527/factors.tsv \
+	--sample_info=$data/sample_info/sample_info.xlsx \
+	--output=$processed_data/160805/covariates.pc4.peer8.gender_letter.tsv \
+	--gender_coding=letter \
+	--num_geno_pc=4 \
+	--num_peer_factor=8
+bgzip $processed_data/160805/covariates.pc4.peer8.gender_letter.tsv
+
+
+# nominal pass to map eQTLs: 
+bash $scripts/160805/run_fastqtl.nominal.wrap.sh \
+	$data/joint3/recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf.id.gz \
+	$processed_data/160530/combined.filter.norm.bed.gz \
+	$processed_data/160805/covariates.pc4.peer8.gender_letter.tsv.gz \
+	$processed_data/160805/hcasmc.eqtl.pc4.peer8.txt \
+	"--window 1e6"
+
+
+# run p-value correction:
+Rscript $scripts/160629/fastqtl_nominal_pvalue_corrections.R $processed_data/160805/hcasmc.eqtl.pc4.peer8.txt $processed_data/160805/hcasmc.eqtl.pc4.peer8.padj.txt
+
+
+# plot the p-values: 
+Rscript $scripts/160629/qqplot_pvalue.R \
+	$processed_data/160805/hcasmc.eqtl.pc4.peer8.txt \
+	$figures/160805/hcasmc.eqtl.qqplot.pdf \
+	$figures/160805/hcasmc.eqtl.histogram.pdf
+
+
+# plot the number of eQTLs vs distance to TSS: 
+cp $scripts/160629/plot_sqtl_vs_distance.R $scripts/160805/plot_eqtl_vs_distance.R
+Rscript $scripts/160805/plot_eqtl_vs_distance.R \
+	-eqtl_file=$processed_data/160805/hcasmc.eqtl.pc4.peer8.padj.txt \
+	-num_eqtl_vs_dist=$figures/160805/num_sig_eqtl_vs_dist.pdf \
+	-pval_vs_dist=$figures/160805/eqtl_pval_vs_dist.pdf
+
+
+
+# run METASOFT:
+

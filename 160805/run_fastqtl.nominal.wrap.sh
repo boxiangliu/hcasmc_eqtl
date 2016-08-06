@@ -8,7 +8,7 @@ fastqtl=/usr/bin/fastQTL
 
 n=0
 for i in {1..22}; do 
-n=$(($n+1))
+	n=$(($n+1))
 	if [[ n -gt 10 ]]; then
 		wait
 		n=0
