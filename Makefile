@@ -2341,6 +2341,28 @@ Rscript $scripts/160805/plot_eqtl_vs_distance.R \
 	-pval_vs_dist=$figures/160805/eqtl_pval_vs_dist.pdf
 
 
+# create symbolic link of eQTL data: 
+ln -s /mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/eqtl_updated_annotation/v6p_fastQTL_allpairs_FOR_QC_ONLY/ /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/
+cp /mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/eqtl_updated_annotation/Metasoft_tissue_order.txt /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/
+# manually added HCASMC as the first line in Metasoft_tissue_order.txt
+
+
+# reformat the genotype column of HCASMC eqtl file: 
+gzip $processed_data/160805/hcasmc.eqtl.pc4.peer8.txt
+Rscript $scripts/160805/format_hcascm_eqtl.R # output $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt
+
+
+# copy HCASMC eQTL data to appropriate location: 
+gzip $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt
+ln -s $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt.gz \
+	$processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/HCASMC_Analysis.v6p.FOR_QC_ONLY.allpairs.txt.gz
+
+
+# generate metasoft input file: 
+Rscript $scripts/160805/gen_metasoft_input.R
+
 
 # run METASOFT:
 
+# run ForestPMplot:
+ ../processed_data/160805/Metasoft_tissue_idx.txt

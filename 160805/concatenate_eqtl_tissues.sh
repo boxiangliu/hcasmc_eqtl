@@ -25,4 +25,4 @@ done
 wait
 
 # merge sort all input: 
-sort -m /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/*_Analysis.v6p.FOR_QC_ONLY.allpairs.2.sorted.txt > /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/All_Tissues_Analysis.v6p.FOR_QC_ONLY.allpairs.2.sorted.txt
+sort -m /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/*_Analysis.v6p.FOR_QC_ONLY.allpairs.sorted.txt > /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/All_Tissues_Analysis.v6p.FOR_QC_ONLY.allpairs.sorted.txt
