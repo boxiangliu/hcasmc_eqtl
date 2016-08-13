@@ -295,6 +295,87 @@ Enriched pathways are shown in figures/160715/gsea_enriched_pathways.png
 To understand whether each gene co-expression cluster correspond to any pathway, we performed hierarchical clustering using the top HCASMC-specific genes (FDR<1e-3, 4266 genes). A set of genes is assigned a cluster if the root of such cluster has height greater than or equal to the height of the root of the whole tree divided by 1.15 (note that this cutoff is ad hoc). A total of 4 clusters are formed, as shown in figures/160715/heatmap.3.pdf. PANTHER pathway analysis returned pathways specific to each of the 4 clusters (result stored in processed_data/160715/panther_hcasmc_specific_genes.{webarchive,txt}). Each gene cluster is enriched in multiple pathways. Note that the number of cluster can be tuned to maximize the number of discovered enriched pathways. However, I would like to discuss the current result before performing parameter tuning. 
 
 
+# find_hcasmc_specific_genes.4.R
+A contrast is used to compare HCASMC to 
+1. all GTEx tissues
+2. GTEx artery tissues
+3. GTEx smooth muscle 
+4. GTEx heart 
+5. GTEx fibroblast 
+5. serum-free HCASMC
+GSEA reports enriched pathway as follows: 
+1. all GTEx tissues 
+- hallmark
+    - upregulated 
+        - cell cycle
+        - protein synethsis and and secretion
+    - downregulated 
+        - KRAS signaling 
+        - myogenesis
+- KEGG
+    - up 
+        - ribosome
+        - proteasome
+        - cell cycle 
+        - DNA replication 
+        - protein export 
+    - down
+        - allograft rejection 
+        - various immune pathways 
+        - smooth muscle contraction 
+
+2. GTEx artery tissues
+- hallmark
+    - same as above
+- KEGG 
+    - up
+        - same as above 
+    - down 
+        - KEGG_VASCULAR_SMOOTH_MUSCLE_CONTRACTION
+        - KEGG_DILATED_CARDIOMYOPATHY
+        - KEGG_COMPLEMENT_AND_COAGULATION_CASCADES
+
+3. GTEx smooth muscle tissues
+- hallmark 
+    - same as above 
+- KEGG
+    - up 
+        - same as above
+    - down
+        - KEGG_CALCIUM_SIGNALING_PATHWAY
+        - KEGG_VASCULAR_SMOOTH_MUSCLE_CONTRACTION
+
+4. GTEx heart 
+- hallmark 
+    - same as above 
+- KEGG
+    - KEGG_DILATED_CARDIOMYOPATHY
+    - KEGG_CARDIAC_MUSCLE_CONTRACTION
+    - KEGG_HYPERTROPHIC_CARDIOMYOPATHY_HCM
+
+5. GTEx fibroblast
+- hallmark
+    - same as above
+- KEGG 
+    - does not make sense?? 
+
+6. HCASMC SF
+- hallmark 
+    - up 
+        - same as above 
+    - down 
+        - HALLMARK_EPITHELIAL_MESENCHYMAL_TRANSITION (?)
+        - HALLMARK_MYOGENESIS
+        - HALLMARK_WNT_BETA_CATENIN_SIGNALING
+- KEGG
+    - up 
+        - KEGG_CARDIAC_MUSCLE_CONTRACTION (rank:31)
+        - KEGG_PROTEASOME
+        - KEGG_RNA_POLYMERASE
+    - down 
+        - KEGG_RIBOSOME (?)
+        - KEGG_NOTCH_SIGNALING_PATHWAY
+
 #### DE between serum-fed and serum-starved HCASMC
 #### 160801:
 # DESeq2_HCASMC_SF_vs_FBS.R 
@@ -328,7 +409,16 @@ the SF set are enriched with the following pathways:
 3. SMAD2/3 signaling etc 
 
 
+#### ATACseq variant scoring 
+The fa file contains 19 bp sequences
+The bed file contains variant positions close but outside of the fa file sequences. 
 #### 
+
+
+#### Fine-mapping by inspection
+#### 160811
+#### select top GWAS hits: extract_gwas_loci.R
+I extracted the top GWAS hits from Nikpay 2015 NG. For each of the top GWAS hit, I extracted all tested genes (genes within 1MB from the variant) and plotted the association pvalue (../figures/160811/gwas_hits_gene_pval.pdf, using plot_gwas_hits_eqtl_pval.R). This plot suggests that two GWAS hits, rs273909 (SLC22A4-SLC22A5) and rs2521501 (FURIN-FES) are significantly associated with at least one gene (p-value <0.05). For rs273909, the top association is SLC22A4 (p<1.8e-4); for rs2521501, the top association is FES (p<2.0e-4). I then made locuszoom plot for both loci and observed coloclization at both loci. Notably, the top GWAS association overlaps the top eQTL association at rs2521501. Next, I made forestPM plot for both loci. For rs273909, HCASMC has the lowest p-value amonges all tissues. However, its m-value did not reach 0.9, likely due to small sample size. For rs2521501, artery, smooth muscle as well as HCASCM share low p-values, and all reached m-value of 0.9. 
 
 # TO READ:
 1. WGCNA paper

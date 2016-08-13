@@ -2226,14 +2226,18 @@ Rscript $scripts/160715/ruvseq.2.R
 Rscript $scripts/160715/find_hcasmc_specific_genes.2.R
 
 
-# find HCASMC specific genes using DESeq contrast: 
-cp $scripts/160715/find_housekeeping_genes.R $scripts/160715/find_hcasmc_specific_genes.3.R
-# GSEA 
-# GSEA analysis
-
-
 # HCASMC specific gene biclustering: 
 Rscript $scripts/160715/find_hcasmc_specific_genes.3.R
+
+
+
+# find HCASMC specific genes using DESeq contrast: 
+Rscript $scripts/160715/find_hcasmc_specific_genes.4.R
+
+
+# GSEA:
+cp -r /Users/boshliu/gsea_home/output/aug09/hcasmc_vs_gtex_all.h.all.GseaPreranked.1470779960906/ /Volumes/HCASMC_eQTL/processed_data/160715/hcasmc_vs_gtex_all.h.all
+cp -r /Users/boshliu/gsea_home/output/aug09/hcasmc_vs_gtex_all.c2.cp.kegg.GseaPreranked.1470781703555/ /Volumes/HCASMC_eQTL/processed_data/160715/hcasmc_vs_gtex_all.c2.cp.kegg
 
 
 #### 160724:
@@ -2358,11 +2362,105 @@ ln -s $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt.gz \
 	$processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/HCASMC_Analysis.v6p.FOR_QC_ONLY.allpairs.txt.gz
 
 
-# generate metasoft input file: 
-Rscript $scripts/160805/gen_metasoft_input.R
+# generate metasoft input file:
+mkdir $processed_data/160805/metasoft_input/ 
+cat $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | \
+python $scripts/160805/gen_metasoft_input.py > \
+$processed_data/160805/metasoft_input/metasoft_input.txt
+
+
+# split metasoft input by chromosome: 
+bash $scripts/160805/split_metasoft_input_by_chr.sh
 
 
 # run METASOFT:
+mkdir $processed_data/160805/metasoft_output
+parallel -j12 bash $scripts/160805/metasoft.core.sh \
+	$processed_data/160805/metasoft_input/metasoft_input.{}.txt \
+	$processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.txt \
+	$processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.log ::: {1..22} X
+
+
+# find HCASMC-specific eQTLs:
 
 # run ForestPMplot:
  ../processed_data/160805/Metasoft_tissue_idx.txt
+
+
+
+#### 160811:
+# fine maping by inspection: 
+# setup: 
+mkdir $scripts/160811 $processed_data/160811 $figures/160811
+
+
+# extract top gwas hits from the supplemetary excel of Nikpay 2015 NG: 
+Rscript $scripts/160811/extract_gwas_loci.R  # ../processed_data/160811/gwas_loci.cad.all.FWER.txt
+
+# format the GWAS loci file so it contains one column chr_pos:
+cat ../processed_data/160811/gwas_loci.cad.all.FWER.txt | awk 'NR>1 {print $1"_"$2}' > ../processed_data/160811/gwas_loci.cad.all.FWER.chr_pos.txt 
+
+# select top GWAS variants from eQTL:
+grep -f ../processed_data/160811/gwas_loci.cad.all.FWER.chr_pos.txt ../processed_data/160805/hcasmc.eqtl.pc4.peer8.padj.txt > ../processed_data/160811/tested_genes_at_gwas_top_hits.txt
+
+# plot p-values of gene:snp pairs at GWAS top hits: 
+Rscript $scripts/160811/plot_gwas_hits_eqtl_pval.R
+
+# subset to eGene with p-value < 0.05 at GWAS top hits: 
+cat ../processed_data/160811/tested_genes_at_gwas_top_hits.txt | awk '{if ($4<0.05) print $1}' > ../processed_data/160811/egenes_at_gwas_top_hits.p05.txt
+
+# subset to eQTL file to eGenes selected above: 
+grep -f ../processed_data/160811/egenes_at_gwas_top_hits.p05.txt ../processed_data/160805/hcasmc.eqtl.pc4.peer8.padj.txt | sort -k1,2 -V > ../processed_data/160811/tested_snps_at_egenes.txt
+
+# add rs ID to each snp: 
+cat ../processed_data/160811/tested_snps_at_egenes.txt | awk 'BEGIN {FS="\t|_";OFS="\t"} {print $2,$3}' > ../processed_data/160811/tested_snps_at_egenes.chr_pos.txt
+cat ../processed_data/160811/tested_snps_at_egenes.chr_pos.txt | python $scripts/160811/subset_dbsnp.py > ../processed_data/160811/tested_snps_at_egenes.dbsnp146.txt
+Rscript $scripts/160811/add_rsid.R -dbsnp=../processed_data/160811/tested_snps_at_egenes.dbsnp146.txt -eqtl=../processed_data/160811/tested_snps_at_egenes.txt -out=../processed_data/160811/tested_snps_at_egenes.rsid.txt
+
+
+# make locuszoom plot for ENSG00000197208.5 at rs273909 (SLC22A4-SLC22A5):
+grep ENSG00000197208.5 ../processed_data/160811/tested_snps_at_egenes.rsid.txt | awk 'BEGIN{OFS="\t"; print "markername","pval"} {print $7,$4}'> ../processed_data/160811/ENSG00000197208.metal.txt
+echo -e "snp\tstring\tcolor" > ../processed_data/160811/ENSG00000197208.markers.txt; echo -e "rs1045020\teQTL\tblue" >> ../processed_data/160811/ENSG00000197208.markers.txt; echo -e "rs273909\tGWAS\tpink" >> ../processed_data/160811/ENSG00000197208.markers.txt
+locuszoom --metal ../processed_data/160811/ENSG00000197208.metal.txt --pvalcol pval --markercol markername --refsnp rs273909 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR --denote-markers-file ../processed_data/160811/ENSG00000197208.markers.txt title="eQTL (ENSG00000197208,SLC22A4)" --prefix ../processed_data/160811/eqtl_ENSG00000197208_rs273909
+
+
+# cast CAD GWAS into METAL format: 
+cat $data/gwas/cad.add.160614.website.txt | awk 'BEGIN {OFS="\t"} {print $1, $11}' > $data/gwas/cad.add.160614.website.metal.txt
+grep -f ../processed_data/160811/tested_snps_at_egenes.chr_pos.txt  /srv/persistent/bliu2/shared/dbsnp/snp146.txt > ../processed_data/160811/tested_snps_at_egenes.dbsnp146.txt
+
+
+# make locuszoom plot for GWAS hit rs273909 (SLC22A4-SLC22A5):
+locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs273909 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR --denote-markers-file ../processed_data/160811/ENSG00000197208.markers.txt title="GWAS (rs273909)" --prefix ../processed_data/160811/gwas_rs273909_ENSG00000197208
+
+
+# make forest PM plot for rs273909:
+cd /srv/persistent/bliu2/tools/ForestPMPlot/
+python /srv/persistent/bliu2/tools/ForestPMPlot/pmplot.py \
+$processed_data/160805/metasoft_input/metasoft_input.5.txt \
+$processed_data/160805/metasoft_output/metasoft_output.5.mcmc.txt \
+$processed_data//160805/Metasoft_tissue_order.alphabetical.txt \
+$processed_data/160805/Metasoft_tissue_idx.txt \
+ENSG00000197208.5_5_131667353_A_G_b37 \
+ENSG00000197208,SLC22A4 \
+$figures/160811/rs273909_ENSG00000197208.pdf
+
+# make locuszoom plot for eQTL ENSG00000182511.7 at rs2521501 (SLC22A4-SLC22A5):
+grep ENSG00000182511.7 ../processed_data/160811/tested_snps_at_egenes.rsid.txt | awk 'BEGIN{OFS="\t"; print "markername","pval"} {print $7,$4}'> ../processed_data/160811/ENSG00000182511.metal.txt
+echo -e "snp\tstring\tcolor" > ../processed_data/160811/ENSG00000182511.markers.txt; echo -e "rs1045020\teQTL\tblue" >> ../processed_data/160811/ENSG00000182511.markers.txt; echo -e "rs273909\tGWAS\tpink" >> ../processed_data/160811/ENSG00000182511.markers.txt
+locuszoom --metal ../processed_data/160811/ENSG00000182511.metal.txt --pvalcol pval --markercol markername --refsnp rs2521501 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000182511,FES)" --prefix ../processed_data/160811/eqtl_ENSG00000182511_rs2521501
+
+
+# make locuszoom plot for GWAS hit rs2521501 (FURIN-FES):
+locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs2521501 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="GWAS (rs2521501)" --prefix ../processed_data/160811/gwas_ENSG00000182511_rs2521501
+
+
+# make forest PM plot for rs2521501: 
+cd /srv/persistent/bliu2/tools/ForestPMPlot/
+python /srv/persistent/bliu2/tools/ForestPMPlot/pmplot.py \
+$processed_data/160805/metasoft_input/metasoft_input.15.txt \
+$processed_data/160805/metasoft_output/metasoft_output.15.mcmc.txt \
+$processed_data//160805/Metasoft_tissue_order.alphabetical.txt \
+$processed_data/160805/Metasoft_tissue_idx.txt \
+ENSG00000182511.7_15_91437388_A_T_b37 \
+ENSG00000182511,FES \
+$figures/160811/rs2521501_ENSG00000182511.pdf
