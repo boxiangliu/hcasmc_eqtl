@@ -2,6 +2,30 @@ library(stringr)
 library(cowplot)
 library(data.table)
 #------ 160715 -----
+#' format the result of DESeq2
+#' @param res result from DESeq2
+#' @param row_data contains two columns, gene_id and gene_name
+#' @return a `data.table` ordered by pvalue. 
+format_result=function(res,row_data){
+	# cast result into data.table:
+	res2=data.table(as.data.frame(res),keep.rownames=T)
+	setnames(res2,'rn','gene_id')
+
+
+	# add gene_name column to result: 
+	res3=merge(res2,row_data,by='gene_id',all.x=T)
+	setcolorder(res3,c(1,ncol(res3),2:(ncol(res3)-1)))
+
+
+	# sort result by pvalue:
+	resOrdered=res3%>%arrange(pvalue)
+
+
+	# return: 
+	return(resOrdered)
+}
+
+
 #' decompose a gct count file:
 #' a gct count files' first and second columns are ENSEMBL ID and gene name
 #' @return res (list) with three elements: count, col_data and row_data 
