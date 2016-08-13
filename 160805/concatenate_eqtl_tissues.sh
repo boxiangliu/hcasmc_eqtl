@@ -1,8 +1,7 @@
 # get all inputs: 
 inputs=($(ls /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/*_Analysis.v6p.FOR_QC_ONLY.allpairs.txt.gz))
 
-
-# sort each input: 
+# unzip each tissue and append tissue name: 
 n=0
 for input in ${inputs[*]}; do
 	n=$(($n+1))
@@ -12,8 +11,8 @@ for input in ${inputs[*]}; do
 	echo $tissue
 
 
-	# sort
-	zcat $input | awk 'BEGIN{OFS="\t"}{print $1"_"$2,$4,$5,$6,"$tissue"}' | sort -k1 -V > ${input/txt.gz/sorted.txt} &
+	# unzip:
+	zcat $input | awk -v tissue=$tissue 'BEGIN{OFS="\t"}{print $1"_"$2,$4,$5,$6,tissue}' > ${input/txt.gz/txt} &
 
 
 	# pause after launching 10 jobs:
@@ -24,5 +23,11 @@ for input in ${inputs[*]}; do
 done
 wait
 
-# merge sort all input: 
-sort -m /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/*_Analysis.v6p.FOR_QC_ONLY.allpairs.sorted.txt > /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/All_Tissues_Analysis.v6p.FOR_QC_ONLY.allpairs.sorted.txt
+
+# concatenate all tissues: 
+cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/*_Analysis.v6p.FOR_QC_ONLY.allpairs.txt > /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.txt
+
+
+
+# sort: 
+sort -S 5G --parallel 10 -T /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/tmp -k1,1 -k5,5 -V /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.txt > /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt
