@@ -5,6 +5,7 @@ library(dplyr)
 library(data.table)
 library(DESeq2)
 library("BiocParallel")
+source('/srv/persistent/bliu2/HCASMC_eQTL/scripts/utils.R')
 register(MulticoreParam(10))
 
 #######
@@ -119,3 +120,33 @@ write.table(output,file='../processed_data/160801/HCASMC_SF_vs_FBS.rnk',quote=F,
 
 # save:
 save(list = c('dds', 'res', 'resOrdered'), file = '../processed_data/160801/DESeq2_HCASMC_SF_vs_FBS.RData')
+
+
+# get row_data:
+row_data=count_wide%>%dplyr::select(Name,Description)
+setnames(row_data,c('gene_id','gene_name'))
+
+
+# format data: 
+resOrdered=format_result(res,row_data)
+
+
+# output rank for GSEA: 
+output=resOrdered[,.(gene_name,stat)]
+output=output[!is.na(stat),]
+write.table(output,file='../processed_data/160801/hcasmc_fbs_vs_sf.rnk',quote=F,row.names=F,col.names=F,sep='\t')
+
+
+# plot RPS16 (ENSG00000105193)
+gene=data.frame(count=unlist(count_wide[Description=='RPS16',3:ncol(count_wide),with=F]))
+gene=gene%>%mutate(condition=str_match(rownames(gene),'sf|fbs'))
+p=ggplot(gene,aes(condition,count))+geom_boxplot()+ggtitle('RPS16')
+save_plot('../figures/160801/RPS16.pdf',p)
+
+
+# plot MRPL13
+gene_name='MRPL13'
+gene=data.frame(count=unlist(count_wide[Description==gene_name,3:ncol(count_wide),with=F]))
+gene=gene%>%mutate(condition=str_match(rownames(gene),'sf|fbs'))
+p=ggplot(gene,aes(condition,count))+geom_boxplot()+ggtitle(gene_name)
+save_plot(sprintf('../figures/160801/%s.pdf',gene_name),p)
