@@ -2297,7 +2297,7 @@ mkdir $scripts/160805 $processed_data/160805 $figures/160805
 
 
 # find the best combination of genotype PCs and PEER factors:
-cp $scripts/160629/run_fastqtl.nominal.wrap.sh $scripts/160805
+cp $scripts/160629/run_fastqtl.nominal.wrap.sh $scripts/160805/run_fastqtl.wrap.sh
 cp $scripts/160530/find_optimal_num_PEER_factors.sh $scripts/160805
 bash $scripts/160805/find_optimal_num_PEER_factors.sh 
 cp $scripts/160530/plot_num_egene_vs_cov.R $scripts/160805/
@@ -2318,12 +2318,15 @@ bgzip $processed_data/160805/covariates.pc4.peer8.gender_letter.tsv
 
 
 # nominal pass to map eQTLs: 
-bash $scripts/160805/run_fastqtl.nominal.wrap.sh \
+bash $scripts/160805/run_fastqtl.wrap.sh \
 	$data/joint3/recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf.id.gz \
 	$processed_data/160530/combined.filter.norm.bed.gz \
 	$processed_data/160805/covariates.pc4.peer8.gender_letter.tsv.gz \
 	$processed_data/160805/hcasmc.eqtl.pc4.peer8.txt \
 	"--window 1e6"
+
+# select variants with p-value less than 1e-3: 
+zcat $processed_data/160805/hcasmc.eqtl.pc4.peer8.txt.gz | awk 'BEGIN{OFS="\t";print "snp","pval"}{if ($4<1e-3) {print $2,$4}}' >  $processed_data/160805/hcasmc.eqtl.pc4.peer8.pval1e-3.txt
 
 
 # run p-value correction:
@@ -2345,6 +2348,22 @@ Rscript $scripts/160805/plot_eqtl_vs_distance.R \
 	-pval_vs_dist=$figures/160805/eqtl_pval_vs_dist.pdf
 
 
+# permutation pass to map eQTLs: 
+bash $scripts/160805/run_fastqtl.wrap.sh \
+	$data/joint3/recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf.id.gz \
+	$processed_data/160530/combined.filter.norm.bed.gz \
+	$processed_data/160805/covariates.pc4.peer8.gender_letter.tsv.gz \
+	$processed_data/160805/hcasmc.eqtl.pc4.peer8.perm.txt \
+	"--window 1e6 --permute 1000 10000"
+
+
+# correct permutation eQTL pvalue:
+cp $scripts/160530/fastqtl_pvalue_corrections.R $scripts/160805/fastqtl_permuted_pvalue_corrections.R
+Rscript $scripts/160805/fastqtl_permuted_pvalue_corrections.R \
+	../processed_data/160805/hcasmc.eqtl.pc4.peer8.perm.txt \
+	../processed_data/160805/hcasmc.eqtl.pc4.peer8.perm.padj.txt
+
+
 # create symbolic link of eQTL data: 
 ln -s /mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/eqtl_updated_annotation/v6p_fastQTL_allpairs_FOR_QC_ONLY/ /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/
 cp /mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/eqtl_updated_annotation/Metasoft_tissue_order.txt /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/
@@ -2360,6 +2379,9 @@ Rscript $scripts/160805/format_hcascm_eqtl.R # output $processed_data/160805/hca
 gzip $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt
 ln -s $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt.gz \
 	$processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/HCASMC_Analysis.v6p.FOR_QC_ONLY.allpairs.txt.gz
+
+# concatenate all eQTL data: 
+bash $scripts/160805/concatenate_eqtl_tissues.sh 
 
 
 # generate metasoft input file:
@@ -2379,6 +2401,14 @@ parallel -j12 bash $scripts/160805/metasoft.core.sh \
 	$processed_data/160805/metasoft_input/metasoft_input.{}.txt \
 	$processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.txt \
 	$processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.log ::: {1..22} X
+
+# merge metasoft output: 
+head -n1 $processed_data/160805/metasoft_output/metasoft_output.1.mcmc.txt > $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
+cat $processed_data/160805/metasoft_output/metasoft_output.{1..22}.mcmc.txt | grep -v RSID >> $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
+
+
+# plot heatmap of m-values: 
+Rscript $scripts/160805/plot_mvalue_heatmap.R 
 
 
 # find HCASMC-specific eQTLs:
@@ -2464,3 +2494,121 @@ $processed_data/160805/Metasoft_tissue_idx.txt \
 ENSG00000182511.7_15_91437388_A_T_b37 \
 ENSG00000182511,FES \
 $figures/160811/rs2521501_ENSG00000182511.pdf
+
+
+#### 160813
+#### convert vcf to bed fasta pairs
+# setup:
+mkdir $scripts/160813
+
+# generate sample list: 
+python $scripts/160813/gen_sample_list.py > $data/joint3/sample_list.txt
+
+# convert vcf to bed fasta pairs: 
+parallel -a $data/joint3/sample_list.txt -j20 \
+	python $scripts/160813/vcf2bedfa.py \
+	$data/joint3/recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf \
+	{} \
+	$data/joint3/bed_fa/{}
+
+
+#### 160816
+#### eQTL mapping on subsampled GTEx tissues:
+# setup: 
+mkdir $scripts/160816 $processed_data/160816 $figures/160816
+
+
+# copy fastqtl subsampling code: 
+cp /srv/persistent/bliu2/gtexciseqtls/subsampling/nominal.pass.subsamples.v6p.{core.sh,sh} $scripts/160816
+cp /srv/persistent/bliu2/gtexciseqtls/subsampling/run_FastQTL_threaded_subsample.py  $scripts/160816
+cp /srv/persistent/bliu2/gtexciseqtls/subsampling/subsample.lists.by.tissue.R $scripts/160816
+
+
+# subset to covariates to first 10: 
+bash $scripts/160816/subset_covariates.sh 
+
+
+# subsample tissues: 
+Rscript $scripts/160816/subsample.lists.by.tissue.R
+
+
+# run fastqtl on subsampled GTEx tissues: 
+bash $scripts/160816/nominal.pass.subsamples.v6p.sh
+
+
+#### replication of HCASMC eQTLs in GTEx tissues: 
+# select HCASMC eQTLs with FDR < 0.05: 
+cat ../processed_data/160805/hcasmc.eqtl.pc4.peer8.perm.padj.txt | \
+awk 'BEGIN{OFS="\t"} {if ($19<=0.05) {print $1,$6"_b37"}}' | \
+sed "s/chr//" > ../processed_data/160816/hcasmc.eqtl.pc4.peer8.perm.padj.fdr05.txt
+
+
+# subset GTEx tissue to association significant in HCASMC:
+mkdir $processed_data/160816/replication/
+parallel -a $data/gtex/gtex.v6p.eqtl.tissues.txt -j44 \
+python $scripts/160816/subset_eQTLs.py \
+../processed_data/160816/hcasmc.eqtl.pc4.peer8.perm.padj.fdr05.txt \
+$data/gtex/v6p/v6p_fastQTL_allpairs_FOR_QC_ONLY/{}_Analysis.v6p.FOR_QC_ONLY.allpairs.txt.gz \
+../processed_data/160816/replication/{}_Analysis.v6p.FOR_QC_ONLY.allpairs.sig_in_HCASMC.txt
+
+
+# calculate pi1 statistics for GTEx tissues
+parallel -a $data/gtex/gtex.v6p.eqtl.tissues.txt -j44 \
+Rscript $scripts/160816/pi1_calc.R \
+../processed_data/160816/replication/{}_Analysis.v6p.FOR_QC_ONLY.allpairs.sig_in_HCASMC.txt \
+{} > ../processed_data/160816/replication/pi1.txt
+
+
+# plot pi1 statistic:
+Rscript $scripts/160816/pi1_plot.R \
+../processed_data/160816/replication/pi1.txt \
+../figures/160816/pi1.pdf
+
+
+# subset subsampled GTEx tissue to association significant in HCASMC:
+mkdir $processed_data/160816/replication_subsample/
+parallel -a $data/gtex/gtex.v6p.eqtl.tissues.txt -j44 \
+python $scripts/160816/subset_eQTLs.py \
+../processed_data/160816/hcasmc.eqtl.pc4.peer8.perm.padj.fdr05.txt \
+$processed_data/160816/subsampling/{}/{}_52.allpairs.txt.gz \
+../processed_data/160816/replication_subsample/{}_52.allpairs.sig_in_HCASMC.txt
+
+
+# calculate pi1 statistics for GTEx tissues
+parallel -a $data/gtex/gtex.v6p.eqtl.tissues.txt -j44 \
+Rscript $scripts/160816/pi1_calc.R \
+../processed_data/160816/replication_subsample/{}_52.allpairs.sig_in_HCASMC.txt \
+{} > ../processed_data/160816/replication_subsample/pi1.txt
+
+
+# plot pi1 statistic:
+Rscript $scripts/160816/pi1_plot.R \
+../processed_data/160816/replication_subsample/pi1.txt \
+../figures/160816/pi1_subsample.pdf
+
+
+#### 160824
+#### run eCavier
+# setup: 
+mkdir $scripts/160824 $processed_data/160824 $figures/160824
+
+# check eQTL file is sorted: 
+zcat ../processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt.gz | sort --parallel=10 -k1,1 -k2,2 -V | gzip > ../processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.sort.txt.gz
+
+
+# split eqtl file by gene name: 
+mkdir ../processed_data/160824/eqtl_by_gene/
+zcat ../processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.sort.txt.gz | python $scripts/160824/split_eqtl_by_gene.py ../processed_data/160824/eqtl_by_gene/
+for input in $(ls ../processed_data/160824/eqtl_by_gene/ENSG*txt); do
+	cat $input | awk '{print $2,$5/$6}' > ${input/txt/eqtl.zscore}
+done 
+
+# intersect gwas and each eqtl (split by gene):
+Rscript $scripts/160824/intersect_gwas_eqtl.R
+
+# for each <gene_id>.gwas.zscore: 
+# 	calculate LD (using plink and European ancestry)
+
+# run caviar: 
+# eqtl file: /srv/persistent/bliu2/HCASMC_eQTL/processed_data//160805/hcasmc.eqtl.pc4.peer8.padj.txt
+# cad file: /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/gwas/cad.add.160614.website.txt
