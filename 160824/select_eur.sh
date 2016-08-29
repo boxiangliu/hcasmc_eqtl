@@ -1,0 +1,1 @@
+cat /srv/persistent/bliu2/shared/1000genomes/phase1v3/integrated_call_samples.20101123.ALL.panel | awk 'BEGIN{OFS="\t"}{if ($3=="EUR") print $1,$1}' > /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160824/eur_samples.txt

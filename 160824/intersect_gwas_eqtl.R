@@ -9,7 +9,7 @@ in_files=list.files(path='../processed_data/160824/eqtl_by_gene',pattern='eqtl.z
 for (in_file in in_files){
 	# get gene id:
 	gene_id=basename(in_file)%>%str_replace('.eqtl.zscore','')
-	message(gene_id	)
+	message(gene_id)
 
 	# reformat eqtl: 
 	eqtl=fread(in_file)
@@ -21,16 +21,20 @@ for (in_file in in_files){
 	eqtl=cbind(eqtl,tmp)
 
 
-	# intersect gwas and eqtl:
+	# intersect gwas and eqtl by chromsome and position:
 	gwas_small=gwas[chr==unique(eqtl$chr)&pos>=min(eqtl$pos)&pos<=max(eqtl$pos),]
 	merge=merge(eqtl,gwas_small,by=c('chr','pos'))
+
+
+	# change label to D and I for insertion and deletion: 
 	merge[,ref2:=ifelse(nchar(ref)!=nchar(alt),'I',ref)]
 	merge[,alt2:=ifelse(nchar(ref)!=nchar(alt),'D',alt)]
 	merge=merge[which(pmin(merge$ref2,merge$alt2)==pmin(merge$effect_allele,merge$noneffect_allele)),]
 	
 
 	# write output:
-	write.table(merge[,.(id,eqtl_zscore)],paste0('../processed_data/eCAVIAR_input/',gene_id,'.eqtl.zscore'),quote=F,row.names=F,col.names=F,sep='\t')
-	write.table(merge[,.(id,gwas_zscore)],paste0('../processed_data/eCAVIAR_input/',gene_id,'.gwas.zscore'),quote=F,row.names=F,col.names=F,sep='\t')
-	write.table(merge[,markername],paste0('../processed_data/eCAVIAR_input/',gene_id,'.markername'),quote=F,row.names=F,col.names=F,sep='\t')
+	# write.table(merge[,.(id,eqtl_zscore)],paste0('../processed_data/160824/eCAVIAR_input/',gene_id,'.eqtl.zscore'),quote=F,row.names=F,col.names=F,sep='\t')
+	# write.table(merge[,.(id,gwas_zscore)],paste0('../processed_data/160824/eCAVIAR_input/',gene_id,'.gwas.zscore'),quote=F,row.names=F,col.names=F,sep='\t')
+	# write.table(merge[,markername],paste0('../processed_data/160824/eCAVIAR_input/',gene_id,'.markername'),quote=F,row.names=F,col.names=F,sep='\t')
+	write.table(merge[,id],paste0('../processed_data/160824/eCAVIAR_input/',gene_id,'.id'),quote=F,row.names=F,col.names=F,sep='\t')
 }
