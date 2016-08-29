@@ -2304,7 +2304,6 @@ cp $scripts/160530/plot_num_egene_vs_cov.R $scripts/160805/
 Rscript $scripts/160805/plot_num_egene_vs_cov.R
 
 
-
 # create covariate file: 
 Rscript $scripts/160530/combine_covariates.R \
 	--genotype_pc=$processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv \
@@ -2601,10 +2600,29 @@ mkdir ../processed_data/160824/eqtl_by_gene/
 zcat ../processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.sort.txt.gz | python $scripts/160824/split_eqtl_by_gene.py ../processed_data/160824/eqtl_by_gene/
 for input in $(ls ../processed_data/160824/eqtl_by_gene/ENSG*txt); do
 	cat $input | awk '{print $2,$5/$6}' > ${input/txt/eqtl.zscore}
-done 
+done
+
+# change rsid to chr_pos_ref_alt_b37 in all 1000 Genomes p1v3 vcf files:
+bash $scripts/160824/reformat_rsid.sh
+parallel -j11 tabix -p vcf /srv/persistent/bliu2/shared/1000genomes/phase1v3/ALL.chr{}.integrated_phase1_v3.20101123.snps_indels_svs.genotypes.rsid.vcf.gz ::: {1..22}
+
+# rsids for indels are labeled by chr:pos:<D|I>; change these rsids to 
+# be consisten with 1000 Genomes phase 1 version 3: 
+# cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/gwas/cad.add.160614.website.txt | python $scripts/160824/update_gwas_rsid.py > /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/gwas/cad.add.160614.website.rsid.txt
 
 # intersect gwas and each eqtl (split by gene):
 Rscript $scripts/160824/intersect_gwas_eqtl.R
+
+
+# subset to genes with at least 1 eQTL and 1 GWAS hit (p<1e-3):
+cat ../processed_data/160805/hcasmc.eqtl.pc4.peer8.perm.txt | awk '{print $1}' > ../processed_data/160824/gene_id.txt
+parallel -a ../processed_data/160824/gene_id.txt -j40 Rscript \
+	$scripts/160824/calc_min_pval.R \
+	../processed_data/160824/eCAVIAR_input/{}.eqtl.zscore \
+	../processed_data/160824/eCAVIAR_input/{}.gwas.zscore \
+	{} > ../processed_data/160824/gene_min_pval.txt
+Rscript $scripts/160824/select_gene_with_eqtl_and_gwas.R > ../processed_data/160824/gene_id_gwas1e-4_eqtl1e-4.txt
+
 
 # for each <gene_id>.gwas.zscore: 
 # 	calculate LD (using plink and European ancestry)
