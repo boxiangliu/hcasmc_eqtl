@@ -2,7 +2,12 @@
 library(XLConnect)
 
 # command args: 
-in_file="/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/nikpay_2015_ng.xlsx"
+args=commandArgs(T)
+in_file=args[1]
+out_file=args[2]
+# in_file="/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/nikpay_2015_ng.xlsx"
+# out_file='../processed_data/eCAVIAR/gwas_loci.cad.all.genomewide_fdr_merged.txt'
+
 
 # read gwas loci:
 gwas_fdr_hits=readWorksheet(loadWorkbook(in_file),sheet=7,startRow=2,endRow=204,startCol=1,endCol=3,check.names=F,header=T)%>%select(markername,chr,pos=bp_hg19)
@@ -16,4 +21,4 @@ merged=rbind(gwas_fdr_hits,gwas_genowide_hits)
 uniq=unique(merged)
 
 # output the merged unique hits:
-write.table(uniq,'../processed_data/eCAVIAR/gwas_loci.cad.all.genomewide_fdr_merged.txt',sep='\t',row.names=F,quote=F)
+write.table(uniq,out_file,sep='\t',row.names=F,quote=F)
