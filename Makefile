@@ -2374,6 +2374,8 @@ gzip $processed_data/160805/hcasmc.eqtl.pc4.peer8.txt
 Rscript $scripts/160805/format_hcascm_eqtl.R # output $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt
 
 
+#### metasoft on full sample
+
 # copy HCASMC eQTL data to appropriate location: 
 gzip $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt
 ln -s $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt.gz \
@@ -2384,7 +2386,7 @@ bash $scripts/160805/concatenate_eqtl_tissues.sh
 
 
 # generate metasoft input file:
-mkdir $processed_data/160805/metasoft_input/ 
+mkdir $processed_data/160805/metasoft_input/
 cat $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | \
 python $scripts/160805/gen_metasoft_input.py > \
 $processed_data/160805/metasoft_input/metasoft_input.txt
@@ -2401,20 +2403,53 @@ parallel -j12 bash $scripts/160805/metasoft.core.sh \
 	$processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.txt \
 	$processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.log ::: {1..22} X
 
+
 # merge metasoft output: 
 head -n1 $processed_data/160805/metasoft_output/metasoft_output.1.mcmc.txt > $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
 cat $processed_data/160805/metasoft_output/metasoft_output.{1..22}.mcmc.txt | grep -v RSID >> $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
 
+#### end metasoft on full sample
+
+
+#### metasoft on subsample
+
+# copy HCASMC eQTL data to appropriate location:
+mkdir $processed_data/160816/subsampling/HCASMC
+ln -s $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt.gz \
+	$processed_data/160816/subsampling/HCASMC/HCASMC_52.allpairs.txt.gz
+
+# concatenate all eQTL data: 
+bash $scripts/160805/concatenate_eqtl_tissues.subsample.sh 
+
+
+# generate metasoft input file:
+mkdir $processed_data/160805/metasoft_input_subsample_52/ 
+cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160816/subsampling/All_Tissues.allpairs.sorted.txt | \
+python $scripts/160805/gen_metasoft_input.py > \
+$processed_data/160805/metasoft_input_subsample_52/metasoft_input.txt
+
+
+# split metasoft input by chromosome: 
+parallel 'grep "_{}_" ../processed_data/160805/metasoft_input_subsample_52/metasoft_input.txt > ../processed_data/160805/metasoft_input_subsample_52/metasoft_input.{}.txt' ::: {1..22} X
+
+
+# run METASOFT:
+mkdir $processed_data/160805/metasoft_output_subsample_52
+parallel bash $scripts/160805/metasoft.core.sh \
+	$processed_data/160805/metasoft_input_subsample_52/metasoft_input.{}.txt \
+	$processed_data/160805/metasoft_output_subsample_52/metasoft_output.{}.mcmc.txt \
+	$processed_data/160805/metasoft_output_subsample_52/metasoft_output.{}.mcmc.log ::: {1..22} X
+
+
+# merge metasoft output: 
+head -n1 $processed_data/160805/metasoft_output/metasoft_output.1.mcmc.txt > $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
+cat $processed_data/160805/metasoft_output/metasoft_output.{1..22}.mcmc.txt | grep -v RSID >> $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
+
+#### end metasoft on subsample
+
 
 # plot heatmap of m-values: 
 Rscript $scripts/160805/plot_mvalue_heatmap.R 
-
-
-# find HCASMC-specific eQTLs:
-
-# run ForestPMplot:
- ../processed_data/160805/Metasoft_tissue_idx.txt
-
 
 
 #### 160811:
@@ -2423,7 +2458,7 @@ Rscript $scripts/160805/plot_mvalue_heatmap.R
 mkdir $scripts/160811 $processed_data/160811 $figures/160811
 
 
-# extract top gwas hits from the supplemetary excel of Nikpay 2015 NG: 
+# extract known gwas hits from the supplemetary excel of Nikpay 2015 NG: 
 Rscript $scripts/160811/extract_gwas_loci.R  # ../processed_data/160811/gwas_loci.cad.all.FWER.txt
 
 # format the GWAS loci file so it contains one column chr_pos:
@@ -2531,8 +2566,12 @@ bash $scripts/160816/subset_covariates.sh
 Rscript $scripts/160816/subsample.lists.by.tissue.R
 
 
-# run fastqtl on subsampled GTEx tissues: 
+# run fastqtl nominal pass on subsampled GTEx tissues: 
 bash $scripts/160816/nominal.pass.subsamples.v6p.sh
+
+
+# run fastqtl permutation pass on subsampled GTEx tissues: 
+bash $scripts/160816/permutation.pass.subsamples.v6p.sh
 
 
 #### replication of HCASMC eQTLs in GTEx tissues: 
@@ -2621,7 +2660,7 @@ parallel -a ../processed_data/160824/gene_id.txt -j40 Rscript \
 	../processed_data/160824/eCAVIAR_input/{}.eqtl.zscore \
 	../processed_data/160824/eCAVIAR_input/{}.gwas.zscore \
 	{} > ../processed_data/160824/gene_min_pval.txt
-Rscript $scripts/160824/select_gene_with_eqtl_and_gwas.R > ../processed_data/160824/gene_id_gwas1e-4_eqtl1e-4.txt
+Rscript $scripts/160824/select_gene_by_eqtl_and_gwas_pval.R > ../processed_data/160824/gene_id_gwas1e-4_eqtl1e-4.txt
 
 
 # for each <gene_id>.gwas.zscore: 
@@ -2630,3 +2669,215 @@ Rscript $scripts/160824/select_gene_with_eqtl_and_gwas.R > ../processed_data/160
 # run caviar: 
 # eqtl file: /srv/persistent/bliu2/HCASMC_eQTL/processed_data//160805/hcasmc.eqtl.pc4.peer8.padj.txt
 # cad file: /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160615/gwas/cad.add.160614.website.txt
+
+
+#### 160829
+#### eCAVIAR
+# setup: 
+mkdir $scripts/eCAVIAR $processed_data/eCAVIAR $figures/eCAVIAR
+
+
+# link GWAS hits: 
+ln ../processed_data/160811/gwas_loci.cad.all.FWER.txt $processed_data/eCAVIAR/gwas_loci.cad.all.FWER.txt
+
+
+# select GWAS loci (variants less than 50 variants away from the GWAS top hits): 
+Rscript $scripts/eCAVIAR/select_gwas_loci.R
+
+
+# select eGenes at GWAS loci:
+Rscript $scripts/eCAVIAR/select_eGene.R
+
+
+# run eCAVIAR:
+bash $scripts/eCAVIAR/ecaviar.sh
+
+
+# make locuszoom plot:
+parallel Rscript $scripts/eCAVIAR/plot_locus.R \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/eCAVIAR/eCAVIAR_input/{}.gwas.zscore \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_input/{}.eqtl.zscore \
+	../figures/eCAVIAR/{}.pdf ::: ENSG00000100014.15 ENSG00000197208.5 ENSG00000198270.8 ENSG00000226972.2 ENSG00000234380.1 ENSG00000236838.2
+
+
+# make locuszoom plot: 
+parallel --xapply $scripts/eCAVIAR/locuszoom.sh {1} {2} $figures/eCAVIAR/ ::: ENSG00000100014.15 ENSG00000197208.5 ENSG00000198270.8 ENSG00000226972.2 ENSG00000234380.1 ENSG00000236838.2 ::: rs5760295 rs273909 rs77684561 rs4245791 rs8134775 rs216172
+
+
+#### eCAVIAR for downsampled GTEx tissue:
+
+# extract top gwas hits from the supplemetary excel of Nikpay 2015 NG: 
+cp $scripts/160811/extract_gwas_loci.R $scripts/eCAVIAR/extract_gwas_variants.R
+Rscript $scripts/eCAVIAR/extract_gwas_variants.R \
+	/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/nikpay_2015_ng.xlsx \
+	../processed_data/eCAVIAR/gwas_loci.cad.all.genomewide_fdr_merged.txt
+
+
+# select GWAS loci: 
+Rscript $scripts/eCAVIAR/select_gwas_loci.R \
+	../processed_data/eCAVIAR/gwas_loci.cad.all.genomewide_fdr_merged.txt \
+	../processed_data/eCAVIAR/cad_gwas_loci/
+
+
+# preprocessing for selecting eGenes: 
+parallel -j20 -a $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt \
+	bash $scripts/eCAVIAR/select_eGene.preprocess.sh \
+	../processed_data/160816/subsampling/{}/{}_52.allpairs.txt.gz \
+	../processed_data/160816/subsampling/{}/{}_52.allpairs.sid_parsed.txt
+
+
+# split gene-snp pairs by chromsomes:
+parallel -j11 bash $scripts/eCAVIAR/split_eqtl_by_chr.sh \
+	../processed_data/160816/subsampling/{1}/{1}_52.allpairs.sid_parsed.txt \
+	../processed_data/160816/subsampling/{1}/{1}_52.allpairs.sid_parsed.{2}.txt \
+	{2} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt ::: {1..22}
+
+
+# select eGenes:
+mkdir ../processed_data/eCAVIAR/eCAVIAR_input2
+parallel -j5 Rscript $scripts/eCAVIAR/select_eGene.R \
+	../processed_data/160816/subsampling/{1}/{1}_52.allpairs.sid_parsed.{2}.txt \
+	../processed_data/eCAVIAR/eCAVIAR_input2/{1}/ \
+	{2} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt ::: {1..22}
+
+
+mkdir ../processed_data/eCAVIAR/eCAVIAR_input4
+parallel -j5 Rscript $scripts/eCAVIAR/select_eGene.separate_gwas_loci.R \
+	../processed_data/160816/subsampling/{1}/{1}_52.allpairs.sid_parsed.{2}.txt \
+	../processed_data/eCAVIAR/eCAVIAR_input4/{1}/ \
+	{2} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt ::: {1..22}
+
+
+# take the unique variants in the input files:
+mkdir /srv/persistent/bliu2/HCASMC_eQTL/processed_data/eCAVIAR/eCAVIAR_input3/
+parallel -j15 bash $scripts/eCAVIAR/unique.sh \
+	../processed_data/eCAVIAR/eCAVIAR_input2/{} \
+	../processed_data/eCAVIAR/eCAVIAR_input3/{} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt
+
+
+# run eCAVIAR:
+# mkdir ../processed_data/eCAVIAR/eCAVIAR_output2
+# parallel -j15 bash $scripts/eCAVIAR/ecaviar.sh \
+# 	../processed_data/eCAVIAR/eCAVIAR_input2/{} \
+# 	../processed_data/eCAVIAR/eCAVIAR_output2/{} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt
+
+mkdir ../processed_data/eCAVIAR/eCAVIAR_output3
+parallel -j15 bash $scripts/eCAVIAR/ecaviar.sh \
+	../processed_data/eCAVIAR/eCAVIAR_input3/{} \
+	../processed_data/eCAVIAR/eCAVIAR_output3/{} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt
+
+bash $scripts/eCAVIAR/ecaviar.sh \
+	../processed_data/eCAVIAR/eCAVIAR_input2/HCASMC/ \
+	../processed_data/eCAVIAR/eCAVIAR_output2/HCASMC/ 
+
+# count eCAVIAR hits: 
+
+#### end eCAVIAR for downsampled GTEx tissue: 
+
+
+#### eGenes vs sample size:
+
+# setup: 
+mkdir $scripts/egenes_vs_sample_size $figures/egenes_vs_sample_size $processed_data/egenes_vs_sample_size
+
+# copy some scripts: 
+cp $scripts/160530/plot_num_egenes_vs_sample_size.R $scripts/egenes_vs_sample_size
+
+
+# plot the number of egenes vs sample size: 
+Rscript $scripts/egenes_vs_sample_size/plot_num_egenes_vs_sample_size.R
+
+
+# count the number of egenes in subsampled (52 individual) GTEx tissues:
+bash $scripts/egenes_vs_sample_size/count_num_egenes_subsampled_52.sh
+
+
+# plot the number of egenes in subsampled tissues:
+Rscript $scripts/egenes_vs_sample_size/plot_num_egenes_subsampled_52.R
+
+#### end eGenes vs sample size
+
+#### HCASMC specific eQTLs: 
+# setup:
+mkdir $scripts/hcasmc_specific_eqtl $processed_data/hcasmc_specific_eqtl $figures/hcasmc_specific_eqtl
+
+
+# plan: 
+touch $scripts/hcasmc_specific_eqtl/plan.sh
+
+
+# find HCASMC specific eQTLs (full sample): 
+parallel -j5 Rscript $scripts/hcasmc_specific_eqtl/find_hcasmc_specific_eqtls.R \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.txt \
+	../figures/hcasmc_specific_eqtl/ \
+	../processed_data/hcasmc_specific_eqtl/hcasmc_specific_eqtl.{}.txt ::: {1..22}
+cat ../processed_data/hcasmc_specific_eqtl/hcasmc_specific_eqtl.*.txt > ../processed_data/hcasmc_specific_eqtl/hcasmc_specific_eqtl.autosomes.txt
+
+
+# find tisue specific eQTLs (subsampled to 52):
+mkdir $processed_data/hcasmc_specific_eqtl2 $figures/hcasmc_specific_eqtl2
+parallel -j5 Rscript $scripts/hcasmc_specific_eqtl/find_tissue_specific_eqtls.R \
+	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/metasoft_output/metasoft_output.{2}.mcmc.txt \
+	../figures/hcasmc_specific_eqtl2/{1}/ \
+	../processed_data/hcasmc_specific_eqtl2/{1}/stat.{2}.txt \
+	../processed_data/hcasmc_specific_eqtl2/{1}/tissue_specific_eqtl.{2}.txt \
+	{1} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt ::: {1..22}
+
+#### end HCASMC specific eQTLs
+
+
+#### ATACseq
+
+# setup: 
+mkdir $scripts/atacseq $processed_data/atacseq $figures/atacseq
+mkdir -p  $data/atacseq/2305/fastq
+
+
+# prepare data:
+scp bosh@valkyr:/home/clint/ATAC/150123_NS500418_0078_AH2JNYBGXX/Data/Intensities/BaseCalls/CA2305/atacseq/*FBS*concat*fastq $data/atacseq/2305/fastq/
+# md5sum checked with no discrepencies. 
+
+
+# gzip all fastq files:
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/atacseq/2305/fastq
+gzip *fastq
+
+
+# processs ATACseq data with Kundaje pipeline:
+# bds $tools/atac_dnase_pipelines/atac.bds -species hg19 -nth 12 -title 2305 -out_dir $data/atacseq/2305/out \
+#  -fastq1_1 $data/atacseq/2305/fastq/CA2305-FBS1_S1_concat_R1_001.fastq.gz -fastq1_2  $data/atacseq/2305/fastq/CA2305-FBS1_S1_concat_R2_001.fastq.gz \
+#  -fastq2_1 $data/atacseq/2305/fastq/CA2305-FBS_S2_concat_R1_001.fastq.gz -fastq2_2 $data/atacseq/2305/fastq/CA2305-FBS_S2_concat_R2_001.fastq.gz \
+#  -fastq3_1 $data/atacseq/2305/fastq/CA2305-FBS_S3_concat_R1_001.fastq.gz -fastq3_2 $data/atacseq/2305/fastq/CA2305-FBS_S3_concat_R2_001.fastq.gz
+bds ~/atac_dnase_pipelines/atac.bds -species hg19 -nth 12 -title 2305 -out_dir ~/atacseq/2305/out \
+ -fastq1_1 ~/atacseq/2305/fastq/CA2305-FBS1_S1_concat_R1_001.fastq.gz -fastq1_2  ~/atacseq/2305/fastq/CA2305-FBS1_S1_concat_R2_001.fastq.gz \
+ -fastq2_1 ~/atacseq/2305/fastq/CA2305-FBS_S2_concat_R1_001.fastq.gz -fastq2_2 ~/atacseq/2305/fastq/CA2305-FBS_S2_concat_R2_001.fastq.gz \
+ -fastq3_1 ~/atacseq/2305/fastq/CA2305-FBS_S3_concat_R1_001.fastq.gz -fastq3_2 ~/atacseq/2305/fastq/CA2305-FBS_S3_concat_R2_001.fastq.gz
+
+#### end ATACseq
+
+
+#### GWAS enrichment in ATACseq and DNAse-Seq:
+# setup: 
+mkdir $scripts/gwas_atacseq_overlap $processed_data/gwas_atacseq_overlap $figures/gwas_atacseq_overlap
+
+
+# plan: 
+touch $scripts/gwas_atacseq_overlap/plan.sh
+
+
+# download roadmap DNAse-seq data: 
+mkdir $data/roadmap
+wget -m http://genboree.org/EdaccData/Release-9/experiment-sample/Chromatin_Accessibility/ -P $data/roadmap
+
+#### end GWAS enrichment in ATACseq and DNAse-Seq 
+
+#### average RNAseq read depth: 
+cd /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq/alignments
+grep "Number of input reads" */Log.final.out | awk 'BEGIN{FS="|"}{print $2}' | awk '{print $1}' > read_depths.txt 
+#### end average RNAseq read depth
+
+
+#### average ATACseq read depth: 
+cd /users/bliu2/atacseq/2305/out/qc
+grep "reads" */*align.log | awk 'BEGIN{FS=":| reads"}{print $2}' 
+#### end average ATACseq read depth

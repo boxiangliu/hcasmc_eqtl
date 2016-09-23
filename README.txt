@@ -420,6 +420,20 @@ The bed file contains variant positions close but outside of the fa file sequenc
 #### select top GWAS hits: extract_gwas_loci.R
 I extracted the top GWAS hits from Nikpay 2015 NG. For each of the top GWAS hit, I extracted all tested genes (genes within 1MB from the variant) and plotted the association pvalue (../figures/160811/gwas_hits_gene_pval.pdf, using plot_gwas_hits_eqtl_pval.R). This plot suggests that two GWAS hits, rs273909 (SLC22A4-SLC22A5) and rs2521501 (FURIN-FES) are significantly associated with at least one gene (p-value <0.05). For rs273909, the top association is SLC22A4 (p<1.8e-4); for rs2521501, the top association is FES (p<2.0e-4). I then made locuszoom plot for both loci and observed coloclization at both loci. Notably, the top GWAS association overlaps the top eQTL association at rs2521501. Next, I made forestPM plot for both loci. For rs273909, HCASMC has the lowest p-value amonges all tissues. However, its m-value did not reach 0.9, likely due to small sample size. For rs2521501, artery, smooth muscle as well as HCASCM share low p-values, and all reached m-value of 0.9. 
 
+
+#### eCAVIAR
+I ran eCAVIAR using a pipeline described in Farhad's paper. 
+1. select GWAS top variant
+2. select the 50 up and downstream as the GWAS loci   
+3. select the eGenes for at least variant in all loci
+4. run eCAVIAR for each genes @ each loci
+There are 6 loci that have CLPP greater than 0.01 
+
+
+#### eGenes vs sample size
+I plotted the number of eGenes vs sample size. The largest sample size is 361, and the smallest is 52. Figure "../figures/egenes_vs_sample_size/num_egenes_vs_sa_size.fullsize.pdf" shows regression on this range. HCASMC is slightly below the regression line. Figure "../figures/egenes_vs_sample_size/num_egenes_vs_sample_size.size150.pdf" shows regression from 52 to 150. In the latter, HCASMC seems to be on the regression line. 
+
+
 # TO READ:
 1. WGCNA paper
 2. Sazonova (2015) Plos Genetics
