@@ -1,0 +1,31 @@
+# parse the SNP id column in eQTL file
+# split eqtl files by chromosomes
+# for each chromosome: 
+# 	select eGenes
+
+#### why does some eCAVIAR input fail? 
+# get the names of input *.id files -> A
+# get the names of output *.col files -> B
+# compare the A and B
+# conclusion: the failed runs has duplicate IDs:
+
+# check if duplicated runs are because two SNPs are close to each other. 
+# how to remove duplicated
+# take the uniq entries in *.id, *.gwas.zscore and *.eqtl.zscore
+# ENSG00000273486.1.ecaviar_col
+
+
+#### why does some files take so long? 
+# these files have very many loci (e.g. one has 700 or so)
+# obviously these file contains multiple gwas hits 
+# I will use the following algorithm to ensure each file contains only 1 gwas hit
+# implemented in select_eGene.separate_gwas_loci.R
+# for chromosome in 1 to 22: 
+#	read eqtl on this chromosome 
+# 	for gwas loci on this chromosome: 
+# 		read gwas loci 
+# 		merge gwas loci and eqtl 
+# 		select eGenes (pval < 1e-3)
+# 		output eGenes and associated variants 
+# 	end for 
+# end for 
