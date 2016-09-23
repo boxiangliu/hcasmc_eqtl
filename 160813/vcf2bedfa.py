@@ -1,10 +1,25 @@
-# convert VCF file to bed-fasta pair: 
+# Convert VCF file to bed-fasta pair: 
+# 
+# Author: Boxiang Liu
+# Email: bliu2@stanford.edu
+# 08/13/2016
+# 
+# Input arguments: 
+# vcf_file: the vcf file to be converted to bed-fasta pairs
+# sample: the sample name. It should be a genotype column of the VCF file
+# out_prefix: prefix to the output. 
+# 
+# Output: 
+# two files will be generated. <output_prefix>.bed and <output_prefix>.fa. 
+ 
 import vcf,sys
 
 # command args: 
 vcf_file=sys.argv[1]
 sample=sys.argv[2]
 out_prefix=sys.argv[3]
+
+# example inputs: 
 # vcf_file='/srv/persistent/bliu2/HCASMC_eQTL/data/joint3/recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.head2000.vcf'
 # sample='20805'
 # out_prefix='/srv/persistent/bliu2/HCASMC_eQTL/data/joint3/bed_fa/20805'

@@ -1,5 +1,19 @@
+# select the up and downstream 50 variants around gwas top hits;
+# select eGenes for at least one of the 100 variants
+# perform eCAVIAR on the top 100 variants. 
+
+
 # algorithm: 
 # subset to 100-200 top hits.
+# for each gene:
+#	read the eqtl file 
+# 	read the gwas file 
+#	select the top 100 gwas variants by zscore -> A
+#	select the top 100 eqtl variants by zscore -> B
+# 	intersect A and B -> C
+# 	subset eqtl by C >> out 
+# 	subset gwas by C >> out 
+
 
 # for each gene:
 #	determine chromosome

@@ -2,7 +2,7 @@
 library(XLConnect)
 
 # read gwas loci:
-gwas_loci=readWorksheet(loadWorkbook("/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/nikpay_2015_ng.xlsx"),sheet=6,startRow=3,endRow=59,startCol=1,endCol=9,check.names=F,header=T,)
+gwas_loci=readWorksheet(loadWorkbook("/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/nikpay_2015_ng.xlsx"),sheet=6,startRow=3,endRow=59,startCol=1,endCol=9,check.names=F,header=T)
 
 
 # set column order:

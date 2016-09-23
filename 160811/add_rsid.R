@@ -14,9 +14,11 @@ out_file=args$out
 dbsnp=fread(dbsnp_file)
 setnames(dbsnp,c('chr','pos','rsid','strand','geno'))
 
+
 # read eqtl: 
 eqtl=fread(eqtl_file)%>%dplyr::select(1:6)
 setnames(eqtl,c('pheno','geno','dist','pval','beta','se'))
+
 
 # add ID column to dbsnp:
 dbsnp[,ID:=paste(chr,pos,sep="_")]
