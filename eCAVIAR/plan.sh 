@@ -28,4 +28,20 @@
 # 		select eGenes (pval < 1e-3)
 # 		output eGenes and associated variants 
 # 	end for 
-# end for 
+# end for
+
+#### problem: Error: Variant names are limited to 16000 characters.
+# solution: filter out records with lengths greater than 16000 characters using bcftools. 
+
+
+#### problem: variants does not exist in 1000G
+24660781 22_24660781_A_AT_b37 22_24660781_AT_A_b37
+24666599 22_24666599_A_ACTT_b37	22_24666599_ACTT_A_b37
+
+#### problem: duplicate variants
+24666336
+
+# run select_eGene.separate_gwas_loci.R on Thyroid again. 
+
+
+#### problem: unknown 

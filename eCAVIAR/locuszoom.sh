@@ -1,9 +1,9 @@
 #!/bin/bash
 # command args
 gene=$1
-# gene=ENSG00000236838.2
+# gene=ENSG00000118526.6
 refsnp=$2
-# refsnp=rs28524880
+# refsnp=rs2327429
 out_dir=$3
 # out_dir=$figures/eCAVIAR/
 scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts

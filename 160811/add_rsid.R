@@ -1,7 +1,11 @@
 # add rs id from dbsnp to eqtl file: 
 
+library(R.utils)
+library(data.table)
+library(dplyr)
+library(stringr)
 
-# command args: 
+# command args:
 args=commandArgs(T,T)
 dbsnp_file=args$dbsnp
 eqtl_file=args$eqtl

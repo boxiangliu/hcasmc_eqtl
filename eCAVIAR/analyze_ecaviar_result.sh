@@ -1,3 +1,4 @@
+#### eCAVIAR_output
 cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output/*.ecaviar_col | awk '{if ($2>0.01) print $0}'
 # 22_24663726_C_T_b37	0.371923
 # 22_24663987_T_C_b37	0.0546991
@@ -123,3 +124,88 @@ less -S /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_input/
 # 17_2125605_G_A_b37      4.13989324408006
 # 17_2126003_A_G_b37      3.70662092522167
 # 17_2126504_G_C_b37      4.13989324408006
+
+#### end eCAVIAR_output
+
+
+#### eCAVIAR_output4
+mkdir /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/colocalization/
+while read tissue; do
+	echo $tissue
+	cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/$tissue/*.ecaviar_col | awk '{if ($2>0.01) print $0}' > /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/colocalization/$tissue.clpp1e-2.txt
+done < $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt
+
+mv /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/colocalization/HCASMC.clpp1e-2.txt /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/colocalization/HCASMC.clpp1e-2.txt.bak 
+cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/colocalization/*.clpp1e-2.txt > /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/colocalization/GTEx.clpp1e-2.txt
+grep /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/colocalization/HCASMC.clpp1e-2.txt.bak -v -f <(cut -f1,1 /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/colocalization/GTEx.clpp1e-2.txt)
+# 6_134206805_A_G_b37	0.0260335 rs6569913 ENSG00000118526.6
+# 6_134209837_T_C_b37	0.0333065 rs2327429 ENSG00000118526.6
+# 12_121413027_G_A_b37	0.126956 rs148608463 ENSG00000188735.8
+# 12_112050445_G_C_b37	0.0369488 rs76741465 ENSG00000198270.8
+# 12_112061723_C_T_b37	0.0740099 rs77684561 ENSG00000198270.8
+# 2_44074431_C_T_b37	0.0175954 rs539702042 ENSG00000226972.2
+# 21_35591826_T_C_b37	0.0355225 rs8134775 ENSG00000234380.1
+# 17_2126504_G_C_b37	0.0146533 rs216172 ENSG00000236838.2
+# 12_121415390_T_C_b37	0.010288 rs2464190 ENSG00000257218.1
+
+
+grep "6_134206805_A_G_b37" /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/*.ecaviar_col
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/ENSG00000118526.6.ecaviar_col:6_134206805_A_G_b37	0.0260335
+
+grep "6_134209837_T_C_b37" /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/*.ecaviar_col
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/ENSG00000118526.6.ecaviar_col:6_134209837_T_C_b37	0.0333065
+
+grep "12_121413027_G_A_b37" /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/*.ecaviar_col
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/ENSG00000188735.8.ecaviar_col:12_121413027_G_A_b37	0.126956
+
+grep "12_112050445_G_C_b37" /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/*.ecaviar_col
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/ENSG00000198270.8.ecaviar_col:12_112050445_G_C_b37	0.0369488
+
+grep "12_112061723_C_T_b37" /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/*.ecaviar_col
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/ENSG00000198270.8.ecaviar_col:12_112061723_C_T_b37	0.0740099
+
+grep "2_44074431_C_T_b37" /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/*.ecaviar_col
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/ENSG00000226972.2.ecaviar_col:2_44074431_C_T_b37	0.0175954
+
+grep "21_35591826_T_C_b37" /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/*.ecaviar_col
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/ENSG00000234380.1.ecaviar_col:21_35591826_T_C_b37	0.0355225
+
+grep "17_2126504_G_C_b37" /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/*.ecaviar_col
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/ENSG00000236838.2.ecaviar_col:17_2126504_G_C_b37	0.0146533
+
+grep "12_121415390_T_C_b37" /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/*.ecaviar_col
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/HCASMC/ENSG00000257218.1.ecaviar_col:12_121415390_T_C_b37	0.010288
+
+# genes id -> gene names
+# ENSG00000118526 TCF21
+# ENSG00000188735 TMEM120B
+# ENSG00000198270 TMEM116
+# ENSG00000226972 RPL12P19 (ribosomal protein L12 pseudogene 19)
+# ENSG00000234380 LINC01426
+# ENSG00000236838 AC090617.1
+# ENSG00000257218 GATC
+
+# Is TCF21 really HCASMC specific? 
+ls /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/*/ENSG00000118526.6.ecaviar_col
+
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/Adipose_Subcutaneous/ENSG00000118526.6.ecaviar_col
+# has significant but different variants (from HCASMC) 
+cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/Adipose_Subcutaneous/ENSG00000118526.6.ecaviar_col | awk '{if ($2>0.01) print $0}'
+# 6_134161114_T_C_b37	0.0830451
+# 6_134166900_A_AC_b37	0.0155076
+# 6_134166901_C_CCTA_b37	0.0464609
+
+
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/Colon_Sigmoid/ENSG00000118526.6.ecaviar_col
+# no significant variant
+
+
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/Esophagus_Muscularis/ENSG00000118526.6.ecaviar_col
+# no significant variant 
+
+
+# /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/Heart_Left_Ventricle/ENSG00000118526.6.ecaviar_col
+# has significant but different variants
+cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/Heart_Left_Ventricle/ENSG00000118526.6.ecaviar_col  | awk '{if ($2>0.01) print $0}'
+# 6_134161114_T_C_b37	0.01958
+# 6_134166901_C_CCTA_b37	0.0134671

@@ -2734,13 +2734,6 @@ parallel -j11 bash $scripts/eCAVIAR/split_eqtl_by_chr.sh \
 
 
 # select eGenes:
-mkdir ../processed_data/eCAVIAR/eCAVIAR_input2
-parallel -j5 Rscript $scripts/eCAVIAR/select_eGene.R \
-	../processed_data/160816/subsampling/{1}/{1}_52.allpairs.sid_parsed.{2}.txt \
-	../processed_data/eCAVIAR/eCAVIAR_input2/{1}/ \
-	{2} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt ::: {1..22}
-
-
 mkdir ../processed_data/eCAVIAR/eCAVIAR_input4
 parallel -j5 Rscript $scripts/eCAVIAR/select_eGene.separate_gwas_loci.R \
 	../processed_data/160816/subsampling/{1}/{1}_52.allpairs.sid_parsed.{2}.txt \
@@ -2748,29 +2741,20 @@ parallel -j5 Rscript $scripts/eCAVIAR/select_eGene.separate_gwas_loci.R \
 	{2} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt ::: {1..22}
 
 
-# take the unique variants in the input files:
-mkdir /srv/persistent/bliu2/HCASMC_eQTL/processed_data/eCAVIAR/eCAVIAR_input3/
-parallel -j15 bash $scripts/eCAVIAR/unique.sh \
-	../processed_data/eCAVIAR/eCAVIAR_input2/{} \
-	../processed_data/eCAVIAR/eCAVIAR_input3/{} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt
-
-
 # run eCAVIAR:
-# mkdir ../processed_data/eCAVIAR/eCAVIAR_output2
-# parallel -j15 bash $scripts/eCAVIAR/ecaviar.sh \
-# 	../processed_data/eCAVIAR/eCAVIAR_input2/{} \
-# 	../processed_data/eCAVIAR/eCAVIAR_output2/{} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt
-
-mkdir ../processed_data/eCAVIAR/eCAVIAR_output3
+mkdir ../processed_data/eCAVIAR/eCAVIAR_output4
 parallel -j15 bash $scripts/eCAVIAR/ecaviar.sh \
-	../processed_data/eCAVIAR/eCAVIAR_input3/{} \
-	../processed_data/eCAVIAR/eCAVIAR_output3/{} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt
+	../processed_data/eCAVIAR/eCAVIAR_input4/{} \
+	../processed_data/eCAVIAR/eCAVIAR_output4/{} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt
 
-bash $scripts/eCAVIAR/ecaviar.sh \
-	../processed_data/eCAVIAR/eCAVIAR_input2/HCASMC/ \
-	../processed_data/eCAVIAR/eCAVIAR_output2/HCASMC/ 
 
 # count eCAVIAR hits: 
+subl $scripts/eCAVIAR/analyze_ecaviar_result.sh 
+
+
+# make locuszoom plot: 
+bash $scripts/eCAVIAR/locuszoom.sh ENSG00000118526.6 rs2327429 $figures/eCAVIAR/
+parallel --xapply $scripts/eCAVIAR/locuszoom.sh {1} {2} $figures/eCAVIAR/ ::: ENSG00000118526.6 ENSG00000118526.6 ENSG00000188735.8 ENSG00000198270.8 ENSG00000198270.8 ENSG00000226972.2 ENSG00000234380.1 ENSG00000236838.2 ENSG00000257218.1 ::: rs6569913 rs2327429 rs148608463 rs76741465 rs77684561 rs539702042 rs8134775 rs216172 rs2464190
 
 #### end eCAVIAR for downsampled GTEx tissue: 
 
