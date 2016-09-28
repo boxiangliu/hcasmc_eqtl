@@ -209,3 +209,7 @@ cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/Ad
 cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/Heart_Left_Ventricle/ENSG00000118526.6.ecaviar_col  | awk '{if ($2>0.01) print $0}'
 # 6_134161114_T_C_b37	0.01958
 # 6_134166901_C_CCTA_b37	0.0134671
+
+
+#### are any of the HCASMC specific colocalized variants also HCASMC specific eQTLs?
+# 6_134206805_A_G_b37	0.0260335 rs6569913 ENSG00000118526.6

@@ -2448,6 +2448,34 @@ cat $processed_data/160805/metasoft_output/metasoft_output.{1..22}.mcmc.txt | gr
 #### end metasoft on subsample
 
 
+#### metasoft on subsample with threshold p=1e-2
+
+# generate metasoft input file:
+# mkdir $processed_data/160805/metasoft_input_subsample_52_p1e-2/ 
+cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160816/subsampling/All_Tissues.allpairs.sorted.txt | \
+python $scripts/160805/gen_metasoft_input.py 1e-2 > \
+$processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.txt
+
+
+# split metasoft input by chromosome: 
+parallel 'grep "_{}_" ../processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.txt > ../processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.{}.txt' ::: {1..22} X
+
+
+# run METASOFT:
+# mkdir $processed_data/160805/metasoft_output_subsample_52_p1e-2
+parallel bash $scripts/160805/metasoft.core.sh \
+	$processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.{}.txt \
+	$processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.{}.mcmc.txt \
+	$processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.{}.mcmc.log ::: {1..22} X
+
+
+# merge metasoft output: 
+head -n1 $processed_data/160805/metasoft_output/metasoft_output.1.mcmc.txt > $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
+cat $processed_data/160805/metasoft_output/metasoft_output.{1..22}.mcmc.txt | grep -v RSID >> $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
+
+#### end metasoft on subsample with threshold 1e-2
+
+
 # plot heatmap of m-values: 
 Rscript $scripts/160805/plot_mvalue_heatmap.R 
 
@@ -2865,3 +2893,22 @@ grep "Number of input reads" */Log.final.out | awk 'BEGIN{FS="|"}{print $2}' | a
 cd /users/bliu2/atacseq/2305/out/qc
 grep "reads" */*align.log | awk 'BEGIN{FS=":| reads"}{print $2}' 
 #### end average ATACseq read depth
+
+
+
+
+
+#### tarid: 
+mkdir tarid ../processed_data/tarid ../figures/tarid
+
+
+# get rpkm for TARID and TCF21:
+bash tarid/tcf21_tarid_expression.sh 
+
+
+# get sample ID to tissue table:
+bash tarid/gen_sampleID_to_tissue_table.sh
+
+
+# plot TARID and TCF21 expresssion:
+Rscript tarid/tarid_vs_tcf21_expression.R # ../figures/tarid_vs_tcf21.pdf, ../figures/tarid_vs_tcf21.median.pdf

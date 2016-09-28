@@ -19,7 +19,7 @@ input=fread(input_file)
 lead_snp=fread(lead_snp_file,header=T)
 
 
-# subset to lead SNPs:
+# subset to proxy SNPs (Dprime > 0.8 with lead SNP):
 output=input[markername%in%lead_snp$Proxy,]
 output$variant_id=with(output,paste(chr,bp_hg19,effect_allele,noneffect_allele,'b37',sep='_'))
 output=output[,.(chr,bp_hg19,markername,variant_id)]

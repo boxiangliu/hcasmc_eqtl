@@ -1,4 +1,4 @@
-# generate metasoft input: 
+# generate metasoft input:
 
 #### modules: 
 import sys
@@ -94,7 +94,11 @@ association={}
 output_line_ID=""
 n_lines=0
 n_input_lines=0
-p=1e-3
+if len(sys.argv) > 1:
+	p=float(sys.argv[1])
+else: 
+	p=1e-3
+sys.stderr.write('threshold: '+str(p)+'\n')
 for line in sys.stdin:
 	n_input_lines=n_input_lines+1
 	parsed_line=parse_line(line)
