@@ -73,19 +73,11 @@ pal=pal(length(levels(tissue)))
 
 # make scatter plot:
 message('plotting...')
-# pdf(figure_file,height=8,width=8)
-# par(mar=c(5.1,4.1,4.1,7.1))
-# par(xpd=T) # turn of clipping to allow legend outside of plotting area
-# plot(mds_res$points,col=pal[color],pch=19,xlab='Coordinate 1',ylab='Coordinate 2')
-# legend(0.32,0.3,levels(tissue),col=pal[unique(color)],pch=19,bty='n')
-# text(x=mds$x_centroid,y=mds$y_centroid,labels=mds$tissue_abb,cex=0.7)
-# dev.off()
-
 set.seed(42)
 mds_centroid=unique(mds[,.(tissue,x_centroid,y_centroid)])
-p1=ggplot(mds,aes(x=x,y=y,color=tissue))+geom_point()+geom_text_repel(data=mds_centroid,aes(x=x_centroid,y=y_centroid,label=tissue),color='black')+theme_bw()
+p1=ggplot(mds,aes(x=x,y=y,color=tissue))+geom_point()+geom_text_repel(data=mds_centroid,aes(x=x_centroid,y=y_centroid,label=tissue),color='black')+theme_bw()+xlab('MDS Coordinate 1')+ylab('MDS Coordinate 2')+theme(axis.title=element_text(size=15))
 save_plot(paste0(figure_path,'/mds.pdf'),p1,base_height=6,base_width=8.5)
-p2=ggplot(mds,aes(x=x,y=y,color=tissue))+geom_point()+xlim(-0.1,0.1)+ylim(-0,0.2)+geom_text_repel(data=mds_centroid,aes(x=x_centroid,y=y_centroid,label=tissue),color='black')+theme_bw()+scale_color_discrete(guide=F)
+p2=ggplot(mds,aes(x=x,y=y,color=tissue))+geom_point()+xlim(-0.1,0.1)+ylim(-0,0.2)+geom_text_repel(data=mds_centroid,aes(x=x_centroid,y=y_centroid,label=tissue),size=7,force=3,color='black')+theme_bw()+scale_color_discrete(guide=F)+theme(axis.text=element_blank(),axis.title=element_blank())
 save_plot(paste0(figure_path,'/mds.cropped.pdf'),p2)
-
+save.image('../processed_data/160603/mds.Rdata')
 
