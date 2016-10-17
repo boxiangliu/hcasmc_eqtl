@@ -42,55 +42,6 @@ stopifnot(ncol(metasoft)==length(col_names))
 setnames(metasoft,col_names)
 
 
-# subset to pvalues:
-pvalue=metasoft%>%dplyr::select(contains('pvalue'))%>%dplyr::select(-c(1:5))%>%as.data.frame()
-rownames(pvalue)=metasoft$RSID
-colnames(pvalue)=str_replace(colnames(pvalue),'pvalue_','')
-
-
-# subset to association with at least 10 tissues: 
-pvalue_bak=pvalue
-pvalue=pvalue_bak[metasoft$`#STUDY`>=10,]
-
-
-# append pid and sid: 
-tmp=str_split_fixed(row.names(pvalue),'_',n=6)[,1:3]
-tmp=data.frame(tmp,stringsAsFactors=F)
-tmp[,2]=as.integer(tmp[,2])
-tmp[,3]=as.integer(tmp[,3])
-colnames(tmp)=c('pid','chrom','pos')
-pvalue_bak=pvalue
-pvalue=cbind(tmp,pvalue_bak)
-
-tmp
-
-# merge gwas and eQTL:
-pvalue=as.data.table(pvalue)
-merge=merge(gwas,pvalue,by=c('chrom','pos'))
-
-
-overlap_summary=data.frame()
-for (eqtl_threshold in c(1e-3,1e-4,1e-5,1e-6,1e-7)){
-	for (tissue in study_name){
-		eqtl=merge[,tissue,with=F]
-		sig_eqtl=eqtl<eqtl_threshold
-		n_sig_eqtl=sum(sig_eqtl,na.rm=T)
-		for (gwas_threshold in c(1e-3,1e-4,1e-5,1e-6,1e-7)){
-			sig_gwas=merge$pval<gwas_threshold
-			n_sig_overlap=sum(sig_eqtl*sig_gwas,na.rm=T)
-			tmp=data.frame(gwas_threshold=gwas_threshold,eqtl_threshold=eqtl_threshold,n_sig_eqtl=n_sig_eqtl,n_sig_overlap=n_sig_overlap,tissue=tissue)
-			overlap_summary=rbind(overlap_summary,tmp)
-		}
-	}
-}
-
-
-overlap_summary=as.data.table(overlap_summary)
-overlap_summary[,fraction:=n_sig_overlap/n_sig_eqtl]
-ggplot(overlap_summary[eqtl_threshold==1e-5,],aes(x=gwas_threshold,y=fraction,color=tissue,size=ifelse(tissue=='HCASMC',2,1)))+geom_point()+scale_x_log10()+theme(axis.text.x=element_text(angle=45,hjust=1))+scale_color_discrete(guide=F)
-
-
-
 # subset to mvalues: 
 mvalue=metasoft%>%dplyr::select(contains('mvalue'))%>%as.data.frame()
 stopifnot(ncol(mvalue)==N_TISSUE)
@@ -103,7 +54,7 @@ mvalue_bak=mvalue
 mvalue=mvalue_bak[metasoft$`#STUDY`>=10,]
 
 
-# append pid and sid: 
+# append pid, chrom, and pos: 
 tmp=str_split_fixed(row.names(mvalue),'_',n=6)[,1:3]
 tmp=data.frame(tmp,stringsAsFactors=F)
 tmp[,2]=as.integer(tmp[,2])
@@ -117,10 +68,13 @@ mvalue=cbind(tmp,mvalue_bak)
 mvalue=as.data.table(mvalue)
 merge=merge(gwas,mvalue,by=c('chrom','pos'))
 
+
+# calculate overlap summary:
+mvalue_threshold=0.9
 overlap_summary=data.frame()
 for (tissue in study_name){
 	eqtl=merge[,tissue,with=F]
-	sig_eqtl=eqtl>=0.9
+	sig_eqtl=eqtl>=mvalue_threshold
 	n_sig_eqtl=sum(sig_eqtl,na.rm=T)
 	for (gwas_threshold in c(1e-3,1e-4,1e-5,1e-6,1e-7)){
 		sig_gwas=merge$pval<gwas_threshold
@@ -131,9 +85,24 @@ for (tissue in study_name){
 }
 
 
+# calculate fraction of overlap over eQTLs:
 overlap_summary=as.data.table(overlap_summary)
 overlap_summary[,fraction:=n_sig_overlap/n_sig_eqtl]
+overlap_summary[,tissue:=as.character(tissue)]
 
-ggplot(overlap_summary,aes(x=gwas_threshold,y=fraction,color=tissue,size=ifelse(tissue=='HCASMC',2,1)))+geom_point()+scale_x_log10()+theme(axis.text.x=element_text(angle=45,hjust=1))+scale_color_discrete(guide=F)
-ggplot(overlap_summary[gwas_threshold==1e-3],aes(x=reorder(tissue,fraction,FUN=mean),y=fraction))+geom_point()+theme(axis.text.x=element_text(angle=45,hjust=1))+scale_color_discrete(guide=F)
-save.image('../processed_data/gwas_eqtl_overlap/overlap.metasoft.RData')
+# 
+pdf('../figures/gwas_eqtl_overlap/overlap.pdf')
+# fraction of overlap over eQTL:
+ggplot(overlap_summary,aes(x=gwas_threshold,y=fraction,color=tissue,size=ifelse(tissue=='HCASMC'|tissue=='Artery_Coronary',2,1)))+geom_point()+scale_x_log10()+theme(axis.text.x=element_text(angle=45,hjust=1))+scale_color_discrete(guide=F)+scale_size(guide=F)+xlab('GWAS threshold')+ylab('Fraction of overlap')+geom_text(aes(label=ifelse(gwas_threshold==1e-3&(tissue=='HCASMC'|tissue=='Artery_Coronary'),tissue,'')),hjust=1.1)
+ggplot(overlap_summary[gwas_threshold==1e-6],aes(y=reorder(tissue,fraction,FUN=mean),x=fraction))+geom_point()+scale_color_discrete(guide=F)+ylab('Tissue')+xlab('Fraction of overlap')
+
+
+# just number of overlaps:
+ggplot(overlap_summary,aes(x=gwas_threshold,y=n_sig_overlap,color=tissue,size=ifelse(tissue=='HCASMC'|tissue=='Artery_Coronary',2,1)))+geom_point()+scale_x_log10()+theme(axis.text.x=element_text(angle=45,hjust=1))+scale_color_discrete(guide=F)+scale_size(guide=F)+xlab('GWAS threshold')+ylab('Fraction of overlap')+geom_text(aes(label=ifelse(gwas_threshold==1e-3&(tissue=='HCASMC'|tissue=='Artery_Coronary'),tissue,'')),hjust=1.1)
+ggplot(overlap_summary[gwas_threshold==1e-6],aes(y=reorder(tissue,n_sig_overlap,FUN=mean),x=n_sig_overlap))+geom_point()+scale_color_discrete(guide=F)+ylab('Tissue')+xlab('Fraction of overlap')
+
+
+# just number of eQTLs:
+ggplot(overlap_summary,aes(x=gwas_threshold,y=n_sig_eqtl,color=tissue,size=ifelse(tissue=='HCASMC'|tissue=='Artery_Coronary',2,1)))+geom_point()+scale_x_log10()+theme(axis.text.x=element_text(angle=45,hjust=1))+scale_color_discrete(guide=F)+scale_size(guide=F)+xlab('GWAS threshold')+ylab('Fraction of overlap')+geom_text(aes(label=ifelse(gwas_threshold==1e-3&(tissue=='HCASMC'|tissue=='Artery_Coronary'),tissue,'')),hjust=1.1)
+ggplot(overlap_summary[gwas_threshold==1e-6],aes(y=reorder(tissue,n_sig_eqtl,FUN=mean),x=n_sig_eqtl))+geom_point()+scale_color_discrete(guide=F)+ylab('Tissue')+xlab('Fraction of overlap')
+dev.off()

@@ -213,3 +213,105 @@ cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eCAVIAR_output4/He
 
 #### are any of the HCASMC specific colocalized variants also HCASMC specific eQTLs?
 # 6_134206805_A_G_b37	0.0260335 rs6569913 ENSG00000118526.6
+
+
+#### 9p21
+cd /srv/persistent/bliu2/HCASMC_eQTL/processed_data/eCAVIAR/colocalization
+grep 9_2 *
+Artery_Coronary.clpp1e-2.txt:9_22077085_A_C_b37	0.0310855
+Brain_Anterior_cingulate_cortex_BA24.clpp1e-2.txt:9_22072638_G_A_b37	0.0291111
+Colon_Transverse.clpp1e-2.txt:9_22098574_A_G_b37	0.0166306
+Colon_Transverse.clpp1e-2.txt:9_22098619_A_G_b37	0.0166306
+Colon_Transverse.clpp1e-2.txt:9_22115026_A_G_b37	0.0115513
+Colon_Transverse.clpp1e-2.txt:9_22115286_T_C_b37	0.0115443
+Colon_Transverse.clpp1e-2.txt:9_22116220_T_C_b37	0.0115575
+Colon_Transverse.clpp1e-2.txt:9_22123766_A_C_b37	0.0107325
+Esophagus_Muscularis.clpp1e-2.txt:9_22105927_T_C_b37	0.0107881
+Esophagus_Muscularis.clpp1e-2.txt:9_22106731_T_A_b37	0.0107881
+Esophagus_Muscularis.clpp1e-2.txt:9_22124140_A_T_b37	0.0268058
+GTEx.clpp1e-2.txt:9_22077085_A_C_b37	0.0310855
+GTEx.clpp1e-2.txt:9_22072638_G_A_b37	0.0291111
+GTEx.clpp1e-2.txt:9_22098574_A_G_b37	0.0166306
+GTEx.clpp1e-2.txt:9_22098619_A_G_b37	0.0166306
+GTEx.clpp1e-2.txt:9_22115026_A_G_b37	0.0115513
+GTEx.clpp1e-2.txt:9_22115286_T_C_b37	0.0115443
+GTEx.clpp1e-2.txt:9_22116220_T_C_b37	0.0115575
+GTEx.clpp1e-2.txt:9_22123766_A_C_b37	0.0107325
+GTEx.clpp1e-2.txt:9_22105927_T_C_b37	0.0107881
+GTEx.clpp1e-2.txt:9_22106731_T_A_b37	0.0107881
+GTEx.clpp1e-2.txt:9_22124140_A_T_b37	0.0268058
+GTEx.clpp1e-2.txt:9_22081850_C_T_b37	0.0305677
+GTEx.clpp1e-2.txt:9_22116071_T_C_b37	0.0621937
+GTEx.clpp1e-2.txt:9_22085598_T_C_b37	0.0115982
+GTEx.clpp1e-2.txt:9_22106225_G_A_b37	0.0159496
+GTEx.clpp1e-2.txt:9_22114495_A_G_b37	0.0137513
+GTEx.clpp1e-2.txt:9_22106225_G_A_b37	0.0524079
+GTEx.clpp1e-2.txt:9_22112599_T_C_b37	0.0132639
+GTEx.clpp1e-2.txt:9_22114495_A_G_b37	0.01104
+GTEx.clpp1e-2.txt:9_22116071_T_C_b37	0.0166585
+Heart_Atrial_Appendage.clpp1e-2.txt:9_22081850_C_T_b37	0.0305677
+Ovary.clpp1e-2.txt:9_22116071_T_C_b37	0.0621937
+Pituitary.clpp1e-2.txt:9_22085598_T_C_b37	0.0115982
+Small_Intestine_Terminal_Ileum.clpp1e-2.txt:9_22106225_G_A_b37	0.0159496
+Small_Intestine_Terminal_Ileum.clpp1e-2.txt:9_22114495_A_G_b37	0.0137513
+Spleen.clpp1e-2.txt:9_22106225_G_A_b37	0.0524079
+Testis.clpp1e-2.txt:9_22112599_T_C_b37	0.0132639
+Testis.clpp1e-2.txt:9_22114495_A_G_b37	0.01104
+Testis.clpp1e-2.txt:9_22116071_T_C_b37	0.0166585
+
+# in coronary artery 
+# 9_22098619 is the 9p21 top hit: 
+bliu2@durga:/srv/persistent/bliu2/HCASMC_eQTL/processed_data/eCAVIAR/eCAVIAR_output4/Artery_Coronary$ grep 9_22098619 *col
+ENSG00000215221.2.ecaviar_col:9_22098619_A_G_b37	3.32992e-05
+bliu2@durga:/srv/persistent/bliu2/HCASMC_eQTL/processed_data/eCAVIAR/eCAVIAR_output4/Artery_Coronary$ grep 9_22077085_A_C_b37 *col
+ENSG00000215221.2.ecaviar_col:9_22077085_A_C_b37	0.0310855
+ENSG00000224416.2.ecaviar_col:9_22077085_A_C_b37	3.61435e-05
+
+# ENSG00000215221 is a UBA52P6, Ubiquitin A-52 Residue Ribosomal Protein Fusion Product 1 Pseudogene 6
+# It's expression seems correlated with UBA52 (using the GTEx browser)
+# however, another pseudogene UBA52P8 seems even more correlated. 
+
+
+# in colon transverse: 
+bliu2@durga:/srv/persistent/bliu2/HCASMC_eQTL/processed_data/eCAVIAR/eCAVIAR_output4/Colon_Transverse$ grep 9_22098619_A_G_b37 *col
+ENSG00000147883.9.ecaviar_col:9_22098619_A_G_b37	1.72664e-08
+ENSG00000240498.2.ecaviar_col:9_22098619_A_G_b37	0.0166306
+# ENSG00000240498 is CDKN2B-AS1. However, this paper http://www.nature.com/nature/journal/v470/n7333/full/nature09753.html investigated the function of CDKN2B-AS1 in detail
+
+
+# look at the full set of HCASMC colocalizations: 
+22_24663726_C_T_b37     0.371923
+22_24663987_T_C_b37     0.0546991
+22_24669465_G_A_b37     0.198669
+22_24677025_G_A_b37     0.191036
+17_40565926_T_G_b37     0.114768
+6_134206805_A_G_b37     0.0260335
+6_134209837_T_C_b37     0.0333065
+17_43662028_A_G_b37     0.0237876
+12_54185879_G_A_b37     0.0149732
+12_54185879_G_A_b37     0.0145358
+1_159890969_G_A_b37     0.0629
+1_159891917_C_T_b37     0.749294
+12_54185879_G_A_b37     0.0149712
+17_43662028_A_G_b37     0.0237735
+12_121413027_G_A_b37    0.126956
+5_131667353_A_G_b37     0.102847
+12_112050445_G_C_b37    0.0369488
+12_112061723_C_T_b37    0.0740099
+17_40571284_T_C_b37     0.264782
+6_31350550_C_A_b37      0.0492069
+17_43662028_A_G_b37     0.0237853
+17_43662028_A_G_b37     0.0237842
+17_43662028_A_G_b37     0.0219889
+2_44074431_C_T_b37      0.0175954
+17_44987261_C_T_b37     0.0143774
+21_35591826_T_C_b37     0.0355225
+10_82167107_T_G_b37     0.0316577
+10_82167121_T_G_b37     0.131821
+10_82167263_CCG_C_b37   0.0121515
+10_82169598_C_G_b37     0.0222305
+17_2125444_C_A_b37      0.0100532
+17_2126504_G_C_b37      0.0146533
+17_43662028_A_G_b37     0.0235314
+12_121415390_T_C_b37    0.010288
+17_43662028_A_G_b37     0.0234731

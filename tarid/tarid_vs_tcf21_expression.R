@@ -19,5 +19,5 @@ rpkm_median=rpkm%>%group_by(tissue)%>%summarize(TARID=median(TARID),TCF21=median
 
 p1=ggplot(rpkm,aes(x=TARID,y=TCF21,color=tissue,group=1))+geom_point()+theme(legend.position="none")+stat_smooth(formula=y~x,method='lm')+scale_x_log10()+scale_y_log10()
 p2=ggplot(rpkm_median,aes(x=TARID,y=TCF21,label=tissue,group=1,color=ifelse(tissue=='HCASMC',1,0)))+geom_point()+theme(legend.position="none")+stat_smooth(formula=y~x,method='lm')+scale_x_log10()+scale_y_log10()+geom_text(angle=-45)
-save_plot('../figures/tarid_vs_tcf21.pdf',p1)
-save_plot('../figures/tarid_vs_tcf21.median.pdf',p2,base_width=8,base_height=8)
+save_plot('../figures/tarid/tarid_vs_tcf21.pdf',p1)
+save_plot('../figures/tarid/tarid_vs_tcf21.median.pdf',p2,base_width=8,base_height=8)

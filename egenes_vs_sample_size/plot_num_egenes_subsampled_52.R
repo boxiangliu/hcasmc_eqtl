@@ -34,13 +34,17 @@ num_egenes$Type=factor(num_egenes$Type,levels=c('HCASMC','Artery','Fibroblast','
 num_egenes$size=ifelse(num_egenes$Type=='Other',1,2)
 hcasmc_egenes=num_egenes[tissue=='HCASMC',num_egenes]
 # p=ggplot(num_egenes,aes(x=num_egenes,y=tissue,color=Type,label=num_egenes))+geom_point()+theme_bw()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+xlab('Number of eGenes')+ylab('Tissue')+scale_color_manual(values=c('red','tan4','linen','deeppink','steelblue','black'))+annotate('text',x=600,y='HCASMC',label=hcasmc_egenes)
-p=ggplot(num_egenes,aes(x=num_egenes,y=tissue,color=Type,label=num_egenes,size=size))+geom_point()+theme_bw()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+xlab('Number of eGenes')+ylab('Tissue')+scale_color_manual(values=c(2:6,1))+scale_size(range=c(1,3),guide=F)
-save_plot('../figures/egenes_vs_sample_size/num_egenes_subsampled_52.pdf',p,base_height=6)
+p=ggplot(num_egenes,aes(x=num_egenes,y=tissue,color=Type,label=num_egenes,size=size))+geom_point()+theme_bw()+theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+xlab('Number of eQTLs')+ylab('Tissue')+scale_color_manual(values=c(2:6,1))+scale_size(range=c(1,3),guide=F)+theme(legend.text=element_text(size=20),legend.key=element_blank(),legend.title=element_text(size=25),legend.key.height=unit(0.05,'npc'))+guides(colour=guide_legend(override.aes = list(size=4)))
+save_plot('../figures/egenes_vs_sample_size/num_egenes_subsampled_52.pdf',p,base_height=6,base_width=8)
 
 
 # get the number of egenes:
 range(num_egenes[Type=='Artery',num_egenes])
+round(mean(num_egenes[Type=='Artery',num_egenes])) # 330
 range(num_egenes[Type=='Smooth Muscle',num_egenes])
+round(mean(num_egenes[Type=='Smooth Muscle',num_egenes])) # 372
 range(num_egenes[Type=='Fibroblast',num_egenes])
+round(mean(num_egenes[Type=='Fibroblast',num_egenes])) # 451
 range(num_egenes[Type=='Heart',num_egenes])
+round(mean(num_egenes[Type=='Heart',num_egenes])) # 333
 

@@ -1,3 +1,4 @@
+# GWAS p-values: 
 # rs12202017      1.98e-11
 # this variant is not located in TARID
 # it is located in the last exon of LINC01312 (unknown function)
@@ -36,3 +37,48 @@
 # rs113499922 (in promotor of TCF21) was not tested in GWAS
 # it is a G/C variant that 
 # rs5880197 was not tested in GWAS
+
+
+# is rs2327430 an eQTL in other related tissues? 
+# fibroblast
+# ENSG00000118526.6	6_134210037_C_T_b37	-239	0.000204738	0.227587	0.0603095
+
+
+# stomach
+# ENSG00000118526.6	6_134210037_C_T_b37	-239	0.0148866	0.239743	0.0971706
+
+
+# uterus 
+# ENSG00000118526.6	6_134210037_C_T_b37	-239	0.124614	-0.224298	0.143554
+
+
+# colon transverse: 
+# ENSG00000118526.6	6_134210037_C_T_b37	-239	0.729355	0.0242066	0.0698163
+
+
+# colon sigmoid: 
+# ENSG00000118526.6	6_134210037_C_T_b37	-239	0.0957626	0.177189	0.105388
+
+
+# small intestine:
+# ENSG00000118526.6	6_134210037_C_T_b37	-239	0.263207	0.131408	0.116247
+
+
+# coronary artery: 
+# ENSG00000118526.6	6_134210037_C_T_b37	-239	0.595227	0.0501757	0.0941284
+
+
+# tibial artery: 
+# ENSG00000118526.6	6_134210037_C_T_b37	-239	0.199303	0.0857505	0.0666259
+
+
+# aortic artery:
+# ENSG00000118526.6	6_134210037_C_T_b37	-239	0.054224	0.153945	0.0793819
+
+
+# heart left ventricle: 
+# ENSG00000118526.6	6_134210037_C_T_b37	-239	0.793198	-0.0150868	0.0574477
+
+
+# heart atrial appendage: 
+# ENSG00000118526.6	6_134210037_C_T_b37	-239	0.553808	-0.0327501	0.0551623

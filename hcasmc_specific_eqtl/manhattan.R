@@ -227,7 +227,7 @@ setnames(eqtl,c('pheno','chr','pos','ref','alt','dist','pval','beta','varbeta'))
 # format eQTL data:
 eqtl=eqtl%>%mutate(geno=paste(chr,pos,ref,alt,'b37',sep='_'))
 eqtl=eqtl%>%select(chr,pos,pval,pheno,geno)
-
+eqtl[,id:=paste0(pheno,'_',geno)]
 
 # read hcasmc specific eQTL ids 
 hcasmc_specific_eqtl=fread('../processed_data/hcasmc_specific_eqtl/hcasmc_specific_eqtl.autosomes.txt',header=F)
@@ -236,22 +236,49 @@ setnames(hcasmc_specific_eqtl,c('pheno','geno'))
 
 # format hcasmc specific eQTL ids:   
 hcasmc_specific_eqtl=format(hcasmc_specific_eqtl)
+hcasmc_specific_eqtl[,id:=paste0(pheno,"_",geno)]
 
 
 # annotate variants based on whether it passes genome wide threshold, and whether it has a HCASMC specific eQTL, :
 ann=rep(1, length(eqtl$pval))
-rm(format)
-format(object.size(ann),units='auto')
-format(object.size(eqtl),units='auto')
-
-ann[eqtl$geno%in%hcasmc_specific_eqtl$geno]=2
-ann=factor(ann, levels=1:2, labels=c("","HCASMC_specific"))
+# ann[eqtl$geno%in%hcasmc_specific_eqtl$geno]=2
+ann[eqtl$id%in%hcasmc_specific_eqtl$id]=2
+ann=factor(ann, levels=1:2, labels=c(""," "))
+# table(ann) 
+       #          HCASMC_specific 
+       # 90286677            5362
 # ann[eqtl$pheno%in%eqtl[eqtl$pval<5e-8,pheno]]=3
 # ann=factor(ann, levels=1:3, labels=c("","HCASMC_specific",'eQTL'))
 
 
 # make manhattan plot:
-fig_file='../figures/hcasmc_specific_eqtl/manhattan.gene.png'
+fig_file='../figures/hcasmc_specific_eqtl/manhattan.gene.2.png'
 png(fig_file, width=950, height=500)
 print(manhattan.plot(chr=eqtl$chr,pos=eqtl$pos,pvalue=eqtl$pval,annotate=ann))
 dev.off()
+
+
+# find example for HCASMC-specific eQTLs:  
+hcasmc_specific_eqtl2=eqtl[which(ann==" "),]
+hcasmc_specific_eqtl2[pval==min(hcasmc_specific_eqtl2$pval),]
+
+hcasmc_specific_eqtl2[pval==min(hcasmc_specific_eqtl2[chr==6,pval]),]
+# ENSG00000137331.11_6_30507577_A_AC_b37 IER3
+# This gene functions in the protection of cells from Fas- or tumor necrosis factor type alpha-induced apoptosis. Partially degraded and unspliced transcripts are found after virus infection in vitro, but these transcripts are not found in vivo and do not generate a valid protein.
+
+hcasmc_specific_eqtl2[pval==min(hcasmc_specific_eqtl2[chr==16,pval]),]
+# ENSG00000169688.10_16_56666848_G_A_b37 MT1B
+# MT1B (Metallothionein 1B) is a Protein Coding gene. Among its related pathways are Metallothioneins bind metals and Metabolism.
+
+hcasmc_specific_eqtl2[pval==min(hcasmc_specific_eqtl2[chr==17,pval]),]
+# ENSG00000120071.8_17_43654468_C_T_b37 KANSL1
+# This gene encodes a nuclear protein that is a subunit of two protein complexes involved with histone acetylation, the MLL1 complex and the NSL1 complex. The corresponding protein in Drosophila interacts with K(lysine) acetyltransferase 8, which is also a subunit of both the MLL1 and NSL1 complexes.
+
+
+# ACTA2
+hcasmc_specific_eqtl2[str_detect(pheno,'ENSG00000107796'),]
+#    chr      pos        pval             pheno                geno
+# 1:  10 90666952 8.61969e-06 ENSG00000107796.8 10_90666952_C_T_b37
+#                                       id
+# 1: ENSG00000107796.8_10_90666952_C_T_b37
+# The protein encoded by this gene belongs to the actin family of proteins, which are highly conserved proteins that play a role in cell motility, structure and integrity. Alpha, beta and gamma actin isoforms have been identified, with alpha actins being a major constituent of the contractile apparatus, while beta and gamma actins are involved in the regulation of cell motility. This actin is an alpha actin that is found in skeletal muscle. Defects in this gene cause aortic aneurysm familial thoracic type 6. Multiple alternatively spliced variants, encoding the same protein, have been identified. [provided by RefSeq, Nov 2008]

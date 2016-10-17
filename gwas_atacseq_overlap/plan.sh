@@ -28,4 +28,12 @@ done
 
 # The GWAS loci is located at ../processed_data/160615/compare_hcasmc_and_gtex/GWAS.txt
 # The atacseq peak is located at ~/atacseq/2305/out/peaks
+# read gwas data
+# read atacseq data
+# for gwas pvalue threshold: 
+# 	filter gwas
+# 	for each atacseq:
+# 		overlap gwas with atacseq
+# 		summarize peaks
+# 		append to overlap summary
 

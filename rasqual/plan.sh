@@ -27,4 +27,15 @@
 
 # why are only the top variant get  
 # generate read count table (Y file) and offset table (K.txt)
-#  
+
+
+# generate VCF file with AS counts: 
+# which bam files should I use? 
+# Use the WASP filtered reads 
+
+# post imputation filtering: 
+# HWE P-value < 1E-6, monomorphic variants, indels of length >51 bp, and imputation quality score INFO<0.4
+# 1. reheader
+# 2. calculate HWE using vcftools 
+# 3. filter based on HWE, imputation quality, monomorphic variants,
+# 4. filter indel length using awk

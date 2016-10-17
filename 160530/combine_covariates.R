@@ -6,6 +6,8 @@
 # library:
 library('R.utils')
 library('XLConnect')
+library(data.table)
+library(dplyr)
 
 # command arguments: 
 args=commandArgs(trailingOnly=T,asValues=T,defaults=list(num_geno_pc=3,num_peer_factor=15))

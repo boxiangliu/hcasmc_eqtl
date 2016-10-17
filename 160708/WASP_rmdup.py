@@ -1,8 +1,10 @@
+import sys 
+sys.path.append('/srv/persistent/bliu2/HCASMC_eQTL/scripts/')
 from utils import *
 from multiprocessing import Pool
 
 def WASPrmdup(bam, paired_end = True):
-	WASP_mapping = '/srv/persistent/bliu2/tools/WASP/mapping'
+	WASP_mapping = '/srv/persistent/bliu2/tools/WASP-0.1/mapping'
 
 
 	output = bam.replace('sorted.bam','rmdup.bam')
@@ -25,7 +27,7 @@ if __name__ == '__main__':
 
 	keep_bams = ["%s/%s"%(sample_dir,'wasp.keep.merged.sorted.bam') for sample_dir in sample_dirs]
 	
-	pool = Pool(processes = len(sample_dirs))
+	pool = Pool(processes = 10)
 	pool.map(WASPrmdup, keep_bams)
 	
 	reportDone()

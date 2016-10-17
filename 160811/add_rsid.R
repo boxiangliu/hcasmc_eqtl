@@ -14,6 +14,7 @@ out_file=args$out
 # eqtl_file='../processed_data/160811/tested_snps_at_egenes.txt'
 # out_file='../processed_data/160811/tested_snps_at_egenes.rsid.txt'
 
+
 # read dbsnp:
 dbsnp=fread(dbsnp_file)
 setnames(dbsnp,c('chr','pos','rsid','strand','geno'))
