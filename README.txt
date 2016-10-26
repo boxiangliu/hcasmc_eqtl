@@ -466,3 +466,6 @@ At first glance most imputed variants in (3) has low allele frequency. Makes sen
 # WASP 
 # CHT
 when running CHT, don't forget to compile snp2h5 so the anaconda/lib versions are correct. 
+
+
+

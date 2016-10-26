@@ -266,6 +266,10 @@ hcasmc_specific_eqtl2[pval==min(hcasmc_specific_eqtl2[chr==6,pval]),]
 # ENSG00000137331.11_6_30507577_A_AC_b37 IER3
 # This gene functions in the protection of cells from Fas- or tumor necrosis factor type alpha-induced apoptosis. Partially degraded and unspliced transcripts are found after virus infection in vitro, but these transcripts are not found in vivo and do not generate a valid protein.
 
+hcasmc_specific_eqtl2[pval==min(hcasmc_specific_eqtl2[chr==7,pval]),]
+# ENSG00000185290.3_7_55803970_G_A_b37 NUPR2
+# 
+
 hcasmc_specific_eqtl2[pval==min(hcasmc_specific_eqtl2[chr==16,pval]),]
 # ENSG00000169688.10_16_56666848_G_A_b37 MT1B
 # MT1B (Metallothionein 1B) is a Protein Coding gene. Among its related pathways are Metallothioneins bind metals and Metabolism.
@@ -275,7 +279,7 @@ hcasmc_specific_eqtl2[pval==min(hcasmc_specific_eqtl2[chr==17,pval]),]
 # This gene encodes a nuclear protein that is a subunit of two protein complexes involved with histone acetylation, the MLL1 complex and the NSL1 complex. The corresponding protein in Drosophila interacts with K(lysine) acetyltransferase 8, which is also a subunit of both the MLL1 and NSL1 complexes.
 
 
-# ACTA2
+# ACTA2: 
 hcasmc_specific_eqtl2[str_detect(pheno,'ENSG00000107796'),]
 #    chr      pos        pval             pheno                geno
 # 1:  10 90666952 8.61969e-06 ENSG00000107796.8 10_90666952_C_T_b37

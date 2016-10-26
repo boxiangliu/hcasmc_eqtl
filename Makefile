@@ -2952,6 +2952,22 @@ Rscript tarid/pm_plot.R ../figures/hcasmc_specific_eqtl2/acta2.size52.pmplot.pdf
 grep "ENSG00000137331.11_6_30507577_A_AC_b37" ../processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.6.mcmc.txt | \
 Rscript tarid/pm_plot.R ../figures/hcasmc_specific_eqtl2/ier3.size52.pmplot.pdf none
 
+
+# make P-M plot for MT1B:
+grep "ENSG00000169688.10_16_56666848_G_A_b37" ../processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.16.mcmc.txt | \
+Rscript tarid/pm_plot.R ../figures/hcasmc_specific_eqtl2/mt1b.size52.pmplot.pdf none
+
+
+# make P-M plot for KANSL1:
+grep "ENSG00000120071.8_17_43654468_C_T_b37" ../processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.17.mcmc.txt | \
+Rscript tarid/pm_plot.R ../figures/hcasmc_specific_eqtl2/kansl1.size52.pmplot.pdf none
+
+
+# make P-M plot for NUPR2:
+grep "ENSG00000185290.3_7_55803970_G_A_b37" ../processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.7.mcmc.txt | \
+Rscript tarid/pm_plot.R ../figures/hcasmc_specific_eqtl2/nupr2.size52.pmplot.pdf none
+ 
+
 #### end HCASMC specific eQTLs
 
 
@@ -3137,8 +3153,14 @@ R --vanilla --quiet --args ../processed_data/rasqual/Y.tidy.txt ../processed_dat
 
 
 # ASVCF: 
-# don't run: 
-vcf2asvcf.sh
+parallel -j12 bash rasqual/vcf2asvcf.sh \
+	../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.vcf.gz ::: {1..22} X
+
+
+# ASVCF cleanup: 
+parallel -j12 bash rasqual/vcf2asvcf.cleanup.sh \
+	../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.vcf.gz ::: {1..22} X
+
 
 # make rasqual input: 
 grep "chr6" /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf | \
@@ -3166,11 +3188,20 @@ rasqual.sh
 
 # calculate p-value:
 Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.txt ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.pval.txt
+Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.txt ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.pval.txt
 
 
-# make locuszoom for TCF21:
+# make locuszoom for TCF21 at rs2327429:
 mkdir ../figures/rasqual/locuszoom/
-cut -f2,26 ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.pval.txt > ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.metal
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.metal --pvalcol pval --markercol rsid --refsnp rs2327429 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (TCF21)" --prefix ../figures/rasqual/locuszoom/TCF21_eQTL
+cut -f2,26 ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.pval.txt > ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.metal
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.metal --pvalcol pval --markercol rsid --refsnp rs2327429 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (TCF21)" --prefix ../figures/rasqual/locuszoom/TCF21_eQTL
+
+
+# make locuszoom for TCF21 at rs12190287:
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.metal --pvalcol pval --markercol rsid --refsnp rs12190287 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (TCF21)" --prefix ../figures/rasqual/locuszoom/TCF21_eQTL
+
+
+# make locuszoom for GWAS at rs12190287:
+locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs12190287 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="GWAS (rs12190287)" --prefix ../figures/rasqual/locuszoom/TCF21_gwas
 
 #### end rasqual
