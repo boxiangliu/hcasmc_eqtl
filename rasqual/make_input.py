@@ -15,11 +15,13 @@ def count_fsnp_and_rsnp(chrom,window_start,window_end,exons):
 		is_fsnp=reduce(lambda x,y: x or y, [exon[0]<=record.POS<=exon[1] for exon in exons])
 		if is_fsnp:
 			n_feat_snp+=1
+	return n_test_snp,n_feat_snp
 
-	# output: 
+def make_output(gene_id,gene_name,chrom,window_start,window_end,n_test_snp,n_feat_snp,exons):
+	# make output: 
 	exon_start_positions=','.join([str(exon[0]) for exon in exons])
 	exon_end_positions=','.join([str(exon[1]) for exon in exons])
-	output="\t".join([gene_id_bak,gene_name_bak,chrom+":"+str(window_start)+"-"+str(window_end),str(n_test_snp),str(n_feat_snp),exon_start_positions,exon_end_positions])+'\n'
+	output="\t".join([gene_id,gene_name,chrom+":"+str(window_start)+"-"+str(window_end),str(n_test_snp),str(n_feat_snp),exon_start_positions,exon_end_positions])+'\n'
 	return output
 
 
@@ -44,6 +46,24 @@ for line in sys.stdin:
 		split_line=line.strip().split('\t')
 
 	if split_line[2]=='gene': # gene lines
+
+		#### output: 
+		try:
+			# report: 
+			sys.stderr.write(gene_id+' '+gene_name+' has '+str(len(exons))+' exon(s)\n')
+
+			# count number of test and feature snps: 
+			[n_test_snp,n_feat_snp]=count_fsnp_and_rsnp(chrom, window_start, window_end, exons)
+			output=make_output(gene_id, gene_name, chrom, window_start, window_end, n_test_snp, n_feat_snp, exons)
+			sys.stdout.write(output)
+
+		except NameError: 
+			pass
+
+		except ValueError: 
+			sys.stderr.write(chrom+' not found in '+vcf_file+'\n')
+
+		#### update: 
 		# gene id and name: 
 		gene_id=p_gene_id.search(split_line[8]).group()
 		gene_name=p_gene_name.search(split_line[8]).group()
@@ -63,24 +83,16 @@ for line in sys.stdin:
 		window_end=tss+window_size
 
 
-		try:
-			# report: 
-			sys.stderr.write(gene_id_bak+' '+gene_name_bak+' has '+str(len(exons))+' exon(s)\n')
+		# # back up some variables for next loop: 
+		# gene_id_bak=gene_id
+		# gene_name_bak=gene_name
+		# chrom_bak=chrom
+		# window_start_bak=window_start
+		# window_end_bak=window_end
 
-			# count number of test and feature snps: 
-			output=count_fsnp_and_rsnp(chrom, window_start, window_end, exons)
-			sys.stdout.write(output)
-
-		except NameError: 
-			pass
-
-		except ValueError: 
-			sys.stderr.write(chrom+' not found in '+vcf_file+'\n')
 
 		# initialize:
 		exons=[]
-		gene_id_bak=gene_id
-		gene_name_bak=gene_name
 
 
 	elif split_line[2]=='exon': # exon lines 
@@ -92,7 +104,8 @@ for line in sys.stdin:
 
 # final output:
 try:
-	output=count_fsnp_and_rsnp(chrom, window_start, window_end, exons)
+	[n_test_snp,n_feat_snp]=count_fsnp_and_rsnp(chrom, window_start, window_end, exons)
+	output==make_output(gene_id, gene_name, chrom, window_start, window_end, n_test_snp, n_feat_snp, exons)
 	sys.stdout.write(output)
 except ValueError:
 	sys.stderr.write(chrom+' not found in '+vcf_file+'\n')
