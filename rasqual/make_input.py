@@ -104,8 +104,9 @@ for line in sys.stdin:
 
 # final output:
 try:
+	sys.stderr.write(gene_id+' '+gene_name+' has '+str(len(exons))+' exon(s)\n')
 	[n_test_snp,n_feat_snp]=count_fsnp_and_rsnp(chrom, window_start, window_end, exons)
-	output==make_output(gene_id, gene_name, chrom, window_start, window_end, n_test_snp, n_feat_snp, exons)
+	output=make_output(gene_id, gene_name, chrom, window_start, window_end, n_test_snp, n_feat_snp, exons)
 	sys.stdout.write(output)
 except ValueError:
 	sys.stderr.write(chrom+' not found in '+vcf_file+'\n')
