@@ -1,0 +1,1 @@
+cat /srv/persistent/bliu2/HCASMC_eQTL/data/gwas/cad.add.160614.website.txt | awk 'BEGIN{OFS="\t";print "SNP","A1","A2","FRQ","INFO","BETA","SE","P"}{if ($1!="markername") print $1,$4,$5,$6,$7,$9,$10,$11}' | gzip > /srv/persistent/bliu2/HCASMC_eQTL/data/gwas/cad.add.160614.website.plink.txt.gz
