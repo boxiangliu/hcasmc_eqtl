@@ -3126,28 +3126,29 @@ cp /srv/persistent/bliu2/tools/WASP/CHT/Snakefile cht/
 mkdir rasqual ../figures/rasqual ../processed_data/rasqual
 
 
-# prepare the read count table: 
+# prepare rasqual read count table: 
 cat ../data/rnaseq2/read_count/rnaseqc/rnaseqc.hcasmc_eqtl.reads.gct | \
 grep -v -e "#1.2" -e "56238" -e "Name" | \
 cut -f1,3- > ../processed_data/rasqual/Y.txt
 
 
-# calculate GC content: 
+# calculate GC content (gene level): 
 python rasqual/calc_gcc.py \
 	/mnt/lab_data/montgomery/shared/genomes/hg19/hg19.fa \
 	/srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf \
 	gene > ../processed_data/rasqual/gcc.gene.txt
 
 
+# calculate GC content (exon level): 
 python rasqual/calc_gcc.py \
 	/mnt/lab_data/montgomery/shared/genomes/hg19/hg19.fa \
 	/srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf \
 	exon > ../processed_data/rasqual/gcc.exon.txt
 
-# calculate offset:
+
+# calculate rasqual offset:
 Rscript reorder_gcc_by_Y.R ../processed_data/rasqual/Y.txt ../processed_data/rasqual/gcc.exon.txt ../processed_data/rasqual/Y.tidy.txt ../processed_data/rasqual/gcc.exon.tidy.txt
 cut -f2-2 ../processed_data/rasqual/gcc.exon.tidy.txt > ../processed_data/rasqual/gcc.exon.tidy.cut.txt
-
 cp /srv/persistent/bliu2/tools/rasqual/R/{makeOffset.R,gcCor.R} rasqual
 R --vanilla --quiet --args ../processed_data/rasqual/Y.tidy.txt ../processed_data/rasqual/gcc.exon.tidy.cut.txt ../processed_data/rasqual/K.txt < rasqual/makeOffset.R
 
@@ -3155,6 +3156,11 @@ R --vanilla --quiet --args ../processed_data/rasqual/Y.tidy.txt ../processed_dat
 # ASVCF: 
 parallel -j12 bash rasqual/vcf2asvcf.sh \
 	../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.vcf.gz ::: {1..22} X
+parallel tabix -p vcf ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz ::: {1..22} X
+bcftools concat -Oz -o ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz \
+../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{1..22}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz \
+../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chrX.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
+tabix -p vcf ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
 
 
 # ASVCF cleanup: 
@@ -3163,12 +3169,12 @@ parallel -j12 bash rasqual/vcf2asvcf.cleanup.sh \
 
 
 # make rasqual input: 
-grep "chr6" /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf | \
+parallel -j6 "grep chr{} /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf | \
 python rasqual/make_input.py \
-../processed_data/160604_phasing/phased_and_imputed/phased_and_imputed.chr6.rename.dr2.indellt51.rnasamples.hg19.vcf.new.gz 1000000 > ../processed_data/rasqual/in.chr6.txt
+../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.gz 1000000 > ../processed_data/rasqual/input/rasqual.input.chr{}.txt" ::: {1..22} X
 
 
-# create covariates: 
+# create rasqual covariates: 
 cp $scripts/160530/combine_covariates.R $scripts/rasqual/combine_covariates.R
 Rscript $scripts/rasqual/combine_covariates.R \
 	--genotype_pc=$processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv \
@@ -3182,9 +3188,29 @@ Rscript $scripts/rasqual/combine_covariates.R \
 # compress: 
 R --vanilla --quiet --args ../processed_data/rasqual/Y.tidy.txt ../processed_data/rasqual/K.txt ../processed_data/rasqual/X.txt < $tools/rasqual/R/txt2bin.R 
 
-# run rasqual:
-# don't run
-rasqual.sh 
+
+# run rasqual for TCF21:
+bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt 19894 \
+../processed_data/rasqual/Y.tidy.bin \
+../processed_data/rasqual/K.bin \
+../processed_data/rasqual/X.bin \
+../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
+
+# run rasqual for AHR:
+bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt 20734 \
+../processed_data/rasqual/Y.tidy.bin \
+../processed_data/rasqual/K.bin \
+../processed_data/rasqual/X.bin \
+../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
+
+
+# run rasqual for all genes: 
+# don't run yet. 
+parallel -j10 bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt 19894 \
+../processed_data/rasqual/Y.tidy.bin \
+../processed_data/rasqual/K.bin \
+../processed_data/rasqual/X.bin \
+../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz ::: {1..51376}
 
 # calculate p-value:
 Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.txt ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.pval.txt
@@ -3205,3 +3231,7 @@ locuszoom --metal ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000
 locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs12190287 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="GWAS (rs12190287)" --prefix ../figures/rasqual/locuszoom/TCF21_gwas
 
 #### end rasqual
+
+
+#### metaXcan: 
+mkdir metaXcan ../processed_data/metaXcan ../figures/metaXcan
