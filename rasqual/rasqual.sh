@@ -26,7 +26,10 @@ echo reference snps: $n_rsnp
 echo feature snps: $n_fsnp
 echo feature id: $feat_id
 
-tabix $vcf_file $region | \
+if [[ -e ../processed_data/rasqual/output/${gene_id}_${gene_name}.txt ]]; then 
+	echo "../processed_data/rasqual/output/${gene_id}_${gene_name}.txt exist! skipping..."
+else  
+	tabix $vcf_file $region | \
 	/srv/persistent/bliu2/tools/rasqual/src/rasqual \
 	-y $Y \
 	-k $K \
@@ -36,4 +39,4 @@ tabix $vcf_file $region | \
     --imputation-quality 0.8 --imputation-quality-fsnp 0.8 \
     -f $gene_name --n_threads 1 \
     --force -v > ../processed_data/rasqual/output/${gene_id}_${gene_name}.txt
-
+fi 

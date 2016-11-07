@@ -39,3 +39,9 @@
 # 2. calculate HWE using vcftools 
 # 3. filter based on HWE, imputation quality, monomorphic variants,
 # 4. filter indel length using awk
+
+
+# select_genes.R 
+# download genes in GWAS catelog 
+# 2015 nikpay paper. 
+# 

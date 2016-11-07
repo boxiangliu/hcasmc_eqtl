@@ -468,4 +468,5 @@ At first glance most imputed variants in (3) has low allele frequency. Makes sen
 when running CHT, don't forget to compile snp2h5 so the anaconda/lib versions are correct. 
 
 
-
+#### find_AHR_eQTLs_in_JUN_and_TCF21_peaks.R
+A TCF21 and JUN peak within chr7:17,410,875-17,412,620 contains rs10265174, rs12699842, rs60457144. rs10265174 is the second most significant eQTL with p-value < 9e-5. Haploreg shows rs10265174 also changes the binding affinity of AP-1 and TCF4 (which has similar motif to TCF21). rs12699842 and rs60457144 are not tested due to low MAF. 

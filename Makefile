@@ -2883,6 +2883,17 @@ parallel -j11 bash $scripts/eCAVIAR/ecaviar.sh \
 
 #### end eCAVIAR for full-sample GTEx tissue
 
+#### eCAVIAR for HCASMC eQTL mapped with RASQUAL: 
+# split eQTL by chromosome: 
+parallel -j11 bash $scripts/eCAVIAR/split_eqtl_by_chr.sh \
+	../processed_data/rasqual/merged_output/prioritized_genes.allpairs.txt \
+	../processed_data/rasqual/merged_output/prioritized_genes.allpairs.{}.txt \
+	{} ::: {1..22}
+
+Rscript $scripts/eCAVIAR/select_eGene.separate_gwas_loci.rasqual.R \
+	../processed_data/rasqual/merged_output/prioritized_genes.allpairs.txt \
+	../processed_data/eCAVIAR/eCAVIAR_rasqual/
+
 
 
 #### eGenes vs sample size:
@@ -3173,6 +3184,10 @@ parallel -j6 "grep chr{} /srv/persistent/bliu2/shared/annotation/gtex/gencode.v1
 python rasqual/make_input.py \
 ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.gz 1000000 > ../processed_data/rasqual/input/rasqual.input.chr{}.txt" ::: {1..22} X
 
+parallel -j6 "grep chr{} /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf | \
+python rasqual/make_input.py \
+../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz 1000000 > ../processed_data/rasqual/input/rasqual.input.new.chr{}.txt" ::: 18 19 20 21 22 X
+
 
 # create rasqual covariates: 
 cp $scripts/160530/combine_covariates.R $scripts/rasqual/combine_covariates.R
@@ -3189,6 +3204,10 @@ Rscript $scripts/rasqual/combine_covariates.R \
 R --vanilla --quiet --args ../processed_data/rasqual/Y.tidy.txt ../processed_data/rasqual/K.txt ../processed_data/rasqual/X.txt < $tools/rasqual/R/txt2bin.R 
 
 
+# select genes: 
+# don't run: 
+# Rscript rasqual/select_genes.R 
+
 # run rasqual for TCF21:
 bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt 19894 \
 ../processed_data/rasqual/Y.tidy.bin \
@@ -3204,17 +3223,49 @@ bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt 20
 ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
 
 
-# run rasqual for all genes: 
-# don't run yet. 
-parallel -j10 bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt 19894 \
+# run rasqual for all prioritize genes: 
+grep -f ../processed_data/rasqual/prioritized_genes.txt -n \
+	../processed_data/rasqual/input/rasqual.input.autosome.txt | \
+	awk '{print $1}' | awk 'BEGIN{FS=":"}{print $1}' > \
+	../processed_data/rasqual/prioritized_genes.number.2.txt
+
+# first try (missed chr21 and chr22)
+parallel bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt {} \
 ../processed_data/rasqual/Y.tidy.bin \
 ../processed_data/rasqual/K.bin \
 ../processed_data/rasqual/X.bin \
-../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz ::: {1..51376}
+../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz :::: ../processed_data/rasqual/prioritized_genes.number.txt 
+
+# second try (running chr21 and chr22):
+parallel -j10 bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.autosome.txt {} \
+../processed_data/rasqual/Y.tidy.bin \
+../processed_data/rasqual/K.bin \
+../processed_data/rasqual/X.bin \
+../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz :::: ../processed_data/rasqual/prioritized_genes.number.2.txt 
+
+
+# run rasqual for other genes: 
+parallel -j10 bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt {} \
+../processed_data/rasqual/Y.tidy.bin \
+../processed_data/rasqual/K.bin \
+../processed_data/rasqual/X.bin \
+../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz :::: ../processed_data/rasqual/unprioritized_genes.number.txt 
+
 
 # calculate p-value:
-Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.txt ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.pval.txt
-Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.txt ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.pval.txt
+grep -f ../processed_data/rasqual/prioritized_genes.txt \
+	../processed_data/rasqual/input/rasqual.input.all.txt | \
+	awk '{print $1"_"$2".txt"}' > \
+	../processed_data/rasqual/prioritized_genes.output_file.txt
+parallel -j10 Rscript rasqual/calc_pval.R \
+../processed_data/rasqual/output/{}.txt \
+../processed_data/rasqual/output/{}.pval.txt :::: ../processed_data/rasqual/prioritized_genes.output_file.txt
+# Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.txt ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.pval.txt
+# Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.txt ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.pval.txt
+
+
+# calculate p-value for AHR:
+Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/ENSG00000106546.8_AHR.txt ../processed_data/rasqual/output/ENSG00000106546.8_AHR.pval.txt
 
 
 # make locuszoom for TCF21 at rs2327429:
@@ -3230,8 +3281,21 @@ locuszoom --metal ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000
 # make locuszoom for GWAS at rs12190287:
 locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs12190287 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="GWAS (rs12190287)" --prefix ../figures/rasqual/locuszoom/TCF21_gwas
 
+
+# make locuszoom for AHR: 
+cut -f2,26 ../processed_data/rasqual/output/ENSG00000106546.8_AHR.pval.txt > ../processed_data/rasqual/output/ENSG00000106546.8_AHR.metal
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000106546.8_AHR.metal --pvalcol pval --markercol rsid --refsnp rs10265174 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (AHR)" --prefix ../figures/rasqual/locuszoom/AHR_eQTL
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000106546.8_AHR.metal --pvalcol pval --markercol rsid --refsnp rs10265174 --flank 500KB ymax=5 --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (AHR)" --prefix ../figures/rasqual/locuszoom/AHR_eQTL
+
+
 #### end rasqual
 
 
 #### metaXcan: 
 mkdir metaXcan ../processed_data/metaXcan ../figures/metaXcan
+
+
+#### specific genes: 
+mkdir specific_genes ../processed_data/specific_genes ../figures/specific_genes
+mkdir specific_genes/AHR
+
