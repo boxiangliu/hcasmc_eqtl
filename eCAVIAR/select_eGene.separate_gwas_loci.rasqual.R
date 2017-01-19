@@ -6,11 +6,13 @@ library(dplyr)
 # commandargs: 
 args=commandArgs(T)
 in_file=args[1]
-out_dir=args[2]
-chr=args[3]
+cad_dir=args[2]
+out_dir=args[3]
+chr=args[4]
 # in_file='../processed_data/160816/subsampling/Liver/Liver_52.allpairs.sid_parsed.20.txt'
 # out_dir='../processed_data/eCAVIAR/eCAVIAR_input/Liver/'
 # chr=20
+if (!dir.exists(out_dir)) {dir.create(out_dir)}
 
 # read eqtl:
 message(in_file)
@@ -23,7 +25,7 @@ if (typeof(eqtl$chr)=='character') gwas$chr=as.character(gwas$chr)
 
 
 # read input file list:
-gwas_files=list.files('../processed_data/eCAVIAR/cad_gwas_loci/',pattern=sprintf("^%s_",chr),full.names=T)
+gwas_files=list.files(cad_dir,pattern=sprintf("^%s_",chr),full.names=T)
 message(length(gwas_files),' gwas loci on chr',chr)
 
 # read gwas:

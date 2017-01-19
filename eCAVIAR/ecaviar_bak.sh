@@ -10,13 +10,12 @@ echo "output directory: $out_dir"
 
 # path to 1000 Genome European sample IDs:
 eur_sample=/srv/persistent/bliu2/HCASMC_eQTL/processed_data//eCAVIAR/eur_samples.txt
-eqtl_vcf=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.GRCh37.rsid.vcf.new.gz
 
 
 # loop over every SNP list: 
 for snp_list in $(ls $in_dir/*.id); do
 	base=$(basename $snp_list)
-	# if [[ ! "$base" == "ENSG00000272097.1_RP11-421M1.8.id" ]]; then continue; fi # for debugging
+	# if [[ ! "$base" == "ENSG00000089248.6.id" ]]; then continue; fi # for debugging
 	if [[ -f $out_dir/${base/.id/.ecaviar_col} ]]; then continue; fi
 	echo "SNP list: $snp_list" 
 
@@ -32,75 +31,55 @@ for snp_list in $(ls $in_dir/*.id); do
 
 
 	# subset to relevant variants: 
-	echo "#### subsetting 1000G vcf..."
-	bcftools view -R ${snp_list}.tmp -S $eur_sample.tmp -Ov -o ${snp_list/.id/.gwas.vcf} $in_file
-
-	echo "#### subsetting eQTL vcf..."
-	bcftools view -R ${snp_list}.tmp -Ov -o ${snp_list/.id/.eqtl.vcf} $eqtl_vcf
-	
+	echo "subsetting vcf..."
+	bcftools view -R ${snp_list}.tmp -S $eur_sample.tmp -Ov -o ${snp_list/.id/.vcf} $in_file
 
 
 	# remove vcf record longer than 16000 characters: 
-	mv ${snp_list/.id/.gwas.vcf} ${snp_list/.id/.gwas.vcf.bak}
-	cat ${snp_list/.id/.gwas.vcf.bak} | awk '{if (length($3)<=16000) print $0}' | uniq > ${snp_list/.id/.gwas.vcf}
-	
+	mv ${snp_list/.id/.vcf} ${snp_list/.id/.vcf.bak}
+	cat ${snp_list/.id/.vcf.bak} | awk '{if (length($3)<=16000) print $0}' | uniq > ${snp_list/.id/.vcf}
 
 
 	# generate bed bim fam:
-	echo "#### generating bed, bim and fam files for GWAS..."
-	plink --vcf ${snp_list/.id/.gwas.vcf} \
+	echo "generating bed, bim and fam files..."
+	plink --vcf ${snp_list/.id/.vcf} \
 		--keep-allele-order \
 		--make-bed \
 		--double-id \
 		--extract $snp_list \
-		--out ${snp_list/.id/.gwas}
-
-
-	echo "#### generating bed, bim and fam files for eQTL..."
-	plink --vcf ${snp_list/.id/.eqtl.vcf} \
-		--keep-allele-order \
-		--make-bed \
-		--double-id \
-		--extract $snp_list \
-		--out ${snp_list/.id/.eqtl}
+		--out ${snp_list/.id/}
 
 
 	# remove variants from gwas and eqtl zscore file if they are not in the bim file: 
 	mv ${snp_list/.id/.eqtl.zscore} ${snp_list/.id/.eqtl.zscore.bak}
-	grep -f <(cut -f2,2 ${snp_list/.id/.eqtl.bim}) ${snp_list/.id/.eqtl.zscore.bak} > ${snp_list/.id/.eqtl.zscore}
+	grep -f <(cut -f2,2 ${snp_list/.id/.bim}) ${snp_list/.id/.eqtl.zscore.bak} > ${snp_list/.id/.eqtl.zscore}
 	mv ${snp_list/.id/.gwas.zscore} ${snp_list/.id/.gwas.zscore.bak}
-	grep -f <(cut -f2,2 ${snp_list/.id/.gwas.bim}) ${snp_list/.id/.gwas.zscore.bak} > ${snp_list/.id/.gwas.zscore}
+	grep -f <(cut -f2,2 ${snp_list/.id/.bim}) ${snp_list/.id/.gwas.zscore.bak} > ${snp_list/.id/.gwas.zscore}
+	
 
 	# calculate LD:
-	echo "#### calculating LD for GWAS..."
-	plink -bfile ${snp_list/.id/.gwas} \
+	echo "calculating LD..."
+	plink -bfile ${snp_list/.id/} \
 		--r square \
-		--out ${snp_list/.id/.gwas}
-
-	echo "#### calculating LD for eQTL..."
-	plink -bfile ${snp_list/.id/.eqtl} \
-		--r square \
-		--out ${snp_list/.id/.eqtl}
+		--out ${snp_list/.id/}
 
 
 	# run eCAVIAR:
-	echo "#### running eCAVIAR..."
+	echo "running eCAVIAR..."
 	base=$(basename $snp_list)
 	if [[ ! -d $out_dir ]]; then mkdir -p $out_dir; fi
 	/srv/persistent/bliu2/tools/caviar/CAVIAR-C++/eCAVIAR \
 		-o $out_dir/${base/.id/.ecaviar} \
-		-l ${snp_list/.id/.gwas.ld} \
-		-l ${snp_list/.id/.eqtl.ld} \
+		-l ${snp_list/.id/.ld} \
+		-l ${snp_list/.id/.ld} \
 		-z ${snp_list/.id/.gwas.zscore} \
 		-z ${snp_list/.id/.eqtl.zscore} \
 		-r 0.95
 
+
 	# cleanup: 
-	rm ${snp_list/.id/.gwas.vcf.bak}
+	rm ${snp_list/.id/.vcf.bak}
 	rm ${snp_list/.id/.eqtl.zscore.bak}
 	rm ${snp_list/.id/.gwas.zscore.bak}
 	rm ${snp_list}.tmp
 done
-
-
-

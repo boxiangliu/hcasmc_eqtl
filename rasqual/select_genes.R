@@ -6,11 +6,11 @@ library(stringr)
 
 
 # read variants from Nikpay paper: 
-nikpay=fread('../processed_data/eCAVIAR/gwas_loci.cad.all.genomewide_fdr_merged.txt')%>%select(chr,pos)
+nikpay=fread('../processed_data/eCAVIAR/gwas_loci.cad.all.genomewide_fdr_merged.txt')%>%select(chr,pos,markername)
 
 
 # read variants from latest metabochip paper: 
-metabo=fread('../data/gwas/metabochip_novel_lead_variants.txt')%>%select(chr,pos)
+metabo=fread('../data/gwas/metabochip_novel_lead_variants.txt')%>%select(chr,pos,markername)
 
 
 # concatenate nikpay and metabochip variants: 
@@ -44,7 +44,7 @@ output=gwas_overlap[,gene_id]%>%unique()
 output=c('AHR','CYP1A1','CYP1B1','IL1A','IL1B',output)
 
 
-# write output: 
+# write output:
 write.table(output,file="../processed_data/rasqual/prioritized_genes.txt",quote=F,col.names=F,row.names=F)
 
 
