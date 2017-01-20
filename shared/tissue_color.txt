@@ -1,0 +1,47 @@
+tissue_full	tissue_pretty	tissue_abbr	color
+Adipose_Subcutaneous	Adipose - Subcutaneous	Adipose	#e6acac
+Adipose_Visceral_Omentum	Adipose - Visceral (Omentum)	Adipose	#e6acac
+Adrenal_Gland	Adrenal - Gland	Adrenal Gland	#e5cf73
+Artery_Aorta	Artery - Aorta	Artery	#00e6d6
+Artery_Coronary	Artery - Coronary	Artery	#00e6d6
+Artery_Tibial	Artery - Tibial	Artery	#00e6d6
+Whole_Blood	Whole - Blood	Blood	#a6002c
+Brain_Anterior_cingulate_cortex_BA24	Brain - Anterior - cingulate - cortex (BA24)	Brain	#4400ff
+Brain_Caudate_basal_ganglia	Brain - Caudate (basal ganglia)	Brain	#4400ff
+Brain_Cerebellar_Hemisphere	Brain - Cerebellar Hemisphere	Brain	#4400ff
+Brain_Cerebellum	Brain - Cerebellum	Brain	#4400ff
+Brain_Cortex	Brain - Cortex	Brain	#4400ff
+Brain_Frontal_Cortex_BA9	Brain - Frontal Cortex (BA9)	Brain	#4400ff
+Brain_Hippocampus	Brain - Hippocampus	Brain	#4400ff
+Brain_Hypothalamus	Brain - Hypothalamus	Brain	#4400ff
+Brain_Nucleus_accumbens_basal_ganglia	Brain - Nucleus accumbens (basal ganglia)	Brain	#4400ff
+Brain_Putamen_basal_ganglia	Brain - Putamen (basal ganglia)	Brain	#4400ff
+Breast_Mammary_Tissue	Breast - Mammary Tissue	Brain	#4400ff
+Colon_Sigmoid	Colon - Sigmoid	Colon	#005f66
+Colon_Transverse	Colon - Transverse	Colon	#005f66
+Esophagus_Gastroesophageal_Junction	Esophagus - Gastroesophageal Junction	Esophagus	#33170d
+Esophagus_Mucosa	Esophagus - Mucosa	Esophagus	#33170d
+Esophagus_Muscularis	Esophagus - Muscularis	Esophagus	#33170d
+Cells_Transformed_fibroblasts	Cells - Transformed fibroblasts	Fibroblasts	#737156
+SF	SF	HCASMC	#af8fbf
+HCASMC	HCASMC	HCASMC	#af8fbf
+Heart_Atrial_Appendage	Heart - Atrial Appendage	Heart	#5c7300
+Heart_Left_Ventricle	Heart - Left Ventricle	Heart	#5c7300
+Small_Intestine_Terminal_Ileum	Small Intestine - Terminal Ileum	Intestine	#661a42
+Cells_EBV-transformed_lymphocytes	Cells - EBV-transformed lymphocytes	LCL	#f22000
+Liver	Liver	Liver	#86aab3
+Lung	Lung	Lung	#7a0099
+Muscle_Skeletal	Muscle - Skeletal	Muscle	#f2853d
+Nerve_Tibial	Nerve - Tibial	Nerve	#74d900
+Ovary	Ovary	Ovary	#00aaff
+Pancreas	Pancreas	Pancreas	#e680ff
+Pituitary	Pituitary	Pituitary	#8c5b23
+Prostate	Prostate	Prostate	#b6f2be
+Skin_Not_Sun_Exposed_Suprapubic	Skin - Not Sun Exposed (Suprapubic)	Skin	#1d4b73
+Skin_Sun_Exposed_Lower_leg	Skin - Sun Exposed (Lower leg)	Skin	#1d4b73
+Spleen	Spleen	Spleen	#f2a200
+Stomach	Stomach	Stomach	#004d1f
+Testis	Testis	Testis	#0057d9
+Thyroid	Thyroid	Thyroid	#f23d85
+Uterus	Uterus	Uterus	#00ffaa
+Vagina	Vagina	Vagina	#120d33

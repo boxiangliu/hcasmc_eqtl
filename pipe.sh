@@ -1396,111 +1396,58 @@ Rscript $scripts/qqplot_pvalue.R ../processed_data/160530/cis.txt ../figures/160
 
 
 #------ run fastQTL --------
-# prepare genotype data: 
+# Prepare genotype data for fastQTL: 
 bgzip /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf && tabix -p vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.gz
 bcftools annotate -Oz -o /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.gz
 tabix -p vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz
 
 
-# prepare expression data: 
-Rscript $scripts/gen_bed.R \
-	$processed_data/gene_loc.txt \
-	$processed_data/combined.filter.norm.rpkm \
-	$processed_data/combined.filter.norm.bed
-bgzip $processed_data/combined.filter.norm.bed
-tabix -p bed $processed_data/combined.filter.norm.bed.gz
+# Prepare expression data for fastQTL: 
+Rscript $scripts/160530/gen_bed.R $processed_data/160530/gene_loc.txt $processed_data/160530/combined.filter.norm.rpkm $processed_data/160530/combined.filter.norm.bed
+bgzip $processed_data/160530/combined.filter.norm.bed
+tabix -p bed $processed_data/160530/combined.filter.norm.bed.gz
 
 
-# prepare covariates: 
-Rscript $scripts/combine_covariates.R \
-	--genotype_pc=../processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv \
-	--peer=../processed_data/160527/factors.tsv \
-	--sample_info=/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx \
-	--output=$processed_data/covariates.fastqtl.tsv \
-	--gender_coding=letter
+# Prepare covariates for fastQTL: 
+Rscript $scripts/combine_covariates.R --genotype_pc=../processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv --peer=../processed_data/160527/factors.tsv --sample_info=/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx --output=$processed_data/covariates.fastqtl.tsv --gender_coding=letter
 bgzip $processed_data/covariates.fastqtl.tsv
 
 
-# run fastqtl nominal pass:
+# Run fastQTL (nominal pass):
 n=0
 for i in {1..22}; do 
 n=$(($n+1))
-if [[ n -gt 10 ]]; then
-	wait
-	n=0
-fi 
-bash $scripts/run_fastqtl.nominal.sh \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz \
-	$processed_data/combined.filter.norm.bed.gz \
-	$processed_data/find_optimum_num_PEER_factors/covariates.fastqtl.pc3.peer8.tsv.gz \
-	$processed_data/fastqtl_nominal/fastqtl.chr$i.pc3.peer8.txt.gz \
-	chr$i > $processed_data/fastqtl_nominal/run_fastqtl.chr$i.log &
+if [[ n -gt 10 ]]; then wait; n=0; fi 
+bash $scripts/run_fastqtl.nominal.sh /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz $processed_data/combined.filter.norm.bed.gz $processed_data/find_optimum_num_PEER_factors/covariates.fastqtl.pc3.peer8.tsv.gz $processed_data/fastqtl_nominal/fastqtl.chr$i.pc3.peer8.txt.gz chr$i > $processed_data/fastqtl_nominal/run_fastqtl.chr$i.log &
 done 
 zcat $processed_data/fastqtl_nominal/fastqtl.chr{1..22}.pc3.peer8.txt.gz > $processed_data/fastqtl_nominal/fastqtl.allpairs.pc3.peer8.txt
 
 
-# run fastqtl with 1000 to 10000 permutations: 
-n=0
-for i in {1..22}; do 
-n=$(($n+1))
-if [[ n -gt 10 ]]; then
-	wait
-	n=0
-fi 
-bash $scripts/run_fastqtl.sh \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz \
-	$processed_data/combined.filter.norm.bed.gz \
-	$processed_data/covariates.fastqtl.tsv.gz \
-	$processed_data/fastqtl_10000_perm/fastqtl.chr$i.txt.gz \
-	chr$i \
-	1000 \
-	10000 > $processed_data/fastqtl_10000_perm/run_fastqtl.chr$i.log &
-done 
+# Create symbolic link from fastQTL result of the nominal pass to the data directory: 
+ln -s /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160530/fastqtl_nominal/ /srv/persistent/bliu2/HCASMC_eQTL/data/eQTL/fastqtl/
 
-# merge all results: 
-zcat $processed_data/fastqtl_10000_perm/fastqtl.chr{1..22}.txt.gz > $processed_data/fastqtl.txt
+# Adjust p-value for fastQTL result from nominal pass: 
+Rscript $scripts/160530/fastqtl_pvalue_corrections.nominal_pass.R $data/eQTL/fastqtl/fastqtl_nominal/fastqtl.allpairs.pc3.peer8.txt $data/eQTL/fastqtl/fastqtl_nominal/fastqtl.allpairs.pc3.peer8.padj.txt
 
 
-# make histogram and qqplot of fastqtl nominal p-values:
+# Make histogram and qqplot of fastQTL nominal p-values:
 Rscript $scripts/qqplot_fastqtl_pvalue.R $processed_data/fastqtl.txt $figures/fastqtl_histogram.pdf $figures/fastqtl_qqplot.pdf
-
-
-# run fastqtl with 10000 to 100000 permutations: 
-n=0
-for i in {1..22}; do 
-n=$(($n+1))
-if [[ n -gt 10 ]]; then
-	wait
-	n=0
-fi 
-bash $scripts/run_fastqtl.sh \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz \
-	$processed_data/combined.filter.norm.bed.gz \
-	$processed_data/covariates.fastqtl.tsv.gz \
-	$processed_data/fastqtl_100000_perm/fastqtl.chr$i.perm100000.txt.gz \
-	chr$i \
-	10000 \
-	100000 > $processed_data/fastqtl_100000_perm/run_fastqtl.chr$i.perm100000.log &
-done
-zcat $processed_data/fastqtl_100000_perm/fastqtl.chr{1..22}.perm100000.txt.gz > $processed_data/fastqtl_100000_perm/fastqtl.perm100000.txt
-
-# make histogram and qqplot of fastqtl nominal p-values:
-Rscript $scripts/qqplot_fastqtl_pvalue.R $processed_data/fastqtl_100000_perm/fastqtl.perm100000.txt $figures/fastqtl_histogram.perm100000.pdf $figures/fastqtl_qqplot.perm100000.pdf
-
-
-# compare 10000 with 100000 permutations:
-Rscript $scripts/compare_10000_100000_permutations.R $processed_data/fastqtl_10000_perm/fastqtl.txt $processed_data/fastqtl_100000_perm/fastqtl.perm100000.txt $figures/compare_10000_100000_permutations.pdf
-# 10000 and 100000 permutations shows high correlation
-
-
-# adjust p-values:
-Rscript $scripts/fastqtl_pvalue_corrections.R $processed_data/fastqtl_10000_perm/fastqtl.txt $processed_data/fastqtl_10000_perm/fastqtl.padj.txt 
 
 
 # find optimal number of PEER factors:
 mkdir $processed_data/find_optimum_num_PEER_factors/
 bash $scripts/find_optimal_num_PEER_factors.sh
 Rscript $scripts/plot_num_egene_vs_cov.R $figures/num_egene_vs_cov.pdf
+
+
+# Copy the optimal eQTL set and remove the rest: 
+mkdir $processed_data/160530/fastqtl_perm/
+cp $processed_data/160530/find_optimum_num_PEER_factors/fastqtl.pc4.peer8* $processed_data/160530/fastqtl_perm/
+rm -r $processed_data/160530/find_optimum_num_PEER_factors/
+
+
+# Create symbolic link from fastQTL result of the permutation pass to the data directory:
+ln -s /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160530/fastqtl_perm/ /srv/persistent/bliu2/HCASMC_eQTL/data/eQTL/fastqtl/fastqtl_perm
 
 
 # How does our discover compare with GTEx: 
@@ -1727,6 +1674,9 @@ parallel -j12 /srv/persistent/bliu2/tools/jre1.8.0_91/bin/java -Xmx8g -jar \
 	ref=/srv/persistent/bliu2/tools/beagle/reference/chr{}.1kg.phase3.v5a.bref \
 	map=/srv/persistent/bliu2/tools/beagle/reference/plink.chr{}.GRCh37.map \
 	impute=true gprobs=true ::: {1..22} X
+
+# link result to data directory: 
+ln -s /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_and_imputed_gprobs /srv/persistent/bliu2/HCASMC_eQTL/data/joint3/phased_imputed
 
 
 # Beagle phasing without reference: 
@@ -2421,108 +2371,69 @@ gzip $processed_data/160805/hcasmc.eqtl.pc4.peer8.txt
 Rscript $scripts/160805/format_hcascm_eqtl.R # output $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt
 
 
-#### metasoft on full sample
-
-# copy HCASMC eQTL data to appropriate location: 
+#----------------- Metasoft -----------------
+## Run Metasoft (full sample, select eQTL with p<1e-3): 
+# Copy HCASMC eQTL data to appropriate location: 
 gzip $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt
-ln -s $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt.gz \
-	$processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/HCASMC_Analysis.v6p.FOR_QC_ONLY.allpairs.txt.gz
+ln -s $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt.gz $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/HCASMC_Analysis.v6p.FOR_QC_ONLY.allpairs.txt.gz
 
-# concatenate all eQTL data: 
+# Concatenate eQTL result for all tissue, append tissue name, and sort according to gene ID and SNP: 
 bash $scripts/160805/concatenate_eqtl_tissues.sh 
 
-
-# generate metasoft input file:
+# Make input file for Metasoft:
 mkdir $processed_data/160805/metasoft_input/
-cat $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | \
-python $scripts/160805/gen_metasoft_input.py > \
-$processed_data/160805/metasoft_input/metasoft_input.txt
+cat $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python $scripts/160805/gen_metasoft_input.py > $processed_data/160805/metasoft_input/metasoft_input.txt
 
-
-# split metasoft input by chromosome: 
+# Split metasoft input by chromosome (to reduce memory footprint for next step): 
 bash $scripts/160805/split_metasoft_input_by_chr.sh
 
-
-# run METASOFT:
-mkdir $processed_data/160805/metasoft_output
-parallel -j12 bash $scripts/160805/metasoft.core.sh \
-	$processed_data/160805/metasoft_input/metasoft_input.{}.txt \
-	$processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.txt \
-	$processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.log ::: {1..22} X
-
+# Run METASOFT:
+mkdir $processed_data/160805/metasoft_output/
+parallel -j12 bash $scripts/160805/metasoft.core.sh $processed_data/160805/metasoft_input/metasoft_input.{}.txt $processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.txt $processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.log ::: {1..22} X
 
 # merge metasoft output: 
 head -n1 $processed_data/160805/metasoft_output/metasoft_output.1.mcmc.txt > $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
 cat $processed_data/160805/metasoft_output/metasoft_output.{1..22}.mcmc.txt | grep -v RSID >> $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
 
-#### end metasoft on full sample
 
-
-#### metasoft on subsample
-
+## Run Metasoft (subsampled to 52, select eQTL with p<1e-3): 
 # copy HCASMC eQTL data to appropriate location:
 mkdir $processed_data/160816/subsampling/HCASMC
-ln -s $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt.gz \
-	$processed_data/160816/subsampling/HCASMC/HCASMC_52.allpairs.txt.gz
+ln -s $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt.gz $processed_data/160816/subsampling/HCASMC/HCASMC_52.allpairs.txt.gz
 
-# concatenate all eQTL data: 
+# Concatenate eQTL result for all tissue, append tissue name, and sort according to gene ID and SNP: 
 bash $scripts/160805/concatenate_eqtl_tissues.subsample.sh 
 
-
-# generate metasoft input file:
+# Generate Metasoft input file:
 mkdir $processed_data/160805/metasoft_input_subsample_52/ 
-cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160816/subsampling/All_Tissues.allpairs.sorted.txt | \
-python $scripts/160805/gen_metasoft_input.py > \
-$processed_data/160805/metasoft_input_subsample_52/metasoft_input.txt
+cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160816/subsampling/All_Tissues.allpairs.sorted.txt | python $scripts/160805/gen_metasoft_input.py > $processed_data/160805/metasoft_input_subsample_52/metasoft_input.txt
 
-
-# split metasoft input by chromosome: 
+# Split metasoft input by chromosome: 
 parallel 'grep "_{}_" ../processed_data/160805/metasoft_input_subsample_52/metasoft_input.txt > ../processed_data/160805/metasoft_input_subsample_52/metasoft_input.{}.txt' ::: {1..22} X
 
-
-
-# run METASOFT:
+# Run METASOFT:
 mkdir $processed_data/160805/metasoft_output_subsample_52
-parallel bash $scripts/160805/metasoft.core.sh \
-	$processed_data/160805/metasoft_input_subsample_52/metasoft_input.{}.txt \
-	$processed_data/160805/metasoft_output_subsample_52/metasoft_output.{}.mcmc.txt \
-	$processed_data/160805/metasoft_output_subsample_52/metasoft_output.{}.mcmc.log ::: {1..22} X
+parallel bash $scripts/160805/metasoft.core.sh $processed_data/160805/metasoft_input_subsample_52/metasoft_input.{}.txt $processed_data/160805/metasoft_output_subsample_52/metasoft_output.{}.mcmc.txt $processed_data/160805/metasoft_output_subsample_52/metasoft_output.{}.mcmc.log ::: {1..22} X
 
-
-# merge metasoft output: 
+# Merge Metasoft output: 
 head -n1 $processed_data/160805/metasoft_output/metasoft_output.1.mcmc.txt > $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
 cat $processed_data/160805/metasoft_output/metasoft_output.{1..22}.mcmc.txt | grep -v RSID >> $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
 
-#### end metasoft on subsample
-
-
-#### metasoft on subsample with threshold p=1e-2
-
+## Run Metasoft (subsample to 52, select eQTL with p<1e-2)
 # generate metasoft input file:
-# mkdir $processed_data/160805/metasoft_input_subsample_52_p1e-2/ 
-cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160816/subsampling/All_Tissues.allpairs.sorted.txt | \
-python $scripts/160805/gen_metasoft_input.py 1e-2 > \
-$processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.txt
+mkdir $processed_data/160805/metasoft_input_subsample_52_p1e-2/
+cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160816/subsampling/All_Tissues.allpairs.sorted.txt | python $scripts/160805/gen_metasoft_input.py 1e-2 > $processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.txt
 
-
-# split metasoft input by chromosome: 
+# split Metasoft input by chromosome: 
 parallel 'grep "_{}_" ../processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.txt > ../processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.{}.txt' ::: {1..22} X
 
-
 # run METASOFT:
-# mkdir $processed_data/160805/metasoft_output_subsample_52_p1e-2
-parallel bash $scripts/160805/metasoft.core.sh \
-	$processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.{}.txt \
-	$processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.{}.mcmc.txt \
-	$processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.{}.mcmc.log ::: {1..22} X
+mkdir $processed_data/160805/metasoft_output_subsample_52_p1e-2
+parallel bash $scripts/160805/metasoft.core.sh $processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.{}.txt $processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.{}.mcmc.txt $processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.{}.mcmc.log ::: {1..22} X
 
-
-# merge metasoft output: 
+# Merge Metasoft output: 
 head -n1 $processed_data/160805/metasoft_output/metasoft_output.1.mcmc.txt > $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
 cat $processed_data/160805/metasoft_output/metasoft_output.{1..22}.mcmc.txt | grep -v RSID >> $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
-
-#### end metasoft on subsample with threshold 1e-2
-
 
 # plot heatmap of m-values: 
 Rscript $scripts/160805/plot_mvalue_heatmap.R 
@@ -2792,7 +2703,20 @@ Rscript $scripts/eCAVIAR/extract_gwas_variants.R \
 # select GWAS loci: 
 Rscript $scripts/eCAVIAR/select_gwas_loci.R \
 	../processed_data/eCAVIAR/gwas_loci.cad.all.genomewide_fdr_merged.txt \
-	../processed_data/eCAVIAR/cad_gwas_loci/
+	../processed_data/eCAVIAR/cad_gwas_loci/ \
+	50 
+
+
+# select GWAS loci (CAD + MI + recessive + metabochip + all known): 
+Rscript $scripts/eCAVIAR/select_gwas_loci.R \
+	../data/gwas/gwas.cad.mi.recessive.metabochip.txt \
+	../data/gwas/cad_gwas_loci_combined_w100/ \
+	100
+
+Rscript $scripts/eCAVIAR/select_gwas_loci.R \
+	../data/gwas/gwas.cad.mi.recessive.metabochip.txt \
+	../data/gwas/cad_gwas_loci_combined_w50/ \
+	50
 
 
 # preprocessing for selecting eGenes: 
@@ -2890,9 +2814,49 @@ parallel -j11 bash $scripts/eCAVIAR/split_eqtl_by_chr.sh \
 	../processed_data/rasqual/merged_output/prioritized_genes.allpairs.{}.txt \
 	{} ::: {1..22}
 
-Rscript $scripts/eCAVIAR/select_eGene.separate_gwas_loci.rasqual.R \
-	../processed_data/rasqual/merged_output/prioritized_genes.allpairs.txt \
-	../processed_data/eCAVIAR/eCAVIAR_rasqual/
+# use 1000G LD for both GWAS and eQTL:
+parallel Rscript $scripts/eCAVIAR/select_eGene.separate_gwas_loci.rasqual.R \
+	../processed_data/rasqual/merged_output/prioritized_genes.allpairs.{}.txt \
+	../data/gwas/cad_gwas_loci_combined_w50 \
+	../processed_data/eCAVIAR/eCAVIAR_input_rasqual_110716/ \
+	{} ::: {1..22}
+
+bash $scripts/eCAVIAR/ecaviar_bak.sh \
+	../processed_data/eCAVIAR/eCAVIAR_input_rasqual_110716/ \
+	../processed_data/eCAVIAR/eCAVIAR_output_rasqual_110716/
+
+# use 1000G LD for only GWAS (100 SNP window): 
+parallel -j10 Rscript $scripts/eCAVIAR/select_eGene.separate_gwas_loci.rasqual.R \
+	../processed_data/rasqual/merged_output/prioritized_genes.allpairs.{}.txt \
+	../data/gwas/cad_gwas_loci_combined_w100 \
+	../processed_data/eCAVIAR/eCAVIAR_input_rasqual_111516/ \
+	{} ::: {1..22}
+
+bash $scripts/eCAVIAR/ecaviar.sh \
+	../processed_data/eCAVIAR/eCAVIAR_input_rasqual_111516/ \
+	../processed_data/eCAVIAR/eCAVIAR_output_rasqual_111516/ 
+
+
+# use 1000G LD for only GWAS (50 SNP window): 
+parallel Rscript $scripts/eCAVIAR/select_eGene.separate_gwas_loci.rasqual.R \
+	../processed_data/rasqual/merged_output/prioritized_genes.allpairs.{}.txt \
+	../data/gwas/cad_gwas_loci_combined_w50 \
+	../processed_data/eCAVIAR/eCAVIAR_input_rasqual_111616/ \
+	{} ::: {1..22}
+
+bash $scripts/eCAVIAR/ecaviar.sh \
+	../processed_data/eCAVIAR/eCAVIAR_input_rasqual_111616/ \
+	../processed_data/eCAVIAR/eCAVIAR_output_rasqual_111616/ 
+
+
+# ls *col | sed 's/\.ecaviar_col//' > sample_list.txt
+parallel -j1 bash eCAVIAR/ecaviar2locuszoom.sh \
+	../processed_data/eCAVIAR/eCAVIAR_output_rasqual/{}.ecaviar_col \
+	../data/gwas/cad.add.160614.website.txt \
+	../processed_data/rasqual/output/{}.pval.txt \
+	../processed_data/eCAVIAR/tmp \
+	../figures/locuszoom :::: ../processed_data/eCAVIAR/eCAVIAR_output_rasqual/sample_list.txt
+
 
 
 
@@ -2918,7 +2882,7 @@ Rscript $scripts/egenes_vs_sample_size/plot_num_egenes_subsampled_52.R
 
 #### end eGenes vs sample size
 
-#### HCASMC specific eQTLs: 
+#---------- HCASMC specific eQTLs -------------
 # setup:
 mkdir $scripts/hcasmc_specific_eqtl $processed_data/hcasmc_specific_eqtl $figures/hcasmc_specific_eqtl
 
@@ -2944,12 +2908,6 @@ parallel -j5 Rscript $scripts/hcasmc_specific_eqtl/find_tissue_specific_eqtls.R 
 	../processed_data/hcasmc_specific_eqtl2/{1}/tissue_specific_eqtl.{2}.txt \
 	{1} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt ::: {1..22}
 
-# parallel -j5 Rscript $scripts/hcasmc_specific_eqtl/find_tissue_specific_eqtls.R \
-# 	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.txt \
-# 	../figures/hcasmc_specific_eqtl2/HCASMC/ \
-# 	../processed_data/hcasmc_specific_eqtl2/HCASMC/stat.{}.txt \
-# 	../processed_data/hcasmc_specific_eqtl2/HCASMC/tissue_specific_eqtl.{}.txt \
-# 	HCASMC ::: {1..22}
 
 # make manhattan plot: 
 Rscript $scripts/hcasmc_specific_eqtl/manhattan.R
@@ -2979,6 +2937,12 @@ grep "ENSG00000185290.3_7_55803970_G_A_b37" ../processed_data/160805/metasoft_ou
 Rscript tarid/pm_plot.R ../figures/hcasmc_specific_eqtl2/nupr2.size52.pmplot.pdf none
  
 
+# select HCASMC specific eQTL based on QSI, and plot distribution of their p-values: 
+bash hcasmc_specific_eqtl/plot_hcasmc_specific_eqtls_pval.sh
+
+# naively select HCASMC specific eQTL: 
+cat ../processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python hcasmc_specific_eqtl/naive_select.py > ../processed_data/hcasmc_specific_eqtl/hcasmc_specific_eqtl.naive_select.txt
+
 #### end HCASMC specific eQTLs
 
 
@@ -3000,10 +2964,6 @@ gzip *fastq
 
 
 # processs ATACseq data with Kundaje pipeline:
-# bds $tools/atac_dnase_pipelines/atac.bds -species hg19 -nth 12 -title 2305 -out_dir $data/atacseq/2305/out \
-#  -fastq1_1 $data/atacseq/2305/fastq/CA2305-FBS1_S1_concat_R1_001.fastq.gz -fastq1_2  $data/atacseq/2305/fastq/CA2305-FBS1_S1_concat_R2_001.fastq.gz \
-#  -fastq2_1 $data/atacseq/2305/fastq/CA2305-FBS_S2_concat_R1_001.fastq.gz -fastq2_2 $data/atacseq/2305/fastq/CA2305-FBS_S2_concat_R2_001.fastq.gz \
-#  -fastq3_1 $data/atacseq/2305/fastq/CA2305-FBS_S3_concat_R1_001.fastq.gz -fastq3_2 $data/atacseq/2305/fastq/CA2305-FBS_S3_concat_R2_001.fastq.gz
 bds ~/atac_dnase_pipelines/atac.bds -species hg19 -nth 12 -title 2305 -out_dir ~/atacseq/2305/out \
  -fastq1_1 ~/atacseq/2305/fastq/CA2305-FBS1_S1_concat_R1_001.fastq.gz -fastq1_2  ~/atacseq/2305/fastq/CA2305-FBS1_S1_concat_R2_001.fastq.gz \
  -fastq2_1 ~/atacseq/2305/fastq/CA2305-FBS_S2_concat_R1_001.fastq.gz -fastq2_2 ~/atacseq/2305/fastq/CA2305-FBS_S2_concat_R2_001.fastq.gz \
@@ -3023,6 +2983,9 @@ bds ~/atac_dnase_pipelines/atac.bds -species hg19 -nth 12 -title 2305 -out_dir ~
  -fastq1_1 ~/atacseq/2305/SF/fastq/CA2305-SF1_S2_concat_R1_001.fastq.gz -fastq1_2  ~/atacseq/2305/SF/fastq/CA2305-SF1_S2_concat_R2_001.fastq.gz \
  -fastq2_1 ~/atacseq/2305/SF/fastq/CA2305-SF_S1_concat_R1_001.fastq.gz -fastq2_2 ~/atacseq/2305/SF/fastq/CA2305-SF_S1_concat_R2_001.fastq.gz
 
+# process all FBS ATACseq data with Kundaje pipeline: 
+# don't run (need to run on nandi):
+bash atacseq/run_fbs.sh
 #### end ATACseq
 
 
@@ -3033,11 +2996,6 @@ mkdir $scripts/gwas_atacseq_overlap $processed_data/gwas_atacseq_overlap $figure
 
 # plan: 
 touch $scripts/gwas_atacseq_overlap/plan.sh
-
-
-# download roadmap DNAse-seq data: 
-mkdir $data/roadmap
-wget -m http://genboree.org/EdaccData/Release-9/experiment-sample/Chromatin_Accessibility/ -P $data/roadmap
 
 
 # plot fraction of overlaps: 
@@ -3120,152 +3078,96 @@ mkdir prevalence_of_CAD ../figures/prevalence_of_CAD ../processed_data/prevalenc
 #### end prevalence of CAD:
 
 
-#### run CHT (WASP): 
-mkdir cht ../processed_data/cht ../figures/cht
-
-
-# modify snakemake config file: 
-cp /srv/persistent/bliu2/tools/WASP/CHT/snake_conf.yaml cht
-cp /srv/persistent/bliu2/tools/WASP/CHT/snake_conf.yaml cht/snake_conf.example.yaml
-cp /srv/persistent/bliu2/tools/WASP/CHT/Snakefile cht/
-
-
-#### end CHT (WASP)
-
-
-#### rasqual: 
+#------------------ RASQUAL ---------------------:
+# Setup:  
 mkdir rasqual ../figures/rasqual ../processed_data/rasqual
 
 
-# prepare rasqual read count table: 
-cat ../data/rnaseq2/read_count/rnaseqc/rnaseqc.hcasmc_eqtl.reads.gct | \
-grep -v -e "#1.2" -e "56238" -e "Name" | \
-cut -f1,3- > ../processed_data/rasqual/Y.txt
+# Prepare RASQUAL read count table: 
+cat ../data/rnaseq2/read_count/rnaseqc/rnaseqc.hcasmc_eqtl.reads.gct | grep -v -e "#1.2" -e "56238" -e "Name" | cut -f1,3- > ../processed_data/rasqual/Y.txt
 
 
-# calculate GC content (gene level): 
-python rasqual/calc_gcc.py \
-	/mnt/lab_data/montgomery/shared/genomes/hg19/hg19.fa \
-	/srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf \
-	gene > ../processed_data/rasqual/gcc.gene.txt
+# Calculate GC content (both gene and exon level): 
+python rasqual/calc_gcc.py /mnt/lab_data/montgomery/shared/genomes/hg19/hg19.fa /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf gene > ../processed_data/rasqual/gcc.gene.txt
+python rasqual/calc_gcc.py /mnt/lab_data/montgomery/shared/genomes/hg19/hg19.fa /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf exon > ../processed_data/rasqual/gcc.exon.txt
 
 
-# calculate GC content (exon level): 
-python rasqual/calc_gcc.py \
-	/mnt/lab_data/montgomery/shared/genomes/hg19/hg19.fa \
-	/srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf \
-	exon > ../processed_data/rasqual/gcc.exon.txt
-
-
-# calculate rasqual offset:
+# Calculate RASQUAL offset:
 Rscript reorder_gcc_by_Y.R ../processed_data/rasqual/Y.txt ../processed_data/rasqual/gcc.exon.txt ../processed_data/rasqual/Y.tidy.txt ../processed_data/rasqual/gcc.exon.tidy.txt
 cut -f2-2 ../processed_data/rasqual/gcc.exon.tidy.txt > ../processed_data/rasqual/gcc.exon.tidy.cut.txt
 cp /srv/persistent/bliu2/tools/rasqual/R/{makeOffset.R,gcCor.R} rasqual
 R --vanilla --quiet --args ../processed_data/rasqual/Y.tidy.txt ../processed_data/rasqual/gcc.exon.tidy.cut.txt ../processed_data/rasqual/K.txt < rasqual/makeOffset.R
 
 
-# ASVCF: 
-parallel -j12 bash rasqual/vcf2asvcf.sh \
-	../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.vcf.gz ::: {1..22} X
+# Calculate allele specific reads for RASQUAL (ASVCF): 
+parallel -j12 bash rasqual/vcf2asvcf.sh ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.vcf.gz ::: {1..22} X
 parallel tabix -p vcf ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz ::: {1..22} X
-bcftools concat -Oz -o ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz \
-../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{1..22}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz \
-../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chrX.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
+bcftools concat -Oz -o ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{1..22}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chrX.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
 tabix -p vcf ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
 
 
-# ASVCF cleanup: 
-parallel -j12 bash rasqual/vcf2asvcf.cleanup.sh \
-	../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.vcf.gz ::: {1..22} X
+# Change rsid to chr_pos_ref_alt_b37:
+bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT\_b37' -Oz -o ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.rsid.vcf.new.gz ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
+tabix -p vcf ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.rsid.vcf.new.gz
+zcat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.rsid.vcf.new.gz | sed 's/chr//g' | bgzip > /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.GRCh37.rsid.vcf.new.gz
+tabix -p vcf /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.GRCh37.rsid.vcf.new.gz
+
+
+# Cleanup intermediate files generated by ASVCF: 
+parallel -j12 bash rasqual/vcf2asvcf.cleanup.sh ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.vcf.gz ::: {1..22} X
 
 
 # make rasqual input: 
-parallel -j6 "grep chr{} /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf | \
-python rasqual/make_input.py \
-../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.gz 1000000 > ../processed_data/rasqual/input/rasqual.input.chr{}.txt" ::: {1..22} X
-
-parallel -j6 "grep chr{} /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf | \
-python rasqual/make_input.py \
-../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz 1000000 > ../processed_data/rasqual/input/rasqual.input.new.chr{}.txt" ::: 18 19 20 21 22 X
+parallel -j6 "grep chr{} /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf | python rasqual/make_input.py ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz 1000000 > ../processed_data/rasqual/input/rasqual.input.new.chr{}.txt" ::: {1..22} X
 
 
 # create rasqual covariates: 
 cp $scripts/160530/combine_covariates.R $scripts/rasqual/combine_covariates.R
-Rscript $scripts/rasqual/combine_covariates.R \
-	--genotype_pc=$processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv \
-	--peer=$processed_data/160527/factors.tsv \
-	--sample_info=$data/sample_info/sample_info.xlsx \
-	--output=$processed_data/rasqual/X.txt \
-	--gender_coding=numerical \
-	--num_geno_pc=4 \
-	--num_peer_factor=8
+Rscript $scripts/rasqual/combine_covariates.R --genotype_pc=$processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv --peer=$processed_data/160527/factors.tsv --sample_info=$data/sample_info/sample_info.xlsx --output=$processed_data/rasqual/X.txt --gender_coding=numerical --num_geno_pc=4 --num_peer_factor=8
+
 
 # compress: 
 R --vanilla --quiet --args ../processed_data/rasqual/Y.tidy.txt ../processed_data/rasqual/K.txt ../processed_data/rasqual/X.txt < $tools/rasqual/R/txt2bin.R 
 
 
-# select genes: 
-# don't run: 
-# Rscript rasqual/select_genes.R 
-
-# run rasqual for TCF21:
-bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt 19894 \
-../processed_data/rasqual/Y.tidy.bin \
-../processed_data/rasqual/K.bin \
-../processed_data/rasqual/X.bin \
-../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
-
-# run rasqual for AHR:
-bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt 20734 \
-../processed_data/rasqual/Y.tidy.bin \
-../processed_data/rasqual/K.bin \
-../processed_data/rasqual/X.bin \
-../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
+# combine 2015 CAD and Metabochip variants: 
+cat ../data/gwas/gwas_loci.cad.all.genomewide_fdr_merged.txt \
+<(grep -v markername ../data/gwas/metabochip_novel_lead_variants.txt) > \
+../data/gwas/gwas.cad.mi.recessive.metabochip.txt
 
 
-# run rasqual for all prioritize genes: 
-grep -f ../processed_data/rasqual/prioritized_genes.txt -n \
-	../processed_data/rasqual/input/rasqual.input.autosome.txt | \
-	awk '{print $1}' | awk 'BEGIN{FS=":"}{print $1}' > \
-	../processed_data/rasqual/prioritized_genes.number.2.txt
-
-# first try (missed chr21 and chr22)
-parallel bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt {} \
-../processed_data/rasqual/Y.tidy.bin \
-../processed_data/rasqual/K.bin \
-../processed_data/rasqual/X.bin \
-../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz :::: ../processed_data/rasqual/prioritized_genes.number.txt 
-
-# second try (running chr21 and chr22):
-parallel -j10 bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.autosome.txt {} \
-../processed_data/rasqual/Y.tidy.bin \
-../processed_data/rasqual/K.bin \
-../processed_data/rasqual/X.bin \
-../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz :::: ../processed_data/rasqual/prioritized_genes.number.2.txt 
+# Select genes close to CAD GWAS hits (from the 2015 CAD and 2016 Metabochip variants): 
+Rscript rasqual/select_genes.R 
 
 
-# run rasqual for other genes: 
-parallel -j10 bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt {} \
-../processed_data/rasqual/Y.tidy.bin \
-../processed_data/rasqual/K.bin \
-../processed_data/rasqual/X.bin \
-../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz :::: ../processed_data/rasqual/unprioritized_genes.number.txt 
+# Run RASQUAL for all selected genes: 
+grep -f ../processed_data/rasqual/prioritized_genes.txt -n ../processed_data/rasqual/input/rasqual.input.autosome.txt | awk '{print $1}' | awk 'BEGIN{FS=":"}{print $1}' > ../processed_data/rasqual/prioritized_genes.number.txt
+parallel bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.autosome.txt {} ../processed_data/rasqual/Y.tidy.bin ../processed_data/rasqual/K.bin ../processed_data/rasqual/X.bin ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz :::: ../processed_data/rasqual/prioritized_genes.number.txt 
 
 
-# calculate p-value:
-grep -f ../processed_data/rasqual/prioritized_genes.txt \
-	../processed_data/rasqual/input/rasqual.input.all.txt | \
-	awk '{print $1"_"$2".txt"}' > \
-	../processed_data/rasqual/prioritized_genes.output_file.txt
-parallel -j10 Rscript rasqual/calc_pval.R \
-../processed_data/rasqual/output/{}.txt \
-../processed_data/rasqual/output/{}.pval.txt :::: ../processed_data/rasqual/prioritized_genes.output_file.txt
-# Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.txt ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w1000000.pval.txt
-# Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.txt ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.pval.txt
+# Run RASQUAL for other genes: 
+parallel -j10 bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt {} ../processed_data/rasqual/Y.tidy.bin ../processed_data/rasqual/K.bin ../processed_data/rasqual/X.bin ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz :::: ../processed_data/rasqual/unprioritized_genes.number.txt 
 
 
-# calculate p-value for AHR:
-Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/ENSG00000106546.8_AHR.txt ../processed_data/rasqual/output/ENSG00000106546.8_AHR.pval.txt
+# Calculate p-value:
+cat ../processed_data/rasqual/input/rasqual.input.autosome.txt | awk '{print $1"_"$2}' > ../processed_data/rasqual/tmp.rasqual_output_file.txt
+parallel Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/{}.txt ../processed_data/rasqual/output/{}.pval.txt :::: ../processed_data/rasqual/tmp.rasqual_output_file.txt
+
+
+# Combined RASQUAL output for all "expressed" genes: 
+mkdir ../data/eQTL/rasqual/
+bash rasqual/combine_rasqual_output.sh
+
+
+# Adjust p-value for all "expressed" genes:
+bash rasqual/adjust_pvalue.sh
+
+
+# concatenate all priortized genes: 
+bash rasqual/rasqual_output2eCAVIAR_input.sh \
+../processed_data/rasqual/prioritized_genes.output_file.txt \
+../processed_data/rasqual/merged_output/prioritized_genes.allpairs.txt
+
 
 
 # make locuszoom for TCF21 at rs2327429:
@@ -3282,20 +3184,227 @@ locuszoom --metal ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000
 locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs12190287 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="GWAS (rs12190287)" --prefix ../figures/rasqual/locuszoom/TCF21_gwas
 
 
+
+#---------------- Compare RASQUAL and fastQTL ------------# 
+# Setup: 
+mkdir compare_rasqual_and_fastqtl ../processed_data/compare_rasqual_and_fastqtl
+
+# Subset the gene, SNP, p-value, q-value, and effect size column of fastQTL and RASQUAL result: 
+bash compare_rasqual_and_fastqtl/subset.sh
+
+# Calculate the percentage of RASQUAL eQTL also discovered fastQTL: 
+bash compare_rasqual_and_fastqtl/compare.R 
+
+#----------------- eQTL and ATACseq ----------# 
+# Setup: 
+mkdir eqtl_and_atacseq ../processed_data/eqtl_and_atacseq
+
+
+# Calculate the percentage of eQTLs within ATACseq regions stratified by p-value: 
+Rscript eqtl_and_atacseq/overlap_eqtl_and_atacseq.R
+
+
+# Calculate the percentage of eQTLs within ATACseq regions stratified by p-value and HCASMC-specificity score: 
+Rscript eqtl_and_atacseq/overlap_hcasmc_specific_eqtl_and_atacseq.svalue.R # s-value model
+Rscript eqtl_and_atacseq/overlap_hcasmc_specific_eqtl_and_atacseq.entropy.R # entropy model
+
+ 
+# Calculate eQTL specificity (fill NAs with 1e-8):
+# cat $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python $scripts/eqtl_and_atacseq/calc_eqtl_specificity.py ../processed_data/eqtl_and_atacseq/eqtl.txt.gz ../processed_data/eqtl_and_atacseq/specificity.txt.gz 1e-8
+cat $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python $scripts/eqtl_and_atacseq/calc_eqtl_specificity.py ../processed_data/eqtl_and_atacseq/eqtl.1e-8.txt.gz ../processed_data/eqtl_and_atacseq/specificity.1e-8.txt.gz 1e-8
+
+
+# Calculate eQTL specificity (fill NAs using mean imputation):
+cat $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python $scripts/eqtl_and_atacseq/calc_eqtl_specificity.py ../processed_data/eqtl_and_atacseq/eqtl.mean.txt.gz ../processed_data/eqtl_and_atacseq/specificity.mean.txt.gz -1
+
+
+# Calculate eQTL and ATACseq overlap stratified by specificity: 
+Rscript eqtl_and_atacseq/overlap_hcasmc_specific_eqtl_and_atacseq.entropy.R
+
+
+#----------------- Brian's genes ---------------# 
+# Setup: 
+mkdir -p ../figures/brian/locuszoom brian ../processed_data/brian
+
 # make locuszoom for AHR: 
-cut -f2,26 ../processed_data/rasqual/output/ENSG00000106546.8_AHR.pval.txt > ../processed_data/rasqual/output/ENSG00000106546.8_AHR.metal
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000106546.8_AHR.metal --pvalcol pval --markercol rsid --refsnp rs10265174 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (AHR)" --prefix ../figures/rasqual/locuszoom/AHR_eQTL
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000106546.8_AHR.metal --pvalcol pval --markercol rsid --refsnp rs10265174 --flank 500KB ymax=5 --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (AHR)" --prefix ../figures/rasqual/locuszoom/AHR_eQTL
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000106546.8_AHR.pval.txt --pvalcol pval --markercol rsid --refsnp rs10265174 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (AHR)" --prefix ../figures/brian/locuszoom/AHR_eQTL
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000106546.8_AHR.pval.txt --pvalcol pval --markercol rsid --refsnp rs10265174 --flank 500KB ymax=5 --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (AHR)" --prefix ../figures/brian/locuszoom/AHR_eQTL
 
+# MMP1:
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000196611.4_MMP1.pval.txt --pvalcol pval --markercol rsid --refsnp rs1799750 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000196611.4_MMP1)" --prefix ../figures/brian/locuszoom/ENSG00000196611.4_MMP1_eqtl
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000196611.4_MMP1.pval.txt --pvalcol pval --markercol rsid --refsnp rs1799750 --flank 5kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000196611.4_MMP1)" --prefix ../figures/brian/locuszoom/ENSG00000196611.4_MMP1_eqtl
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000196611.4_MMP1.pval.txt --pvalcol pval --markercol rsid --refsnp rs1711437 --flank 5kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000196611.4_MMP1)" --prefix ../figures/brian/locuszoom/ENSG00000196611.4_MMP1_eqtl
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000196611.4_MMP1.pval.txt --pvalcol pval --markercol rsid --refsnp rs751547 --flank 5kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000196611.4_MMP1)" --prefix ../figures/brian/locuszoom/ENSG00000196611.4_MMP1_eqtl
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000196611.4_MMP1.pval.txt --pvalcol pval --markercol rsid --refsnp rs1784405 --flank 5kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000196611.4_MMP1)" --prefix ../figures/brian/locuszoom/ENSG00000196611.4_MMP1_eqtl
 
-#### end rasqual
+# CYP1B1:
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000138061.7_CYP1B1.pval.txt --pvalcol pval --markercol rsid --refsnp rs4670837 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000138061.7_CYP1B1)" --prefix ../figures/brian/locuszoom/ENSG00000138061.7_CYP1B1_eqtl
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000138061.7_CYP1B1.pval.txt --pvalcol pval --markercol rsid --refsnp rs162558 --flank 5kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000138061.7_CYP1B1)" --prefix ../figures/brian/locuszoom/ENSG00000138061.7_CYP1B1_eqtl
+
+#### end Brian's genes:
 
 
 #### metaXcan: 
 mkdir metaXcan ../processed_data/metaXcan ../figures/metaXcan
 
+#### end metaXcan
 
-#### specific genes: 
-mkdir specific_genes ../processed_data/specific_genes ../figures/specific_genes
-mkdir specific_genes/AHR
+
+#### PIQ
+# TCF21:
+cd /srv/persistent/bliu2/tools/piq-single/
+Rscript pwmmatch.exact.r common.r \
+/srv/persistent/bliu2/shared/jaspar/pfm_all.txt 820 \
+$processed_data/footprint/piq/motif.matches/
+
+Rscript bam2rdata.r common.r \
+$processed_data/footprint/piq/bam/fbs.RData \
+$data/atacseq/fbs/2305/out/align/rep1/CA2305-FBS1_S1_concat_R1_001.trim.PE2SE.bam \
+$data/atacseq/fbs/2305/out/align/rep2/CA2305-FBS_S2_concat_R1_001.trim.PE2SE.bam \
+$data/atacseq/fbs/2305/out/align/rep3/CA2305-FBS_S3_concat_R1_001.trim.PE2SE.bam
+
+Rscript pertf.r common.r \
+$processed_data/footprint/piq/motif.matches/ \
+$processed_data/footprint/piq/tmp/ \
+$processed_data/footprint/piq/fbs_footprint/ \
+$processed_data/footprint/piq/bam/fbs.RData 820
+
+# JUN:
+Rscript pwmmatch.exact.r common.r \
+/srv/persistent/bliu2/shared/jaspar/pfm_all.txt 478 \
+$processed_data/footprint/piq/motif.matches/
+
+Rscript pertf.r common.r \
+$processed_data/footprint/piq/motif.matches/ \
+$processed_data/footprint/piq/tmp/ \
+$processed_data/footprint/piq/fbs_footprint/ \
+$processed_data/footprint/piq/bam/fbs.RData 478
+
+
+#### Metabochip eQTL lookup: 
+mkdir metabochip ../processed_data/metabochip
+parallel "grep '{}' ../processed_data/rasqual/output/*pval.txt | cut -d: -f2 > ../processed_data/metabochip/{}.txt" :::: <(cut -f1 ../data/gwas/metabochip_novel_lead_variants.txt | grep -v markername)
+cat ../processed_data/metabochip/*.txt | awk 'BEGIN{OFS="\t"}{if (exp(log(10)*$10)<0.05) print $1,$2,$3,$4,$26,exp(log(10)*$10)}'
+
+
+#### fine-mapping:
+# REST:
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000084093.11_REST.pval.txt --pvalcol pval --markercol rsid --refsnp rs17087335 --chr chr4 --start 57700000 --end 57900000 --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000084093.11_REST)" --no-date --prefix ../figures/locuszoom/ENSG00000084093.11_REST_eqtl_chr4:57700000-57900000
+locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs17087335 --chr chr4 --start 57700000 --end 57900000 --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000084093.11_REST)" --no-date --prefix ../figures/locuszoom/ENSG00000084093.11_REST_gwas_chr4:57700000-57900000
+
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000084093.11_REST.pval.txt --pvalcol pval --markercol rsid --refsnp rs66790703 --chr chr4 --start 57700000 --end 57900000 --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000084093.11_REST)" --no-date --plotonly --prefix ../figures/locuszoom/ENSG00000084093.11_REST_eqtl_chr4:57700000-57900000
+locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs66790703 --chr chr4 --start 57700000 --end 57900000 --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000084093.11_REST)" --no-date --plotonly --prefix ../figures/locuszoom/ENSG00000084093.11_REST_gwas_chr4:57700000-57900000
+
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000084093.11_REST.pval.txt --pvalcol pval --markercol rsid --refsnp rs56155140 --chr chr4 --start 57700000 --end 57900000 --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000084093.11_REST)" --no-date --plotonly --prefix ../figures/locuszoom/ENSG00000084093.11_REST_eqtl_chr4:57700000-57900000
+locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs56155140 --chr chr4 --start 57700000 --end 57900000 --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000084093.11_REST)" --no-date --plotonly --prefix ../figures/locuszoom/ENSG00000084093.11_REST_gwas_chr4:57700000-57900000
+
+# MAP3K7CL: 
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000156265.11_MAP3K7CL.pval.txt --pvalcol pval --markercol rsid --refsnp rs11911017 --chr chr21 --start 30500000 --end 30700000 --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000156265.11_MAP3K7CL)" --no-date --prefix ../figures/locuszoom/ENSG00000156265.11_MAP3K7CL_eqtl_chr21:30500000-30700000
+locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs11911017 --chr chr21 --start 30500000 --end 30700000 --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000156265.11_MAP3K7CL)" --no-date --prefix ../figures/locuszoom/ENSG00000156265.11_MAP3K7CL_gwas_chr21:30500000-30700000
+
+# COL4A2: 
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000134871.13_COL4A2.pval.txt --pvalcol pval --markercol rsid --refsnp rs11838776 --flank 500kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000134871.13_COL4A2)" --no-date --prefix ../figures/locuszoom/ENSG00000134871.13_COL4A2_eqtl
+locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs11838776 --flank 500kB --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000134871.13_COL4A2)" --no-date --prefix ../figures/locuszoom/ENSG00000134871.13_COL4A2_gwas
+
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000134871.13_COL4A2.pval.txt --pvalcol pval --markercol rsid --refsnp rs11838776 --flank 50kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000134871.13_COL4A2)" --no-date --prefix ../figures/locuszoom/ENSG00000134871.13_COL4A2_eqtl
+locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs11838776 --flank 50kB --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000134871.13_COL4A2)" --no-date --prefix ../figures/locuszoom/ENSG00000134871.13_COL4A2_gwas
+
+
+#### MPRA array:
+# setup: 
+mkdir mpra ../processed_data/mpra
+
+
+# find LD SNPs with rAggr: 
+cat ../data/gwas/gwas.cad.mi.recessive.metabochip.txt | sort -n -k2 -n -k3 | uniq | awk '{print "chr"$2":"$3}' > ../processed_data/mpra/rAggr/rAggrInput.txt
+# On http://raggr.usc.edu/, select 1000 Genomes Phase 3, East Asian, European, and South Asian, MAF = 0.01, r2 range [0.6,1], Max Distance 500kb, other parameters are left as default. 
+
+
+# Remove duplicated variants in rAggr output, and select variants with r2 > 0.8 (with the lead variants): 
+Rscript mpra/rAggr2uniq_rAggr.R ../processed_data/mpra/rAggr/maf0.01_dist500kb_rsq0.6_1kgp3.csv ../processed_data/mpra/rAggr/maf0.01_dist500kb_rsq0.8_1kgp3.uniq.txt 0.8
+
+
+# select tested genes for each GWAS proxy SNPs: 
+mkdir ../processed_data/mpra/naive_overlap
+parallel --xapply "grep -P 'chr{1}' ../processed_data/rasqual/output/*pval.txt | cut -d: -f2 > ../processed_data/mpra/naive_overlap/{2}.txt" :::: <(cat ../processed_data/mpra/rAggr/maf0.01_dist500kb_rsq0.8_1kgp3.uniq.txt | grep -v markername | cut -f2,3) :::: <(cat ../processed_data/mpra/rAggr/maf0.01_dist500kb_rsq0.8_1kgp3.uniq.txt | grep -v markername | cut -f1)
+
+
+# select eQTLs for all GWAS proxy SNPs: 
+mkdir ../processed_data/mpra/naive_overlap_eQTL/
+cat ../processed_data/mpra/naive_overlap/*.txt | awk 'BEGIN{OFS="\t";print "fid","rsid","chr","pos","ref","alt","af","pi","n_rsnps","rsq_rsnp","pval","padj","rank"}{if (exp(log(10)*$10)<0.05) print $1,$2,$3,$4,$5,$6,$7,$12,$18,$25,$26,exp(log(10)*$10),$27}' | sort -g -k10 > ../processed_data/mpra/naive_overlap_eQTL/gwas_eQTL_naive_overlap.txt
+
+
+# QC on colocalized eQTLs: 
+Rscript mpra/qc_naive_overlap.R ../processed_data/mpra/naive_overlap_eQTL/gwas_eQTL_naive_overlap.txt ../figures/mpra/naive_overlap/
+
+
+# Select colocalized genes and compute the number of putative variants for each gene:
+mkdir ../processed_data/mpra/eCAVIAR
+bash mpra/select_eCAVIAR_genes.sh ../processed_data/eCAVIAR/eCAVIAR_output_rasqual_111616/ ../processed_data/mpra/eCAVIAR/eCAVIAR_colocalized_genes.txt
+
+
+# Plot the distribution of putative eQTL/GWAS/intersection/union variants in the 95% confidence set for colocalized/null genes:
+mkdir ../figures/mpra/eCAVIAR
+bash mpra/qc_eCAVIAR_genes.R ../processed_data/mpra/eCAVIAR/eCAVIAR_colocalized_genes.txt ../figures/mpra/eCAVIAR/qc_eCAVIAR_genes.pdf
+
+
+# Select colocalized variants selected by eCAVIAR:
+bash mpra/select_eCAVIAR_variants.sh ../processed_data/mpra/eCAVIAR/eCAVIAR_colocalized_genes.txt ../processed_data/eCAVIAR/eCAVIAR_output_rasqual_111616/ /srv/scratch/bliu2/concat_eCAVIAR_variants/ ../processed_data/mpra/eCAVIAR/eCAVIAR_colocalized_variants.bed
+
+
+# Add RASQUAL statistics, conservation, TFBS, open chromatin, CADD score to putative variants selected by eCAVIAR: 
+bash mpra/add_features.sh ../processed_data/mpra/eCAVIAR/eCAVIAR_colocalized_variants.bed ../processed_data/mpra/eCAVIAR/eCAVIAR_colocalized_variants.allFeatures.bed
+
+
+# Plot the distribution of annotations (TFBS, CADD score, etc) for variants selected by eCAVIAR:
+Rscript mpra/qc_eCAVIAR_variants.R ../processed_data/mpra/eCAVIAR/eCAVIAR_colocalized_variants.allFeatures.bed ../figures/mpra/eCAVIAR/qc_eCAVIAR_variants.pdf
+
+
+# Subset to columns to provide to Nathan Abell: 
+Rscript mpra/format_eCAVIAR_variants.R
+Rscript mpra/format_naive_overlap.R
+
+
+#------------------ Feature construction ----------------
+# Convert VCF into BEDs:
+mkdir ../data/variantBeds feature_construction
+for i in {1..22}; do zcat ../data/joint3/phased_imputed/phased_and_imputed.chr$i.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz | grep -v '#' | awk 'BEGIN{FS="\t|;"; OFS="\t"}{print $1,$2-1,$2,$3,$4,$5,$10}' | sed 's/AF=//' | sort -k2,2n > ../data/variantBeds/chr$i.bed; done
+
+
+# Add CADD score to variant BEDs (output will be gzipped):
+mkdir ../data/features 
+parallel -j10 bash feature_construction/add.cadd.scores.sh ../data/variantBeds/chr{}.bed ../data/features/chr{}.withCADD.bed ::: {1..22}
+
+
+# process HCASMC ATACseq file for 2305:
+cut -f1,2,3,7 ../data/atacseq/fbs/2305/out/peak/idr/optimal_set/2305_ppr.IDR0.1.filt.narrowPeak | sort -k1,1 -k2,2n | gzip > /srv/scratch/bliu2/2305_ppr.IDR0.1.filt.narrowPeak.gz
+
+
+# Add ATACseq, ENCODE, 1000 Genomes, CADD TF features to variants BEDs: 
+parallel -j10 bash feature_construction/add.features.sh ../data/features/chr{}.withCADD ../data/features/chr{}.allFeatures.bed.gz &> ../logs/add.features.log ::: {1..22}
+
+
+#----------------- Chromatin annotation ------------------
+# Setup: 
+mkdir -p chromatin ../processed_data/chromatin ../figures/chromatin ../data/chromatin/fastq
+
+
+# Prepare chromatin peaks files: 
+bash chromatin/valk2durga.sh 
+
+
+# Install ChIPseq pipeline from Kundaje lab and ChromHMM: 
+bash chromatin/install.sh 
+
+
+# Run ChIPseq pipeline on H3K4me1, H3K4me3, H3K27me3, and H3K27ac data: 
+cp chromatin/process_histone_mods.sh /users/bliu2/
+bash /users/bliu2/process_histone_mods.sh # run on Nandi!
+
+
+# Install ChromHMM:
+
+#------------------ Shared ----------------
+# Setup: 
+mkdir -p shared
 
