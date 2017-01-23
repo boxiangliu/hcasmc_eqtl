@@ -1,5 +1,6 @@
 library(dplyr)
 gtex_tissue_color=read.table('../data/gtex/gtex_tissue_colors.txt',header=T,sep='\t')
 tissue_color=rbind(gtex_tissue_color,data.frame(tissue_site_detail=c('HCASMC','SF'),tissue_site_detail_abbr=c('HCASMC','SF'),tissue_site_detail_id=c('HCASMC','SF'),tissue_site=c('HCASMC','HCASMC'),tissue_color_hex=c('FF0066','FF0066'),tissue_color_rgb=c('255,0,102','255,0,102')))
+tissue_color$tissue_color_hex=paste0('#',tissue_color$tissue_color_hex)
 tissue_color=tissue_color%>%arrange(as.character(tissue_site_detail))
 write.table(tissue_color,'shared/tissue_color.txt',quote=F,col.names=T,row.names=F,sep='\t')

@@ -2943,7 +2943,13 @@ bash hcasmc_specific_eqtl/plot_hcasmc_specific_eqtls_pval.sh
 # naively select HCASMC specific eQTL: 
 cat ../processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python hcasmc_specific_eqtl/naive_select.py > ../processed_data/hcasmc_specific_eqtl/hcasmc_specific_eqtl.naive_select.txt
 
+
+# Make forest plot: 
+bash hcasmc_specific_eqtl/plot_hcasmc_specific_eqtls.sh 
+
+
 #### end HCASMC specific eQTLs
+
 
 
 #### ATACseq
@@ -3163,6 +3169,10 @@ bash rasqual/combine_rasqual_output.sh
 bash rasqual/adjust_pvalue.sh
 
 
+# Gene-wise bonferroni adjustment: 
+
+
+
 # concatenate all priortized genes: 
 bash rasqual/rasqual_output2eCAVIAR_input.sh \
 ../processed_data/rasqual/prioritized_genes.output_file.txt \
@@ -3185,7 +3195,7 @@ locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --
 
 
 
-#---------------- Compare RASQUAL and fastQTL ------------# 
+#---------------- RASQUAL and fastQTL ------------# 
 # Setup: 
 mkdir compare_rasqual_and_fastqtl ../processed_data/compare_rasqual_and_fastqtl
 
@@ -3193,7 +3203,9 @@ mkdir compare_rasqual_and_fastqtl ../processed_data/compare_rasqual_and_fastqtl
 bash compare_rasqual_and_fastqtl/subset.sh
 
 # Calculate the percentage of RASQUAL eQTL also discovered fastQTL: 
-bash compare_rasqual_and_fastqtl/compare.R 
+bash compare_rasqual_and_fastqtl/compare.R
+
+# Bon
 
 #----------------- eQTL and ATACseq ----------# 
 # Setup: 
@@ -3408,3 +3420,5 @@ bash /users/bliu2/process_histone_mods.sh # run on Nandi!
 # Setup: 
 mkdir -p shared
 
+# File to map each tissue to a color: 
+Rscript shared/tissue_color.R   # shared/tissue_color.txt
