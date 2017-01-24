@@ -80,7 +80,7 @@ myClusterSideBar <- clusterCols[mycl]
 tissue_colors=ifelse(col_data$tissue[1:100]=='HCASMC',"#FF0000","#0000FF")
 
 
-# choose a color palette for the heat map
+# choose a color palette for the heat map:
 myheatcol <- rev(redgreen(75))
 
 

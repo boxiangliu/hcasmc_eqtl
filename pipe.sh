@@ -2181,11 +2181,13 @@ cp /srv/persistent/bliu2/gtexciseqtls/subsampling/subsample.lists.by.tissue.R $s
 mkdir $data/gtex/v6p/subsampling
 Rscript $scripts/160715/subsample.lists.by.tissue.bl.R -size=10 # create lists of samples to inlude in the subsets.
 
+
 # perform subsampling on read counts: 
 Rscript $scripts/160715/subsample.R \
 	-input='/srv/persistent/bliu2/HCASMC_eQTL/data/gtex/v6p/v6p_All_Tissues_read_counts_FOR_QC_ONLY.gct' \
 	-pattern='*.10.txt' \
 	-output_suffix='count' # actually do the subsampling
+
 
 # perform subsampling on rpkm:
 Rscript $scripts/160715/subsample.R \
@@ -2196,6 +2198,7 @@ Rscript $scripts/160715/subsample.R \
 
 # merge HCASMC samples into one dataframe: 
 bash $scripts/160715/combine_read_counts.sh
+bash $scripts/160715/combine_rpkm.sh
 
 
 # DESeq with one-way ANOVA model:
@@ -2211,7 +2214,7 @@ Rscript $scripts/160715/find_housekeeping_genes.2.R
 Rscript $scripts/160715/ruvseq.R
 
 
-# find HCASMC specific genes: 
+# find HCASMC specific genes using the "rank test": 
 Rscript $scripts/160715/find_hcasmc_specific_genes.R
 
 
@@ -2219,7 +2222,7 @@ Rscript $scripts/160715/find_hcasmc_specific_genes.R
 Rscript $scripts/160715/ruvseq.2.R
 
 
-# find HCASMC specific genes (without RUVSeq correction):
+# find HCASMC specific genes using the "rank test" (without RUVSeq correction):
 Rscript $scripts/160715/find_hcasmc_specific_genes.2.R
 
 
@@ -2236,6 +2239,9 @@ Rscript $scripts/160715/find_hcasmc_specific_genes.4.R
 cp -r /Users/boshliu/gsea_home/output/aug09/hcasmc_vs_gtex_all.h.all.GseaPreranked.1470779960906/ /Volumes/HCASMC_eQTL/processed_data/160715/hcasmc_vs_gtex_all.h.all
 cp -r /Users/boshliu/gsea_home/output/aug09/hcasmc_vs_gtex_all.c2.cp.kegg.GseaPreranked.1470781703555/ /Volumes/HCASMC_eQTL/processed_data/160715/hcasmc_vs_gtex_all.c2.cp.kegg
 
+
+# Find HCASMC specific gene using information theory: 
+prepare_gct_file.sh 
 
 #### 160724:
 # obj: re-map sQTL using WASP files:

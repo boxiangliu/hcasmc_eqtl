@@ -49,7 +49,7 @@ hcasmc_sub=subsample_gct(hcasmc,10)
 res=decompose_gct(hcasmc_sub)
 
 
-# extract gene_id and gene_name from hcascm: 
+# extract gene_id and gene_name from hcasmc: 
 row_data=hcasmc_sub%>%select(Name,Description)
 setnames(row_data,c('gene_id','gene_name'))
 
