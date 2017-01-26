@@ -2241,7 +2241,9 @@ cp -r /Users/boshliu/gsea_home/output/aug09/hcasmc_vs_gtex_all.c2.cp.kegg.GseaPr
 
 
 # Find HCASMC specific gene using information theory: 
-prepare_gct_file.sh 
+bash 160715/prepare_gct_file.sh 
+Rscript 160715/find_hcasmc_specific_genes.info_theory.R
+
 
 #### 160724:
 # obj: re-map sQTL using WASP files:
