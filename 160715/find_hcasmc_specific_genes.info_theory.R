@@ -138,6 +138,10 @@ esi=calculate_esi(tissue_median,'HCASMC')
 esi_gname=gid2gname(esi,rowdata)
 
 
+# Save ESI: 
+fwrite(data.table(gene_id=names(esi),esi=esi),'../processed_data/160715/esi.hcasmc.txt',sep='\t')
+
+
 # Read tissue color: 
 tissue_color=fread('shared/tissue_color.txt')[,c(1,5)]
 colnames(tissue_color)=c('tissue','color')
