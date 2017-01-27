@@ -2,6 +2,7 @@ library(data.table)
 library(dtplyr)
 library(dplyr)
 library(stringr)
+library(cowplot)
 
 # Function:
 reformat=function(x){
@@ -76,18 +77,29 @@ pick_closest_genes=function(gwas,gene,n=10){
 	x=gwas[,CHR_POS_19]
 	y=gene[,tss]
 	dist=abs(outer(x,y,FUN=`-`))
+
 	dist[!same_chr]=Inf
 	dist_rank=t(apply(dist,1,rank))
 	top=(dist_rank<=n)
 
 	container=list(nrow(top))
 	for (i in 1:nrow(top)){
-		x=esi[top[i,],]
-		x=cbind(x,cad[i,])
+		x=esi[which(top[i,]),]
+		x=cbind(x,gwas[i,])
 		container[[i]]=x
 	}
 	y=Reduce(rbind,container)
 	return(y)
+}
+
+
+make_boxplot=function(genes,background){
+	x=unique(genes[,.(gene_id,esi)])
+	y=unique(background[,.(gene_id,esi)])
+	z=rbind(data.table(esi=x$esi,gwas='CAD'),data.table(esi=y$esi,gwas='background'))
+	pval=t.test(x$esi,y$esi)$p.value
+	p=ggplot(z,aes(x=gwas,y=esi))+geom_boxplot()+xlab('GWAS')+ylab('ESI')+annotate(geom='text',x=1.5,y=1.3,label=paste0('Two-sided t-test\np < ',formatC(pval,digits=3)))
+	return(p)
 }
 
 
@@ -100,10 +112,6 @@ Mapping coordinates
 gwasp=prune(gwas)
 gwasp=gwasp%>%arrange(CHR_ID,CHR_POS_19)
 
-# Select variant for CAD or CHD:
-cad=gwasp[MAPPED_TRAIT=='coronary heart disease'|MAPPED_TRAIT=='coronary artery disease',]
-cad=rmdupvar(cad)
-
 
 # Get ESI scores:
 esi=fread('../processed_data/160715/esi.hcasmc.txt')
@@ -113,5 +121,34 @@ esi[,tss:=ifelse(strand=='+',start,end)]
 esi=esi%>%arrange(chr,tss)
 
 
+# Select variant for CAD or CHD:
+cad=gwasp[MAPPED_TRAIT=='coronary heart disease'|MAPPED_TRAIT=='coronary artery disease',]
+cad=rmdupvar(cad)
+
+
 # Select genes around CAD variants:
 cad_genes=pick_closest_genes(cad,esi)
+
+
+# Select variants for all other GWAS: 
+background=gwasp[MAPPED_TRAIT!='coronary heart disease'&MAPPED_TRAIT!='coronary artery disease',]
+background=rmdupvar(background)
+
+
+# Select genes around background variants:
+background_genes=pick_closest_genes(background,esi)
+
+
+# Make boxplot to compare CAD and background genes:
+p=make_boxplot(cad_genes,background_genes)
+
+
+pick_top_esi=function(x){
+	x[,max_esi:=max(esi),by=c('CHR_ID','CHR_POS_19')]
+	top=x[esi==max_esi,]
+	return(top)
+}
+
+top_cad_genes=pick_top_esi(cad_genes)
+top_background_genes=pick_top_esi(background_genes)
+
