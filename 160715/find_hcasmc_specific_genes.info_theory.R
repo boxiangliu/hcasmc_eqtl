@@ -76,6 +76,16 @@ gid2gname=function(x,rowdata){
 	return(x)
 }
 
+list2df=function(x){
+	y=list()
+	for (i in names(x)){
+		y[[i]]=data.frame(gene=names(x[[i]]),esi=x[[i]],tissue=i)
+	}
+	z=Reduce(rbind,y)
+	w=dcast(z,gene~tissue,value.var='esi')
+	return(w)
+}
+
 make_plot=function(rpkm,rowdata,coldata,gene_name,tissue_color){
 	stopifnot(nrow(rpkm)==nrow(rowdata))
 	stopifnot(ncol(rpkm)==nrow(coldata))
@@ -103,6 +113,7 @@ make_qqplot=function(esi_ls){
 	p=ggplot(qqdata,aes(x=y,y=x,color=sample))+geom_line(alpha=ifelse(qqdata$sample=='HCASMC',1,0.2))+scale_color_manual(guide='none',breaks=tissue_color$tissue,values=tissue_color$color)+xlab('HCASMC quantiles')+ylab('GTEx quantiles')
 	return(p)
 }
+
 
 # Main: 
 # Read RPKM: 
@@ -156,6 +167,11 @@ for (gene in c('MMP1','CXCL6','CALD1','VIM','MYH10','TPM4','RBP1')){
 
 # Calculate ESI for all tissues: 
 esi_ls=calculate_esi_tissue_list(tissue_median,colnames(tissue_median))
+
+
+# Save ESI for all tissues: 
+esi_df=list2df(esi_ls)
+fwrite(esi_df,'../processed_data/160715/esi.all_tissues.txt',sep='\t')
 
 
 # Make qqplot:
