@@ -93,12 +93,18 @@ pick_closest_genes=function(gwas,gene,n=10){
 }
 
 
+pick_top_esi=function(x){
+	x[,max_esi:=max(esi),by=c('CHR_ID','CHR_POS_19')]
+	top=x[esi==max_esi,]
+	return(top)
+}
+
 make_boxplot=function(genes,background){
 	x=unique(genes[,.(gene_id,esi)])
 	y=unique(background[,.(gene_id,esi)])
 	z=rbind(data.table(esi=x$esi,gwas='CAD'),data.table(esi=y$esi,gwas='background'))
-	pval=t.test(x$esi,y$esi)$p.value
-	p=ggplot(z,aes(x=gwas,y=esi))+geom_boxplot()+xlab('GWAS')+ylab('ESI')+annotate(geom='text',x=1.5,y=1.3,label=paste0('Two-sided t-test\np < ',formatC(pval,digits=3)))
+	pval=wilcox.test(x$esi,y$esi)$p.value
+	p=ggplot(z,aes(x=gwas,y=esi))+geom_boxplot()+xlab('GWAS')+ylab('ESI')+annotate(geom='text',x=1.5,y=1.2,label=paste0('Rank-sum test\np < ',formatC(pval,digits=3)))
 	return(p)
 }
 
@@ -140,15 +146,39 @@ background_genes=pick_closest_genes(background,esi)
 
 
 # Make boxplot to compare CAD and background genes:
-p=make_boxplot(cad_genes,background_genes)
+p1=make_boxplot(cad_genes,background_genes)
+save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.pdf',p1)
 
 
-pick_top_esi=function(x){
-	x[,max_esi:=max(esi),by=c('CHR_ID','CHR_POS_19')]
-	top=x[esi==max_esi,]
-	return(top)
-}
-
+# Pick the gene with highest ESI for each loci:
 top_cad_genes=pick_top_esi(cad_genes)
 top_background_genes=pick_top_esi(background_genes)
 
+
+# Make boxplot to compare CAD and background genes: 
+p2=make_boxplot(top_cad_genes,top_background_genes)
+save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.top_esi.pdf',p2)
+
+
+# Read ESI for GTEx tissues and HCASMC: 
+esi_all=fread('../processed_data/160715/esi.all_tissues.txt') 
+
+
+# Select genes around CAD variants:
+cad_genes_all_tissue=esi_all[gene%in%unique(cad_genes[,gene_id]),]
+cad_genes_long=melt(cad_genes_all_tissue,id.var='gene',variable.name='tissue',value.name='esi')
+
+
+# Make violin plot to compare ESI distribution across all tissue: 
+make_violin_to_compare_ESI_across_tissue=function(){
+	tissue_color=fread('shared/tissue_color.txt')[,c(1,5)]
+	colnames(tissue_color)=c('tissue','color')
+	tissue_color=tissue_color%>%filter(tissue!='SF')
+	color=tissue_color$color
+	names(color)=as.character(tissue_color$tissue)
+	cad_genes_long=merge(cad_genes_long,tissue_color,by='tissue')
+	cad_genes_long$tissue=reorder(cad_genes_long$tissue,cad_genes_long$esi,FUN=function(x){mean(x,na.rm=T)})
+	ggplot(cad_genes_long,aes(tissue,esi,fill=tissue))+geom_violin()+scale_fill_manual(guid='none',values=color)+ylab('ESI')+xlab('Tissue')+coord_flip()
+}
+p3=make_violin_to_compare_ESI_across_tissue()
+save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.all_tissue.pdf',p3,base_width=8,base_height=8)
