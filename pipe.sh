@@ -2160,7 +2160,7 @@ python $scripts/160708/WASP_rmdup.py $data/rnaseq2/wasp $data/rnaseq2/alignments
 
 
 
-# 160715:
+#---------------- HCASMC specific gene ---------------#
 # obj: DE between HCASMC and GTEx
 # setup:
 mkdir $scripts/160715 $processed_data/160715 $figures/160715
@@ -2243,6 +2243,10 @@ cp -r /Users/boshliu/gsea_home/output/aug09/hcasmc_vs_gtex_all.c2.cp.kegg.GseaPr
 # Find HCASMC specific gene using information theory: 
 bash 160715/prepare_gct_file.sh 
 Rscript 160715/find_hcasmc_specific_genes.info_theory.R
+
+
+# Overlap HCASMC specific gene and GWAS: 
+Rscript 160715/hcasmc_specific_gene_and_GWAS.R 
 
 
 #### 160724:

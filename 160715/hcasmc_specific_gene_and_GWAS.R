@@ -108,14 +108,79 @@ make_boxplot=function(genes,background){
 	return(p)
 }
 
+get_tissue_color=function(color_file='shared/tissue_color.txt'){
+	tissue_color=fread(color_file)[,c(1,5)]
+	colnames(tissue_color)=c('tissue','color')
+	tissue_color=tissue_color%>%filter(tissue!='SF')
+	color=tissue_color$color
+	names(color)=as.character(tissue_color$tissue)
+	return(color)
+}
+
+make_violin_to_compare_ESI_across_tissue=function(x,title){
+	color=get_tissue_color()
+	x$tissue=reorder(x$tissue,x$esi,FUN=function(x){mean(x,na.rm=T)})
+	p=ggplot(x,aes(tissue,esi,fill=tissue))+geom_violin()+scale_fill_manual(guid='none',values=color)+ylab('ESI')+xlab('Tissue')+coord_flip()+ggtitle(title)
+	return(p)
+}
+
+
+bootstrap_difference_in_mean=function(x,y,size=1000){
+	stopifnot(colnames(x)==colnames(y))
+	diff_mat=matrix(nrow=size,ncol=ncol(x))
+	colnames(diff_mat)=colnames(x)
+	n=nrow(x)
+	m=nrow(y)
+	for (i in 1:size){
+		xb=x[sample(1:n,n,replace=T),]
+		yb=y[sample(1:m,m,replace=T),]
+		xmean=apply(xb,2,function(x) {mean(x,na.rm=T)})
+		ymean=apply(yb,2,function(x) {mean(x,na.rm=T)})
+		diff=xmean-ymean
+		diff_mat[i,]=diff
+	}
+	diff_df=as.data.frame(diff_mat)
+	diff_long=melt(diff_df,id.var=NULL,value.name='diff_in_mean',variable.name='tissue')
+	return(diff_long)
+}
+
+
+main=function(gwas,gene_location,esi_all,trt){
+	message('selecting trait genes...')
+	trait=gwas[MAPPED_TRAIT==trt,]
+	trait=rmdupvar(trait)
+	trait_genes=pick_closest_genes(trait,gene_location)
+
+	message('selecting background genes...')
+	background=gwas[MAPPED_TRAIT!=trt,]
+	background=rmdupvar(background)
+	background_genes=pick_closest_genes(background,gene_location)
+
+	message('selecting top genes...')
+	top_genes=pick_top_esi(trait_genes)
+	top_background=pick_top_esi(background_genes)
+
+	top_genes_all=esi_all[gene%in%unique(top_genes[,gene_id]),]
+	top_background_all=esi_all[gene%in%unique(top_background[,gene_id]),]
+
+	message('performing bootstrap...')
+	diff=bootstrap_difference_in_mean(top_genes_all[,2:ncol(top_genes_all),with=F],top_background_all[,2:ncol(top_background_all),with=F],size=1000)
+	diff$tissue=reorder(diff$tissue,diff$diff_in_mean,function(x) {mean(x,na.rm=T)})
+	diff_summary=diff%>%group_by(tissue)%>%summarise(mean=mean(diff_in_mean),lb=quantile(diff_in_mean,0.025),ub=quantile(diff_in_mean,0.975))
+	
+	message('making plot')
+	p=ggplot(diff_summary,aes(tissue,mean))+geom_point()+geom_errorbar(aes(ymin=lb,ymax=ub))+coord_flip()+geom_hline(yintercept=0)
+	return(p)
+}
+
 
 # Read NHGRI GWAS catalog:
-gwas=fread('../data/gwas/nhgri_catalog/gwas_catalog_v1.0.1-associations_e87_r2017-01-23.tsv')
-gwas=reformat(gwas)
-gwas=liftOver(gwas)
-Reading liftover chains
-Mapping coordinates
-gwasp=prune(gwas)
+# gwas=fread('../data/gwas/nhgri_catalog/gwas_catalog_v1.0.1-associations_e87_r2017-01-23.tsv')
+# gwas=reformat(gwas)
+# gwas=liftOver(gwas)
+# gwasp=prune(gwas)
+# fwrite(gwasp,'../data/gwas/nhgri_catalog/gwas_catalog_v1.0.1-associations_e87_r2017-01-23.prune.tsv',sep='\t')
+gwasp=fread('../data/gwas/nhgri_catalog/gwas_catalog_v1.0.1-associations_e87_r2017-01-23.prune.tsv')
 gwasp=gwasp%>%arrange(CHR_ID,CHR_POS_19)
 
 
@@ -136,7 +201,7 @@ cad=rmdupvar(cad)
 cad_genes=pick_closest_genes(cad,esi)
 
 
-# Select variants for all other GWAS: 
+# Select background variants: 
 background=gwasp[MAPPED_TRAIT!='coronary heart disease'&MAPPED_TRAIT!='coronary artery disease',]
 background=rmdupvar(background)
 
@@ -155,7 +220,7 @@ top_cad_genes=pick_top_esi(cad_genes)
 top_background_genes=pick_top_esi(background_genes)
 
 
-# Make boxplot to compare CAD and background genes: 
+# Make boxplot to compare top CAD and background genes: 
 p2=make_boxplot(top_cad_genes,top_background_genes)
 save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.top_esi.pdf',p2)
 
@@ -169,16 +234,57 @@ cad_genes_all_tissue=esi_all[gene%in%unique(cad_genes[,gene_id]),]
 cad_genes_long=melt(cad_genes_all_tissue,id.var='gene',variable.name='tissue',value.name='esi')
 
 
-# Make violin plot to compare ESI distribution across all tissue: 
-make_violin_to_compare_ESI_across_tissue=function(){
-	tissue_color=fread('shared/tissue_color.txt')[,c(1,5)]
-	colnames(tissue_color)=c('tissue','color')
-	tissue_color=tissue_color%>%filter(tissue!='SF')
-	color=tissue_color$color
-	names(color)=as.character(tissue_color$tissue)
-	cad_genes_long=merge(cad_genes_long,tissue_color,by='tissue')
-	cad_genes_long$tissue=reorder(cad_genes_long$tissue,cad_genes_long$esi,FUN=function(x){mean(x,na.rm=T)})
-	ggplot(cad_genes_long,aes(tissue,esi,fill=tissue))+geom_violin()+scale_fill_manual(guid='none',values=color)+ylab('ESI')+xlab('Tissue')+coord_flip()
-}
-p3=make_violin_to_compare_ESI_across_tissue()
-save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.all_tissue.pdf',p3,base_width=8,base_height=8)
+# Make violin plot on ESI distribution across all tissue for CAD-nearby genes: 
+p3=make_violin_to_compare_ESI_across_tissue(cad_genes_long,title='CAD-neighboring genes')
+save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.all_tissue.cad_gene.pdf',p3,base_width=8,base_height=8)
+
+
+# Make violin plot on ESI distribution across all tissue for all genes: 
+all_genes_long=melt(esi_all,id.var='gene',variable.name='tissue',value.name='esi')
+p4=make_violin_to_compare_ESI_across_tissue(all_genes_long,title='All genes')
+save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.all_tissue.all_gene.pdf',p4,base_width=8,base_height=8)
+
+
+# Make violin plot on ESI distribution across all tissue for all genes besides CAD: 
+non_cad_genes_all_tissue=esi_all[!(gene%in%unique(cad_genes[,gene_id])),]
+non_cad_genes_long=melt(non_cad_genes_all_tissue,id.var='gene',variable.name='tissue',value.name='esi')
+p5=make_violin_to_compare_ESI_across_tissue(non_cad_genes_long,title='non CAD-neighboring genes')
+save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.all_tissue.non_cad_gene.pdf',p5,base_width=8,base_height=8)
+
+
+# Make violin plot on ESI distribution across all tissues for top CAD gene (one per CAD loci):
+top_cad_genes_all_tissue=esi_all[gene%in%unique(top_cad_genes[,gene_id]),]
+top_cad_genes_long=melt(top_cad_genes_all_tissue,id.var='gene',variable.name='tissue',value.name='esi')
+p6=make_violin_to_compare_ESI_across_tissue(top_cad_genes_long,title='top CAD-neighboring genes')
+save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.all_tissue.top_cad_genes.pdf',p6,base_width=8,base_height=8)
+
+
+# Make violin plot on ESI distribution across all tissues for top non-CAD gene (one per GWAS loci):
+top_non_cad_genes_all_tissue=esi_all[gene%in%unique(top_background_genes[,gene_id]),]
+top_non_cad_genes_long=melt(top_non_cad_genes_all_tissue,id.var='gene',variable.name='tissue',value.name='esi')
+p7=make_violin_to_compare_ESI_across_tissue(top_non_cad_genes_long,title='top non CAD-neighboring genes')
+save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.all_tissue.top_non_cad_genes.pdf',p7,base_width=8,base_height=8)
+
+
+# Caclulate the difference in ESI between top CAD and top background genes: 
+diff_long=bootstrap_difference_in_mean(top_cad_genes_all_tissue[,2:ncol(top_cad_genes_all_tissue),with=F],top_non_cad_genes_all_tissue[,2:ncol(top_non_cad_genes_all_tissue),with=F],size=10000)
+diff_long$tissue=reorder(diff_long$tissue,diff_long$diff_in_mean,mean)
+
+
+# Plot the difference:
+diff_summary=diff_long%>%group_by(tissue)%>%summarise(mean=mean(diff_in_mean),lb=quantile(diff_in_mean,0.025),ub=quantile(diff_in_mean,0.975))
+p=ggplot(diff_summary,aes(tissue,mean))+geom_point()+geom_errorbar(aes(ymin=lb,ymax=ub))+coord_flip()+geom_hline(yintercept=0)
+save_plot('../figures/160715/difference_in_ESI_between_top_CAD_and_background_genes.pdf',p,base_width=8,base_height=8)
+
+
+# p=main(gwasp,esi,esi_all,'Alzheimers disease')
+
+
+# Make scatterplot of ESI score (for QC): 
+pdf('../figures/160715/esi_scatterplots.pdf')
+ggplot(esi_all,aes(HCASMC,`Whole Blood`))+geom_point()+geom_abline(intercept=0,slope=1,color='red')
+ggplot(esi_all,aes(HCASMC,`Adipose - Subcutaneous`))+geom_point()+geom_abline(intercept=0,slope=1,color='red')
+ggplot(esi_all,aes(HCASMC,`Artery - Coronary`))+geom_point()+geom_abline(intercept=0,slope=1,color='red')
+ggplot(esi_all,aes(HCASMC,`Lung`))+geom_point()+geom_abline(intercept=0,slope=1,color='red')
+dev.off()
+
