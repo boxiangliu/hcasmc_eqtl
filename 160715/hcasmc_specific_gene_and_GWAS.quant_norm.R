@@ -196,6 +196,8 @@ esi=esi%>%arrange(chr,tss)
 cad=gwasp[MAPPED_TRAIT=='coronary heart disease'|MAPPED_TRAIT=='coronary artery disease',]
 cad=rmdupvar(cad)
 
+# Output CAD SNPs:
+fwrite(cad[,.(CHR_ID,CHR_POS_19)],'../processed_data/160715/SNPsnap/cad_gwas_variants.chr_pos',col.names=F,sep=':')
 
 # Select genes around CAD variants:
 cad_genes=pick_closest_genes(cad,esi)
@@ -206,7 +208,7 @@ background=gwasp[MAPPED_TRAIT!='coronary heart disease'&MAPPED_TRAIT!='coronary 
 background=rmdupvar(background)
 
 
-# Select genes around background variants:
+# Select genes around background variants (takes time):
 background_genes=pick_closest_genes(background,esi)
 
 

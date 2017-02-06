@@ -13,8 +13,5 @@ merged[,Description.y:=NULL]
 setnames(merged,'Description.x','Description')
 
 
-# Perform quantile normalization: 
-
-
 # Save data: 
 fwrite(merged,file='../processed_data/160715/combined.gtex.hcasmc.rpkm',sep='\t',quote=F)
