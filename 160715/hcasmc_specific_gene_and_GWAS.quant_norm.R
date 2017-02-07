@@ -173,6 +173,35 @@ main=function(gwas,gene_location,esi_all,trt){
 	return(p)
 }
 
+calc_diff_with_matched_snp=function(gwas,matched){
+	stopifnot(class(gwas)=='character')
+	stopifnot('data.table'%in%class(matched))
+
+	x=as.data.table(str_split_fixed(gwas,':',2))
+	setnames(x,c('CHR_ID','CHR_POS_19'))
+	x[,CHR_ID:=as.integer(CHR_ID)]
+	x[,CHR_POS_19:=as.integer(CHR_POS_19)]
+	y=pick_closest_genes(x,esi)
+	z=pick_top_esi(y)
+	w=esi_all[gene%in%unique(z[,gene_id]),]
+	w_long=melt(w,id.var='gene',variable.name='tissue',value.name='esi')
+	gwas_mean=w_long%>%group_by(tissue)%>%summarise(mean_esi=mean(esi,na.rm=T))
+
+	diff=data.table()
+	for (i in 1:ncol(matched)){
+		x=as.data.table(str_split_fixed(unlist(matched[,i,with=F]),':',2))
+		setnames(x,c('CHR_ID','CHR_POS_19'))
+		x[,CHR_ID:=as.integer(CHR_ID)]
+		x[,CHR_POS_19:=as.integer(CHR_POS_19)]
+		y=pick_closest_genes(x,esi)
+		z=pick_top_esi(y)
+		w=esi_all[gene%in%unique(z[,gene_id]),]
+		w_long=melt(w,id.var='gene',variable.name='tissue',value.name='esi')
+		matched_mean=w_long%>%group_by(tissue)%>%summarise(mean_esi=mean(esi,na.rm=T))
+		diff=rbind(diff,data.table(tissue=cad_mean$tissue,diff=cad_mean$mean_esi-matched_mean$mean_esi))
+	}
+	return(diff)
+}
 
 # Read NHGRI GWAS catalog:
 # gwas=fread('../data/gwas/nhgri_catalog/gwas_catalog_v1.0.1-associations_e87_r2017-01-23.tsv')
@@ -271,4 +300,21 @@ ggplot(esi_all,aes(HCASMC,`Adipose - Subcutaneous`))+geom_point()+geom_abline(in
 ggplot(esi_all,aes(HCASMC,`Artery - Coronary`))+geom_point()+geom_abline(intercept=0,slope=1,color='red')
 ggplot(esi_all,aes(HCASMC,`Lung`))+geom_point()+geom_abline(intercept=0,slope=1,color='red')
 dev.off()
+
+
+# Read SNPsnap output: 
+snpsnap=fread('../processed_data/160715/SNPsnap/SNPsnap_output/matched_snps.txt')
+
+
+# Calculate difference between top CAD and SNPsnap-matched SNPs:  
+diff=calc_diff_with_matched_snp(snpsnap[,Input_SNP],snpsnap[,2:1001,with=F])
+diff$tissue=reorder(diff$tissue,diff$diff,median)
+diff_summary=res%>%group_by(tissue)%>%summarise(mean=mean(diff),lb=quantile(diff,0.025),ub=quantile(diff,0.975))
+
+
+# Plot the difference between top CAD and SNPsnap-matched SNPs:
+p=ggplot(diff_summary,aes(tissue,mean))+geom_point()+geom_errorbar(aes(ymin=lb,ymax=ub))+coord_flip()+geom_hline(yintercept=0)
+save_plot('../figures/160715/difference_in_ESI_between_top_CAD_and_matched_snp.quant_norm.pdf',p,base_width=8,base_height=8)
+
+
 
