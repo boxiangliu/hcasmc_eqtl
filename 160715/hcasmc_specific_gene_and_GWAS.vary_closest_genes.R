@@ -68,6 +68,17 @@ rmdupvar=function(x){
 	return(z)
 }
 
+rm_overlap_var=function(x,y,min_dist=3e6){
+	### remove variants in x with less than min_dist from any variants in y
+	stopifnot(class(x[,CHR_ID])==class(y[,CHR_ID]))
+	stopifnot(class(x[,CHR_POS_19])==class(y[,CHR_POS_19]))
+	same_chr=outer(x[,CHR_ID],y[,CHR_ID],`==`)
+	dist=abs(outer(x[,CHR_POS_19],y[,CHR_POS_19],`-`))
+	dist[!same_chr]=Inf
+	dist_to_closest=apply(dist,1,min)
+	z=x[dist_to_closest>=min_dist]
+	return(z)
+}
 
 pick_closest_genes=function(gwas,gene,n=10){
 	x=gwas[,CHR_ID]
@@ -99,7 +110,6 @@ plot_distance=function(x,title){
 	abline(v=lb,col='red',lty=2)
 	abline(v=ub,col='red',lty=2)
 }
-
 
 pick_top_esi=function(x){
 	x[,max_esi:=max(esi),by=c('CHR_ID','CHR_POS_19')]
@@ -153,16 +163,12 @@ bootstrap_difference_in_mean=function(x,y,size=1000){
 }
 
 
-main=function(gwas,gene_location,esi_all,trt){
+main=function(gwas,gene_location,esi_all,trait_variants,background_variants,n_genes,title){
 	message('selecting trait genes...')
-	trait=gwas[MAPPED_TRAIT==trt,]
-	trait=rmdupvar(trait)
-	trait_genes=pick_closest_genes(trait,gene_location)
+	trait_genes=pick_closest_genes(trait_variants,gene_location,n=n_genes)
 
 	message('selecting background genes...')
-	background=gwas[MAPPED_TRAIT!=trt,]
-	background=rmdupvar(background)
-	background_genes=pick_closest_genes(background,gene_location)
+	background_genes=pick_closest_genes(background_variants,gene_location,n=n_genes)
 
 	message('selecting top genes...')
 	top_genes=pick_top_esi(trait_genes)
@@ -177,39 +183,12 @@ main=function(gwas,gene_location,esi_all,trt){
 	diff_summary=diff%>%group_by(tissue)%>%summarise(mean=mean(diff_in_mean),lb=quantile(diff_in_mean,0.025),ub=quantile(diff_in_mean,0.975))
 	
 	message('making plot')
-	p=ggplot(diff_summary,aes(tissue,mean))+geom_point()+geom_errorbar(aes(ymin=lb,ymax=ub))+coord_flip()+geom_hline(yintercept=0)
+	color=get_tissue_color() # get tissue color
+	p=ggplot(diff_summary,aes(tissue,mean))+geom_errorbar(aes(ymin=lb,ymax=ub,color=tissue),width=0.1,size=1)+geom_point(size=1)+coord_flip()+geom_hline(yintercept=0)+ggtitle(title)+scale_color_manual(guide='none',values=color)
 	return(p)
 }
 
-calc_diff_with_matched_snp=function(gwas,matched){
-	stopifnot(class(gwas)=='character')
-	stopifnot('data.table'%in%class(matched))
 
-	x=as.data.table(str_split_fixed(gwas,':',2))
-	setnames(x,c('CHR_ID','CHR_POS_19'))
-	x[,CHR_ID:=as.integer(CHR_ID)]
-	x[,CHR_POS_19:=as.integer(CHR_POS_19)]
-	y=pick_closest_genes(x,esi)
-	z=pick_top_esi(y)
-	w=esi_all[gene%in%unique(z[,gene_id]),]
-	w_long=melt(w,id.var='gene',variable.name='tissue',value.name='esi')
-	gwas_mean=w_long%>%group_by(tissue)%>%summarise(mean_esi=mean(esi,na.rm=T))
-
-	diff=data.table()
-	for (i in 1:ncol(matched)){
-		x=as.data.table(str_split_fixed(unlist(matched[,i,with=F]),':',2))
-		setnames(x,c('CHR_ID','CHR_POS_19'))
-		x[,CHR_ID:=as.integer(CHR_ID)]
-		x[,CHR_POS_19:=as.integer(CHR_POS_19)]
-		y=pick_closest_genes(x,esi)
-		z=pick_top_esi(y)
-		w=esi_all[gene%in%unique(z[,gene_id]),]
-		w_long=melt(w,id.var='gene',variable.name='tissue',value.name='esi')
-		matched_mean=w_long%>%group_by(tissue)%>%summarise(mean_esi=mean(esi,na.rm=T))
-		diff=rbind(diff,data.table(tissue=cad_mean$tissue,diff=cad_mean$mean_esi-matched_mean$mean_esi))
-	}
-	return(diff)
-}
 
 # Read NHGRI GWAS catalog:
 # gwas=fread('../data/gwas/nhgri_catalog/gwas_catalog_v1.0.1-associations_e87_r2017-01-23.tsv')
@@ -234,16 +213,8 @@ cad=gwasp[MAPPED_TRAIT=='coronary heart disease'|MAPPED_TRAIT=='coronary artery 
 cad=rmdupvar(cad)
 
 
-# Output CAD SNPs:
-fwrite(cad[,.(CHR_ID,CHR_POS_19)],'../processed_data/160715/SNPsnap/cad_gwas_variants.chr_pos',col.names=F,sep=':')
-
 # Select genes around CAD variants:
-cad_genes=pick_closest_genes(cad,esi)
-
-
-# Calculate distance between CAD genes and variants: 
-cad_genes[,dist:=tss-CHR_POS_19]
-
+cad_genes=pick_closest_genes(cad,esi,n=10)
 
 
 # Select background variants: 
@@ -251,24 +222,12 @@ background=gwasp[MAPPED_TRAIT!='coronary heart disease'&MAPPED_TRAIT!='coronary 
 background=rmdupvar(background)
 
 
+# Remove variants from background set that overlap the CAD set:
+background=rm_overlap_var(background,cad)
+
+
 # Select genes around background variants (takes time):
-background_genes=pick_closest_genes(background,esi)
-
-
-# Calculate distance between background genes and variants: 
-background_genes[,dist:=tss-CHR_POS_19]
-
-
-# Plot distance between GWAS genes and variants:
-pdf('../figures/160715/distance_of_closest_10_genes.pdf')
-plot_distance(cad_genes,'CAD')
-plot_distance(background_genes,'non-CAD')
-dev.off()
-
-
-# Make boxplot to compare CAD and background genes:
-p1=make_boxplot(cad_genes,background_genes)
-save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.quant_norm.pdf',p1)
+background_genes=pick_closest_genes(background,esi,n=10)
 
 
 # Pick the gene with highest ESI for each loci:
@@ -276,65 +235,16 @@ top_cad_genes=pick_top_esi(cad_genes)
 top_background_genes=pick_top_esi(background_genes)
 
 
-# Make boxplot to compare top CAD and background genes: 
-p2=make_boxplot(top_cad_genes,top_background_genes)
-save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.top_esi.quant_norm.pdf',p2)
-
-
 # Read ESI for GTEx tissues and HCASMC: 
 esi_all=fread('../processed_data/160715/esi.quant_norm.all_tissues.txt') 
 
 
-# Make violin plot on ESI distribution across all tissues for top CAD gene (one per CAD loci):
-top_cad_genes_all_tissue=esi_all[gene%in%unique(top_cad_genes[,gene_id]),]
-top_cad_genes_long=melt(top_cad_genes_all_tissue,id.var='gene',variable.name='tissue',value.name='esi')
-p6=make_violin_to_compare_ESI_across_tissue(top_cad_genes_long,title='top CAD-neighboring genes')
-save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.all_tissue.top_cad_genes.quant_norm.pdf',p6,base_width=8,base_height=8)
-
-
-# Make violin plot on ESI distribution across all tissues for top non-CAD gene (one per GWAS loci):
-top_non_cad_genes_all_tissue=esi_all[gene%in%unique(top_background_genes[,gene_id]),]
-top_non_cad_genes_long=melt(top_non_cad_genes_all_tissue,id.var='gene',variable.name='tissue',value.name='esi')
-p7=make_violin_to_compare_ESI_across_tissue(top_non_cad_genes_long,title='top non CAD-neighboring genes')
-save_plot('../figures/160715/hcasmc_specific_gene_and_GWAS.all_tissue.top_non_cad_genes.quant_norm.pdf',p7,base_width=8,base_height=8)
-
-
-# Caclulate the difference in ESI between top CAD and top background genes: 
-diff_long=bootstrap_difference_in_mean(top_cad_genes_all_tissue[,2:ncol(top_cad_genes_all_tissue),with=F],top_non_cad_genes_all_tissue[,2:ncol(top_non_cad_genes_all_tissue),with=F],size=10000)
-diff_long$tissue=reorder(diff_long$tissue,diff_long$diff_in_mean,mean)
-
-
-# Plot the difference:
-diff_summary=diff_long%>%group_by(tissue)%>%summarise(mean=mean(diff_in_mean),lb=quantile(diff_in_mean,0.025),ub=quantile(diff_in_mean,0.975))
-p=ggplot(diff_summary,aes(tissue,mean))+geom_point()+geom_errorbar(aes(ymin=lb,ymax=ub))+coord_flip()+geom_hline(yintercept=0)
-save_plot('../figures/160715/difference_in_ESI_between_top_CAD_and_background_genes.quant_norm.pdf',p,base_width=8,base_height=8)
-
-
-# p=main(gwasp,esi,esi_all,'Alzheimers disease')
-
-
-# Make scatterplot of ESI score (for QC): 
-pdf('../figures/160715/esi_scatterplots.quant_norm.pdf')
-ggplot(esi_all,aes(HCASMC,`Whole Blood`))+geom_point()+geom_abline(intercept=0,slope=1,color='red')
-ggplot(esi_all,aes(HCASMC,`Adipose - Subcutaneous`))+geom_point()+geom_abline(intercept=0,slope=1,color='red')
-ggplot(esi_all,aes(HCASMC,`Artery - Coronary`))+geom_point()+geom_abline(intercept=0,slope=1,color='red')
-ggplot(esi_all,aes(HCASMC,`Lung`))+geom_point()+geom_abline(intercept=0,slope=1,color='red')
+# Plot the difference in ESI between top CAD and top background genes using various numbers of closest genes: 
+pdf('../figures/160715/difference_in_ESI_between_top_CAD_and_background_genes.vary_closest_genes.pdf')
+for (n in c(3,5,10,15,20)){
+	print(main(gwasp,esi,esi_all,cad,background,n_genes=n,paste(n,'closest gene')))
+}
 dev.off()
-
-
-# Read SNPsnap output: 
-snpsnap=fread('../processed_data/160715/SNPsnap/SNPsnap_output/matched_snps.txt')
-
-
-# Calculate difference between top CAD and SNPsnap-matched SNPs:  
-diff=calc_diff_with_matched_snp(snpsnap[,Input_SNP],snpsnap[,2:1001,with=F])
-diff$tissue=reorder(diff$tissue,diff$diff,median)
-diff_summary=res%>%group_by(tissue)%>%summarise(mean=mean(diff),lb=quantile(diff,0.025),ub=quantile(diff,0.975))
-
-
-# Plot the difference between top CAD and SNPsnap-matched SNPs:
-p=ggplot(diff_summary,aes(tissue,mean))+geom_point()+geom_errorbar(aes(ymin=lb,ymax=ub))+coord_flip()+geom_hline(yintercept=0)
-save_plot('../figures/160715/difference_in_ESI_between_top_CAD_and_matched_snp.quant_norm.pdf',p,base_width=8,base_height=8)
 
 
 
