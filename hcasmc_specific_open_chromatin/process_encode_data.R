@@ -53,27 +53,7 @@ annotation=rbind(data.frame(file='2305_ppr.IDR0.1.filt.narrowPeak.gz',epigenome=
 
 
 # Process DHS data:
-# num_peaks=get_num_peaks()
 message(sprintf('%d inputs in total',nrow(annotation)))
-# for (i in 1:nrow(annotation)){
-# 	input=annotation$file[i]
-# 	message(input)
-# 	command=paste('zcat ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc/',input,sep='/')
-# 	x=fread(command)
-# 	setnames(x,c('chrom','chromStart','chromEnd','name','score','strand','signalValue','pValue','qValue','peak'))
-# 	y=x[chrom%in%paste0('chr',1:22),] # keeping only autosomes.
-# 	y=y%>%arrange(desc(signalValue)) # sort peaks by signalValue
-# 	if (nrow(y)>=num_peaks){
-# 		z=y[1:num_peaks,] # take the top 50,000 peaks 
-# 	} else {
-# 		message(sprintf('%s has less than %d peaks',input,num_peaks))
-# 		z=y
-# 	}
-# 	z=sort_bed_by_chrom_pos(z)
-# 	output=paste0(OUT_DIR,'/',str_replace_all(annotation$epigenome[i],' ','_'),'.bed')
-# 	fwrite(z,output,sep='\t',col.names=F)
-# }
-
 for (i in 1:nrow(annotation)){
 	input=annotation$file[i]
 	output=paste0(OUT_DIR,'/',str_replace_all(annotation$epigenome[i],' ','_'),'.bed')
