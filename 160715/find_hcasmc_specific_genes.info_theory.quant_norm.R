@@ -28,36 +28,42 @@ median2=function(x,coldata){
 	return(w)
 }
 
-remove_zero_rows=function(x){
-	y=x[rowSums(x)!=0,]
-	return(y)
-}
-
-normalize=function(x){
-	y=apply(x,1,sum)
-	z=x/y
-	return(z)
-}
-
-entropy=function(x){
-	w=apply(x,1,function(y) {z=y[y!=0];-sum(z*log2(z))})
-	return(w)
-}
 
 calculate_esi=function(x,tissue){
+
+	entropy=function(x){
+		w=apply(x,1,function(y) {z=y[y!=0];-sum(z*log2(z))})
+		return(w)
+	}
+
+	remove_zero_rows=function(x){
+		y=x[rowSums(x)!=0,]
+		return(y)
+	}
+
+	normalize=function(x){
+		y=apply(x,1,sum)
+		z=x/y
+		return(z)
+	}
+
 	# toi=tissue of interest
 	# ot=other tissues
 	stopifnot(class(x)=='data.frame')
 	y=remove_zero_rows(x)
+
 	toi=y[,tissue]
 	ot=y[,colnames(y)!=tissue]
+
 	toin=toi/rowSums(ot)
 	otn=normalize(ot)
+
 	e=entropy(otn)
 	z=e-log2(toin)
 	z=z[!is.infinite(z)]
 	z=z[!is.na(z)]
 	esi=1-z/max(z)
+
 	return(esi)
 }
 

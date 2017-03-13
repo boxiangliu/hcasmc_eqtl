@@ -2247,6 +2247,8 @@ Rscript 160715/find_hcasmc_specific_genes.info_theory.R
 
 # Overlap HCASMC specific gene and GWAS: 
 Rscript 160715/hcasmc_specific_gene_and_GWAS.R 
+Rscript 160715/hcasmc_specific_gene_and_GWAS.quant_norm.R 
+Rscript 160715/hcasmc_specific_gene_and_GWAS.vary_closest_genes.R 
 
 
 #### 160724:
@@ -3428,9 +3430,43 @@ bash /users/bliu2/process_histone_mods.sh # run on Nandi!
 
 # Install ChromHMM:
 
+
+
 #------------------ Shared ----------------
 # Setup: 
 mkdir -p shared
 
 # File to map each tissue to a color: 
 Rscript shared/tissue_color.R   # shared/tissue_color.txt
+
+
+
+#------------------ HCASMC-specific open chromatin ---------
+# Setup:
+mkdir -p ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc_filt/ ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc
+ln /srv/persistent/bliu2/HCASMC_eQTL/processed_data/mpra/DHS_expanded/* ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc
+
+
+# Preprocess encode data: 
+Rscript hcasmc_specific_open_chromatin/process_encode_data.R
+
+
+# Find shared peaks: 
+python hcasmc_specific_open_chromatin/find_shared_peaks.py
+
+
+# Get signal at shared peaks:
+python hcasmc_specific_open_chromatin/get_signal_at_shared_peaks.py
+Rscript hcasmc_specific_open_chromatin/merge_signals.R
+
+
+# Quantile normalization: 
+Rscript hcasmc_specific_open_chromatin/quantile_normalization.R
+
+
+# Define HCASMC-specific peak score:
+Rscript hcasmc_specific_open_chromatin/calc_peak_specificity_index.R
+
+
+# Intersect specificity with sample peaks: 
+Rscript hcasmc_specific_open_chromatin/intersect_specificity_and_peaks.R

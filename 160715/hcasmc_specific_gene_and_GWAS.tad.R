@@ -80,6 +80,48 @@ rm_overlap_var=function(x,y,min_dist=3e6){
 	return(z)
 }
 
+read_tad_region=function(f='../data/hic/dixon_2012/IMR90/combined/total.combined.domain'){
+	x=fread(f,header=F)%>%setnames(c('chr','start','end'))
+	x=x[chr%in%paste0('chr',1:22),]
+	x=x%>%mutate(chr=as.integer(str_replace(chr,'chr','')))
+	return(x)
+}
+
+
+pick_tad_genes=function(gwas,gene,tad,top=TRUE,tss=FALSE){
+	# Overlap GWAS variants with TAD regions: 
+	gwas=gwas%>%transmute(chr=CHR_ID,start=CHR_POS_19,end=CHR_POS_19)
+	setkey(gwas,chr,start,end)
+	setkey(tad,chr,start,end)
+	overlap=foverlaps(gwas,tad)
+
+	# Select unique TAD regions:
+	overlap=unique(overlap[!is.na(start),.(chr,start,end)])
+
+
+	# Overlap TAD regions with genes: 
+	setkey(overlap,chr,start,end)
+	gene$chr=as.integer(gene$chr)
+	if (!tss){
+		setkey(gene,chr,start,end)
+		overlap2=foverlaps(overlap,gene)
+	} else {
+		gene=gene[,c('start','end'):=list(tss,tss)]
+		setkey(gene,chr,start,end)
+		overlap2=foverlaps(overlap,gene)
+	}
+	setnames(overlap2,c('i.start','i.end'),c('tad_start','tad_end'))	
+	
+	# Pick top gene per TAD region:
+	if (top){
+		overlap2[,max_esi:=max(esi,na.rm=T),by='tad_start']
+		return(overlap2[esi==max_esi,])
+	} else {
+		return(overlap2)
+	}
+}
+
+
 pick_closest_genes=function(gwas,gene,n=10){
 	x=gwas[,CHR_ID]
 	y=gene[,chr]
@@ -163,22 +205,18 @@ bootstrap_difference_in_mean=function(x,y,size=1000){
 }
 
 
-main=function(gwas,gene_location,esi_all,trait_variants,background_variants,n_genes,title){
+main=function(gwas,gene_location,esi_all,trait_variants,background_variants,top=TRUE,tss=FALSE,title){
 	message('selecting trait genes...')
-	trait_genes=pick_closest_genes(trait_variants,gene_location,n=n_genes)
+	cad_genes=pick_tad_genes(trait_variants,gene_location,tad,top,tss)
 
 	message('selecting background genes...')
-	background_genes=pick_closest_genes(background_variants,gene_location,n=n_genes)
+	background_genes=pick_tad_genes(background_variants,gene_location,tad,top,tss)
 
-	message('selecting top genes...')
-	top_genes=pick_top_esi(trait_genes)
-	top_background=pick_top_esi(background_genes)
-
-	top_genes_all=esi_all[gene%in%unique(top_genes[,gene_id]),]
-	top_background_all=esi_all[gene%in%unique(top_background[,gene_id]),]
+	cad_genes_all=esi_all[gene%in%unique(cad_genes[,gene_id]),]
+	background_genes_all=esi_all[gene%in%unique(background_genes[,gene_id]),]
 
 	message('performing bootstrap...')
-	diff=bootstrap_difference_in_mean(top_genes_all[,2:ncol(top_genes_all),with=F],top_background_all[,2:ncol(top_background_all),with=F],size=1000)
+	diff=bootstrap_difference_in_mean(cad_genes_all[,2:ncol(cad_genes_all),with=F],background_genes_all[,2:ncol(background_genes_all),with=F],size=1000)
 	diff$tissue=reorder(diff$tissue,diff$diff_in_mean,function(x) {mean(x,na.rm=T)})
 	diff_summary=diff%>%group_by(tissue)%>%summarise(mean=mean(diff_in_mean),lb=quantile(diff_in_mean,0.025),ub=quantile(diff_in_mean,0.975))
 
@@ -213,8 +251,12 @@ cad=gwasp[MAPPED_TRAIT=='coronary heart disease'|MAPPED_TRAIT=='coronary artery 
 cad=rmdupvar(cad)
 
 
+# Read TAD regions: 
+tad=read_tad_region()
+
+
 # Select genes around CAD variants:
-cad_genes=pick_closest_genes(cad,esi,n=10)
+cad_genes=pick_tad_genes(cad,esi,tad)
 
 
 # Select background variants: 
@@ -227,12 +269,7 @@ background=rm_overlap_var(background,cad)
 
 
 # Select genes around background variants (takes time):
-background_genes=pick_closest_genes(background,esi,n=10)
-
-
-# Pick the gene with highest ESI for each loci:
-top_cad_genes=pick_top_esi(cad_genes)
-top_background_genes=pick_top_esi(background_genes)
+background_genes=pick_tad_genes(background,esi,tad)
 
 
 # Read ESI for GTEx tissues and HCASMC: 
@@ -240,38 +277,12 @@ esi_all=fread('../processed_data/160715/esi.quant_norm.all_tissues.txt')
 
 
 # Plot the difference in ESI between top CAD and top background genes using various numbers of closest genes: 
-diff_summary=data.table()
-pdf('../figures/160715/difference_in_ESI_between_top_CAD_and_background_genes.vary_closest_genes.pdf')
-for (n in c(3,5,10,15,20,30,40,50,60,70,80,90,100,150,200,250,300,350,400,450,500,600,700,800,900,1000)){
-	res=main(gwasp,esi,esi_all,cad,background,n_genes=n,paste(n,'closest gene'))
-	p=res[[1]]
-	tmp=res[[2]]
-	tmp$n_genes=n
-	if (nrow(diff_summary)==0){
-		diff_summary=tmp
-	} else {
-		diff_summary=rbind(diff_summary,tmp)
-	}
-	print(p)
-}
+pdf('../figures/160715/difference_in_ESI_between_top_CAD_and_background_genes.tad.pdf')
+main(gwasp,esi,esi_all,cad,background,top=TRUE,tss=TRUE,'tad and top gene (tss)')[[1]]
+main(gwasp,esi,esi_all,cad,background,top=TRUE,tss=FALSE,'tad and top gene')[[1]]
+main(gwasp,esi,esi_all,cad,background,top=FALSE,tss=TRUE,'tad and all gene (tss)')[[1]]
+main(gwasp,esi,esi_all,cad,background,top=FALSE,tss=FALSE,'tad and all gene')[[1]]
 dev.off()
 
 
-# Calculate the difference in ESI across various number genes:
-meta_summary=data.table()
-for (n in c(3,5,10,15,20,30,40,50,60,70,80,90,100,150,200,250,300,350,400,450,500,600,700,800,900,1000)){
-	tmp=data.table(n_genes=n,mean=mean(diff_summary[n_genes==n,mean]),sd=sd(diff_summary[n_genes==n,mean]))
-	if (nrow(meta_summary)==0){
-		meta_summary=tmp
-	} else {
-		meta_summary=rbind(meta_summary,tmp)
-	}
-}
 
-
-# Plot the difference in ESI across various number genes:
-pdf('../figures/160715/ESI_change_across_different_number_of_closest_genes.pdf')
-color=get_tissue_color() # get tissue color
-ggplot(diff_summary,aes(n_genes,mean,color=tissue))+geom_line(aes(alpha=ifelse(tissue%in%c('HCASMC','Artery - Coronary','Artery - Aorta','Artery - Tibial'),1,0.5)))+scale_color_manual(guide='none',values=color)+scale_x_log10()+scale_alpha_continuous(guide='none')+xlab('Num closest genes')+ylab('ESI(CAD) - ESI(GWAS-CAD)')
-ggplot(meta_summary,aes(n_genes,sd))+stat_smooth(method='loess')+geom_point(size=2)+scale_x_log10()+xlab('Num closest genes')+ylab('SD(ESI(CAD) - ESI(GWAS-CAD))')
-dev.off()

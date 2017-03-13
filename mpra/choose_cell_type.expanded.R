@@ -96,6 +96,7 @@ for (i in annotation$file){
 # Calculate the Jaccard index:
 jaccard=calculate_jaccard(annotation,out_dir)
 
+
 # Make heatmap of jaccard index: 
 pdf('../figures/mpra/epigenome_jaccard_index_heatmap.expanded.pdf',width=20,height=20)
 heatmap.2(jaccard,trace='none',margin=c(10,10))
