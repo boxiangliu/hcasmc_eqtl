@@ -1111,7 +1111,7 @@ subl 160516_matrix_eQTL.R $dir1/chr22.genotype.maf.txt $dir1/chr22.genotype_loc.
 mkdir ../data/rnaseq2
 # saved ../processed_data/rna_wgs_match.reduced_050616.xlsx into txt file 
 # use vim to turn all ^M into \r
-subl 160517_get_rnaseq_data.sh
+bash 160517_get_rnaseq_data.sh
 
 # sort and index some bam and sam files: 
 samtools sort -o 2305/Aligned.out.sorted.bam -O bam -@8 2305/Aligned.out.sam &
@@ -3336,7 +3336,7 @@ locuszoom --metal ../processed_data/rasqual/output/ENSG00000134871.13_COL4A2.pva
 locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs11838776 --flank 50kB --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000134871.13_COL4A2)" --no-date --prefix ../figures/locuszoom/ENSG00000134871.13_COL4A2_gwas
 
 
-#### MPRA array:
+#----------------- MPRA array ----------------# 
 # setup: 
 mkdir mpra ../processed_data/mpra
 
@@ -3391,6 +3391,11 @@ Rscript mpra/format_eCAVIAR_variants.R
 Rscript mpra/format_naive_overlap.R
 
 
+# Choose cell type for MPRA:
+Rscript mpra/choose_cell_type.R
+Rscript mpra/choose_cell_type.expanded.R
+ 
+
 #------------------ Feature construction ----------------
 # Convert VCF into BEDs:
 mkdir ../data/variantBeds feature_construction
@@ -3441,7 +3446,7 @@ Rscript shared/tissue_color.R   # shared/tissue_color.txt
 
 
 
-#------------------ HCASMC-specific open chromatin ---------
+#------------------ HCASMC specific open chromatin ---------
 # Setup:
 mkdir -p ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc_filt/ ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc
 ln /srv/persistent/bliu2/HCASMC_eQTL/processed_data/mpra/DHS_expanded/* ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc
@@ -3470,3 +3475,16 @@ Rscript hcasmc_specific_open_chromatin/calc_peak_specificity_index.R
 
 # Intersect specificity with sample peaks: 
 Rscript hcasmc_specific_open_chromatin/intersect_specificity_and_peaks.R
+
+
+# Take the minimum specificity index of each peak: 
+Rscript hcasmc_specific_open_chromatin/get_min_index.R
+
+
+# Plot the distribution of number of tissues sharing each peak in HCASMC:
+Rscript hcasmc_specific_open_chromatin/plot_distribution_of_tissue_sharing.R
+
+
+# Perform multi-dimensional scaling: 
+Rscript hcasmc_specific_open_chromatin/mds_open_chromatin.R 
+
