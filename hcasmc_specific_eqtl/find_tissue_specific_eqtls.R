@@ -12,11 +12,7 @@ fig_dir=args[2]
 out_file1=args[3]
 out_file2=args[4]
 tissue=args[5]
-# in_file='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/metasoft_output/metasoft_output.16.mcmc.txt'
-# fig_dir='../figures/hcasmc_specific_eqtl/Liver/'
-# out_file1='../processed_data/hcasmc_specific_eqtl/HCASMC/stat.chr16.txt'
-# out_file2='../processed_data/hcasmc_specific_eqtl/HCASMC/tissue_specific_eqtl.chr16.txt'
-# tissue='HCASMC'
+
 tissue_names_file='/srv/persistent/bliu2/HCASMC_eQTL/scripts/160603/collapsed_tissue_names.3.txt'
 tissue_names=fread(tissue_names_file,header=T)
 
@@ -32,8 +28,6 @@ metasoft=fread(in_file,skip=1)
 
 # remove the extra column (issue due to white space)
 metasoft[,V107:=NULL]
-# n_col=ncol(metasoft) 
-# metasoft=metasoft[,1:(n_col-1),with=F]
 
 
 # read tissue name (study name):
@@ -93,14 +87,14 @@ write.table(output1,file=out_file1,quote=F,sep='\t',row.names=F,col.names=F)
 
 # make PM plot:
 if (!dir.exists(fig_dir)) dir.create(fig_dir)
-# for (idx in tissue_specific_eqtl_idx){
-# 	to_plot=data.frame(mvalue=unlist(mvalue[idx,]),pvalue=-log10(unlist(pvalue[idx,])))
-# 	to_plot$tissue=rownames(to_plot)
-# 	to_plot_bak=to_plot
-# 	to_plot=merge(to_plot_bak,tissue_names,by.x='tissue',by.y='original')
-# 	p=ggplot(to_plot,aes(mvalue,pvalue,label=tissue,color=collapsed))+geom_point()+theme_bw()+xlab('M-value')+ylab('-log10(P-value)')+geom_vline(xintercept=0.9,color='red',linetype='dashed')+scale_color_discrete(guide=F)
-# 	save_plot(paste0(fig_dir,'/',rownames(mvalue[idx,]),'.pdf'),p)
-# }
+for (idx in tissue_specific_eqtl_idx){
+	to_plot=data.frame(mvalue=unlist(mvalue[idx,]),pvalue=-log10(unlist(pvalue[idx,])))
+	to_plot$tissue=rownames(to_plot)
+	to_plot_bak=to_plot
+	to_plot=merge(to_plot_bak,tissue_names,by.x='tissue',by.y='original')
+	p=ggplot(to_plot,aes(mvalue,pvalue,label=tissue,color=collapsed))+geom_point()+theme_bw()+xlab('M-value')+ylab('-log10(P-value)')+geom_vline(xintercept=0.9,color='red',linetype='dashed')+scale_color_discrete(guide=F)
+	save_plot(paste0(fig_dir,'/',rownames(mvalue[idx,]),'.pdf'),p)
+}
 
 # write hcasmc-specific eQTL to text file: 
 output2=as.data.frame(str_split_fixed(names(tissue_specific_eqtl_idx),"_",n=2))

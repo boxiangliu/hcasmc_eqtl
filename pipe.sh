@@ -2896,63 +2896,38 @@ Rscript $scripts/egenes_vs_sample_size/plot_num_egenes_subsampled_52.R
 
 #### end eGenes vs sample size
 
-#---------- HCASMC specific eQTLs -------------
+#---------- HCASMC specific eQTLs -------------#
 # setup:
-mkdir $scripts/hcasmc_specific_eqtl $processed_data/hcasmc_specific_eqtl $figures/hcasmc_specific_eqtl
-
-
-# plan: 
-touch $scripts/hcasmc_specific_eqtl/plan.sh
+mkdir hcasmc_specific_eqtl ../processed_data/hcasmc_specific_eqtl ../figures/hcasmc_specific_eqtl
 
 
 # find HCASMC specific eQTLs (full sample): 
-parallel -j5 Rscript $scripts/hcasmc_specific_eqtl/find_hcasmc_specific_eqtls.R \
-	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.txt \
-	../figures/hcasmc_specific_eqtl/ \
-	../processed_data/hcasmc_specific_eqtl/hcasmc_specific_eqtl.{}.txt ::: {1..22}
-cat ../processed_data/hcasmc_specific_eqtl/hcasmc_specific_eqtl.*.txt > ../processed_data/hcasmc_specific_eqtl/hcasmc_specific_eqtl.autosomes.txt
+parallel -j5 Rscript ../scripts/hcasmc_specific_eqtl/find_tissue_specific_eqtls.R ../processed_data/160805/metasoft_output/metasoft_output.{2}.mcmc.txt ../figures/hcasmc_specific_eqtl/fullsample/{1}/ ../processed_data/hcasmc_specific_eqtl/fullsample/{1}/stat.{2}.txt ../processed_data/hcasmc_specific_eqtl/fullsample/{1}/tissue_specific_eqtl.{2}.txt {1} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt ::: {1..22}
 
 
 # find tisue specific eQTLs (subsampled to 52):
-mkdir $processed_data/hcasmc_specific_eqtl2 $figures/hcasmc_specific_eqtl2
-parallel -j5 Rscript $scripts/hcasmc_specific_eqtl/find_tissue_specific_eqtls.R \
-	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160805/metasoft_output/metasoft_output.{2}.mcmc.txt \
-	../figures/hcasmc_specific_eqtl2/{1}/ \
-	../processed_data/hcasmc_specific_eqtl2/{1}/stat.{2}.txt \
-	../processed_data/hcasmc_specific_eqtl2/{1}/tissue_specific_eqtl.{2}.txt \
-	{1} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt ::: {1..22}
+parallel -j5 Rscript ../scripts/hcasmc_specific_eqtl/find_tissue_specific_eqtls.R ../processed_data/160805/metasoft_input_subsample_52/metasoft_output.{2}.mcmc.txt ../figures/hcasmc_specific_eqtl/subsample_52/{1}/ ../processed_data/hcasmc_specific_eqtl/subsample_52/{1}/stat.{2}.txt ../processed_data/hcasmc_specific_eqtl/subsample_52/{1}/tissue_specific_eqtl.{2}.txt {1} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt ::: {1..22}
+
+
+# Plot examples of HCASMC-specific eQTL:
+bash hcasmc_specific_eqtl/plot_examples_of_hcasmc_eqtl.sh
 
 
 # make manhattan plot: 
-Rscript $scripts/hcasmc_specific_eqtl/manhattan.R
+Rscript hcasmc_specific_eqtl/manhattan.R
 
 
-# make P-M plot for ACTA2: 
-grep "ENSG00000107796.8_10_90666952_C_T_b37" ../processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.10.mcmc.txt | \
-Rscript tarid/pm_plot.R ../figures/hcasmc_specific_eqtl2/acta2.size52.pmplot.pdf none
-
-# make P-M plot for IER3:
-grep "ENSG00000137331.11_6_30507577_A_AC_b37" ../processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.6.mcmc.txt | \
-Rscript tarid/pm_plot.R ../figures/hcasmc_specific_eqtl2/ier3.size52.pmplot.pdf none
+# Calculate eQTL specificity using information theory (fill NAs with 1e-8):
+cat ../processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python $scripts/hcasmc_specific_eqtl/calc_eqtl_specificity.py ../processed_data/hcasmc_specific_eqtl/eqtl_specificity_index/eqtl.1e-8.txt.gz ../processed_data/hcasmc_specific_eqtl/eqtl_specificity_index/specificity.1e-8.txt.gz 1e-8
 
 
-# make P-M plot for MT1B:
-grep "ENSG00000169688.10_16_56666848_G_A_b37" ../processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.16.mcmc.txt | \
-Rscript tarid/pm_plot.R ../figures/hcasmc_specific_eqtl2/mt1b.size52.pmplot.pdf none
+# Calculate eQTL specificity using information theory (fill NAs using mean imputation):
+cat ../processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python $scripts/hcasmc_specific_eqtl/calc_eqtl_specificity.py ../processed_data/hcasmc_specific_eqtl/eqtl_specificity_index/eqtl.mean.txt.gz ../processed_data/hcasmc_specific_eqtl/eqtl_specificity_index/specificity.mean.txt.gz -1
 
-
-# make P-M plot for KANSL1:
-grep "ENSG00000120071.8_17_43654468_C_T_b37" ../processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.17.mcmc.txt | \
-Rscript tarid/pm_plot.R ../figures/hcasmc_specific_eqtl2/kansl1.size52.pmplot.pdf none
-
-
-# make P-M plot for NUPR2:
-grep "ENSG00000185290.3_7_55803970_G_A_b37" ../processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.7.mcmc.txt | \
-Rscript tarid/pm_plot.R ../figures/hcasmc_specific_eqtl2/nupr2.size52.pmplot.pdf none
- 
 
 # select HCASMC specific eQTL based on QSI, and plot distribution of their p-values: 
 bash hcasmc_specific_eqtl/plot_hcasmc_specific_eqtls_pval.sh
+
 
 # naively select HCASMC specific eQTL: 
 cat ../processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python hcasmc_specific_eqtl/naive_select.py > ../processed_data/hcasmc_specific_eqtl/hcasmc_specific_eqtl.naive_select.txt
@@ -2962,12 +2937,9 @@ cat ../processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpa
 bash hcasmc_specific_eqtl/plot_hcasmc_specific_eqtls.sh 
 
 
-#### end HCASMC specific eQTLs
 
 
-
-#### ATACseq
-
+#------------- ATACseq --------------#
 # setup: 
 mkdir $scripts/atacseq $processed_data/atacseq $figures/atacseq
 mkdir -p  $data/atacseq/2305/fastq
@@ -3219,7 +3191,7 @@ bash compare_rasqual_and_fastqtl/subset.sh
 # Calculate the percentage of RASQUAL eQTL also discovered fastQTL: 
 bash compare_rasqual_and_fastqtl/compare.R
 
-# Bon
+
 
 #----------------- eQTL and ATACseq ----------# 
 # Setup: 
@@ -3234,14 +3206,9 @@ Rscript eqtl_and_atacseq/overlap_eqtl_and_atacseq.R
 Rscript eqtl_and_atacseq/overlap_hcasmc_specific_eqtl_and_atacseq.svalue.R # s-value model
 Rscript eqtl_and_atacseq/overlap_hcasmc_specific_eqtl_and_atacseq.entropy.R # entropy model
 
- 
-# Calculate eQTL specificity (fill NAs with 1e-8):
-# cat $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python $scripts/eqtl_and_atacseq/calc_eqtl_specificity.py ../processed_data/eqtl_and_atacseq/eqtl.txt.gz ../processed_data/eqtl_and_atacseq/specificity.txt.gz 1e-8
-cat $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python $scripts/eqtl_and_atacseq/calc_eqtl_specificity.py ../processed_data/eqtl_and_atacseq/eqtl.1e-8.txt.gz ../processed_data/eqtl_and_atacseq/specificity.1e-8.txt.gz 1e-8
 
-
-# Calculate eQTL specificity (fill NAs using mean imputation):
-cat $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python $scripts/eqtl_and_atacseq/calc_eqtl_specificity.py ../processed_data/eqtl_and_atacseq/eqtl.mean.txt.gz ../processed_data/eqtl_and_atacseq/specificity.mean.txt.gz -1
+# Link eQTL specificity score: 
+ln ../processed_data/hcasmc_specific_eqtl/eqtl_specificity_index/* ../processed_data/eqtl_and_atacseq/
 
 
 # Calculate eQTL and ATACseq overlap stratified by specificity: 
@@ -3479,6 +3446,9 @@ Rscript hcasmc_specific_open_chromatin/intersect_specificity_and_peaks.R
 
 # Take the minimum specificity index of each peak: 
 Rscript hcasmc_specific_open_chromatin/get_min_index.R
+
+
+# Assign peak specificity score to raw peaks:
 
 
 # Plot the distribution of number of tissues sharing each peak in HCASMC:
