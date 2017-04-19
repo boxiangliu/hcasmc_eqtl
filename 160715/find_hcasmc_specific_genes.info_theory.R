@@ -141,7 +141,9 @@ coldata=coldata[match(colnames(rpkm),coldata$sample)]
 
 # Calculate median of each tissue and each gene:
 tissue_median=median2(rpkm,coldata)
+fwrite('../')
 rownames(tissue_median)=rowdata$Name
+tissue_rank=apply(tissue_median,2,rank)
 
 
 # Calculate ESI:
