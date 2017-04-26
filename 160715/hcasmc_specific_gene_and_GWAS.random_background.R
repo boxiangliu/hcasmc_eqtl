@@ -4,6 +4,11 @@ library(dplyr)
 library(stringr)
 library(cowplot)
 
+
+# Variables: 
+fig_dir='../figures/160715/hcasmc_specific_gene_and_GWAS.random_background/'
+if (!dir.exists(fig_dir)) {dir.create(fig_dir)}
+
 # Function:
 reformat=function(x){
 	if (class(x$CHR_POS)!='numeric') {x[,CHR_POS:=as.integer(CHR_POS)]}
@@ -229,18 +234,36 @@ esi=fread('../processed_data/160715/esi.hcasmc.txt')
 esi=merge(esi,annotation,by='gene_id')
 
 
+# Read expression ranks:
+expression_rank=read.table('../processed_data/160715/expression_median_and_rank/rank.tsv',header=T,row.names=1,sep='\t',check.names=F)
+tissue='HCASMC'
+
+
 # For each variants, pick genes in 1Mb window: 
 var=data.table(snpID=names(background_ls[1]),status='gwas')
 var=rbind(var,data.table(snpID=background_ls[[1]][,snpID],status='background'))
 var[,chr:=str_split_fixed(snpID,":",2)[,1]]
 var[,pos:=as.integer(str_split_fixed(snpID,":",2)[,2])]
-window=1e6
-var[,c('start','end'):=list(pos-window,pos+window)]
-setkey(var,chr,start,end)
-setkey(esi,chr,start,end)
-overlap=foverlaps(var,esi,nomatch=0)
-max=overlap[,list(esi=max(esi)),by=c('chr','pos','status')]
-pdf('1.pdf')
-hist(max$esi,breaks=100)
-abline(v=max[status=='gwas',esi],col='red') 
+
+pdf(sprintf('%s/max_rank.pdf',fig_dir))
+window=c(1e4,1e5,1e6)
+for (w in window){
+	var[,c('start','end'):=list(pos-w,pos+w)]
+	setkey(var,chr,start,end)
+	setkey(annotation,chr,start,end)
+	overlap=foverlaps(var,annotation,nomatch=0)
+
+	container=list()
+	for (v in unique(overlap$snpID)){
+		print(sprintf('INFO - %s',v))
+		gene_id=overlap[snpID==v,gene_id]
+		status=unique(overlap[snpID==v,status])
+		tmp=max(expression_rank[which(rownames(expression_rank)%in%gene_id),tissue])
+		container[[v]]=data.frame(rank=tmp,snpID=v,status)
+	}
+
+	x=Reduce(rbind,container)
+	print(ggplot(x,aes(snpID,rank,color=status))+geom_point()+ggtitle(w))
+}
 dev.off()
+

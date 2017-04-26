@@ -78,9 +78,10 @@ coldata=coldata[match(colnames(rpkm),coldata$sample)]
 tissue_median=median2(rpkm,coldata)
 rownames(tissue_median)=rowdata$Name
 tissue_rank=apply(tissue_median,2,rank)
-tissue_rank=data.table(tissue_rank)
+tissue_rank=data.frame(tissue_rank)
+colnames(tissue_rank)=colnames(tissue_median)
 
 
 # Output: 
-fwrite(tissue_median,sprintf('%s/median.tsv',out_dir),sep='\t')
-fwrite(tissue_rank,sprintf('%s/rank.tsv',out_dir),sep='\t')
+write.table(tissue_median,sprintf('%s/median.tsv',out_dir),sep='\t',row.names=T,quote=F)
+write.table(tissue_rank,sprintf('%s/rank.tsv',out_dir),sep='\t',row.names=T,quote=F)

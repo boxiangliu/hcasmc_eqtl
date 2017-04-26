@@ -2981,11 +2981,12 @@ bash atacseq/run_fbs.sh
 #### end ATACseq
 
 
-#### GWAS ATACseq overlap:
+#------------ GWAS ATACseq overlap -------------#
 # setup: 
 mkdir $scripts/gwas_atacseq_overlap $processed_data/gwas_atacseq_overlap $figures/gwas_atacseq_overlap
 
 
+# Method 1: Native overlap
 # plan: 
 touch $scripts/gwas_atacseq_overlap/plan.sh
 
@@ -2994,10 +2995,17 @@ touch $scripts/gwas_atacseq_overlap/plan.sh
 Rscript $scripts/gwas_atacseq_overlap/overlap.gwas_thresholding.R # ../figures/gwas_atacseq_overlap/gwas_atacseq_overlap.unique.pdf
 
 
-#### end GWAS enrichment in ATACseq and DNAse-Seq 
+# Method 2: GREGOR
+# Preprocessing: 
+Rscript gwas_atacseq_overlap/gregor/LD_proxy.R 
+Rscript gwas_atacseq_overlap/gregor/merge_peaks.R
+
+# Perform overlap and calculate enrichment statistics: 
+Rscript gwas_atacseq_overlap/gregor/overlap_enrichment.R
 
 
-#### GWAS eQTL overlap: 
+
+#------------ GWAS eQTL overlap ---------------#
 mkdir gwas_eqtl_overlap ../processed_data/gwas_eqtl_overlap ../figures/gwas_eqtl_overlap
 
 
