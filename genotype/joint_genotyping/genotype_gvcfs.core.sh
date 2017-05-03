@@ -7,7 +7,6 @@
 # command args:
 chrom=$1
 
-
 # paths: 
 GATK=/usr/bin/GenomeAnalysisTK.jar
 HG19=/srv/persistent/bliu2/shared/ucsc_hg19/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa

@@ -121,14 +121,14 @@ system(sprintf('grep EUR ../../shared/1000genomes/phase3v5a/integrated_call_samp
 
 
 # Prepare VCF files: 
-# for (c in 1:22){
-# 	# Subset to EUR samples, change rs ID to chr:pos, and remove variants with duplicate genomic positions:
-# 	print(sprintf('INFO - chr%s',c))
-# 	print('INFO - preparing VCF...')
-# 	vcf_out_fn=sprintf('%s/chr%s.vcf.gz',tmp_dir,c)
-# 	command=sprintf("../../tools/bcftools/bcftools view -S %s ../../shared/1000genomes/phase3v5a/ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz -Ou | ../../tools/bcftools/bcftools annotate --set-id '%%CHROM:%%POS' -Ou | ../../tools/bcftools/bcftools norm -d 'any' -Oz > %s",eur_sample_fn,c,vcf_out_fn)
-# 	system(command)
-# }
+for (c in 1:22){
+	# Subset to EUR samples, change rs ID to chr:pos, and remove variants with duplicate genomic positions:
+	print(sprintf('INFO - chr%s',c))
+	print('INFO - preparing VCF...')
+	vcf_out_fn=sprintf('%s/chr%s.vcf.gz',tmp_dir,c)
+	command=sprintf("../../tools/bcftools/bcftools view -S %s ../../shared/1000genomes/phase3v5a/ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz -Ou | ../../tools/bcftools/bcftools annotate --set-id '%%CHROM:%%POS' -Ou | ../../tools/bcftools/bcftools norm -d 'any' -Oz > %s",eur_sample_fn,c,vcf_out_fn)
+	system(command)
+}
 
 
 # Calculate LD r2:
@@ -140,6 +140,7 @@ foreach(c=1:22)%dopar%{
 }
 command=sprintf('cat %s/ld0.7.chr*.ld | grep -v "CHR_A" > %s/ld0.7.all_chr.ld',tmp_dir,tmp_dir)
 system(command)
+
 
 # Get Create LD snp set:
 print('INFO - creating LD snp set...')
@@ -171,66 +172,3 @@ stopifnot(length(unique(ld_set$gwas_index))==65)
 stopifnot(ld_set[ld_proxy==FALSE,all(snpID==loci_index)])
 stopifnot(ld_set[ld_proxy==TRUE,all(snpID!=loci_index)])
 fwrite(ld_set,sprintf('%s/ld_set.tsv',tmp_dir),sep='\t')
-
-
-# Read HCASMC narrow peak: 
-atac=fread('../data/atacseq/fbs/2305/out/peak/idr/optimal_set/2305_ppr.IDR0.1.filt.narrowPeak',col.names=c('chr','start','end','name','score','strand','signalValue','pValue','qValue','peak'))
-atac=atac[chr%in%paste0('chr',1:22)]
-setkey(atac,chr,start,end)
-
-# Intermediate statistics: 
-ld_set[,c('start','end'):=list(pos,pos)]
-ld_set[,id:=1:nrow(ld_set)]
-setkey(ld_set,chr,start,end)
-overlap=unique(foverlaps(ld_set,atac[,list(chr,start,end)]))
-stopifnot(nrow(overlap)==nrow(ld_set))
-
-overlap[,c('i.start','i.end'):=NULL]
-overlap[,snp_overlap:=!is.na(start)]
-overlap[,loci_overlap:=any(snp_overlap),by='loci_index']
-overlap=overlap[ld_proxy==FALSE,]
-overlap[,p:=mean(loci_overlap),by='gwas_index']
-
-
-# Calculate enrichment p-value:
-p=overlap[,list(p=unique(p)),by='gwas_index']
-n=rep(1,length(p$p))
-p_non_identical_binom(n,p$p,s)
-
-
-# 
-in_dir='../processed_data/gwas_atacseq_overlap/encode_plus_hcasmc_filt/'
-dhs_fns=list.files(in_dir,full.names=F)
-pval=data.frame(matrix(NA,nrow=length(dhs_fns),ncol=2))
-colnames(pval)=c('sample','pval')
-for (i in 1:length(dhs_fns)){
-	fn=dhs_fns[i]
-	sample=str_replace(fn,'.bed','')
-	print(sprintf('INFO - %s',sample))
-	dhs=fread(sprintf('%s/%s',in_dir,fn),col.names=c('chr','start','end','signal'))
-	dhs=dhs[chr%in%paste0('chr',1:22)]
-	setkey(dhs,chr,start,end)
-
-	# Intermediate statistics: 
-	overlap=unique(foverlaps(ld_set,dhs[,list(chr,start,end)]))
-	stopifnot(nrow(overlap)==nrow(ld_set))
-
-	overlap[,c('i.start','i.end'):=NULL]
-	overlap[,snp_overlap:=!is.na(start)]
-	overlap[,loci_overlap:=any(snp_overlap),by='loci_index']
-	overlap=overlap[ld_proxy==FALSE,]
-	overlap[,p:=mean(loci_overlap),by='gwas_index']
-
-
-	# Calculate enrichment p-value:
-	p=overlap[,list(p=unique(p)),by='gwas_index']
-	n_exp=100000
-	n_gwas_index=nrow(p)
-	set.seed(42)
-	exp=matrix(rbinom(n_exp*n_gwas_index,1,p$p),nrow=n_gwas_index,ncol=n_exp)
-	S_sum=colSums(exp)
-	s=sum(overlap[gwas_index==snpID,loci_overlap])
-	pval[i,'pval']=sum(S_sum>=s)/length(S_sum)
-	pval[i,'sample']=sample
-}
-setorder(pval,pval)

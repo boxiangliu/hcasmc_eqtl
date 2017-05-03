@@ -43,12 +43,6 @@ bds ~/atac_dnase_pipelines/atac.bds -species hg19 -nth 12 \
  -fastq1_1 ~/atac_hcasmc/fbs/fastq/CA2356_S7_concat_R1_001.fastq.gz -fastq1_2 ~/atac_hcasmc/fbs/fastq/CA2356_S7_concat_R2_001.fastq.gz
 
 
-# fbs/2463:
-bds ~/atac_dnase_pipelines/atac.bds -species hg19 -nth 12 \
- -title 2463 -out_dir ~/atac_hcasmc/fbs/2463/out/ \
- -fastq1_1 ~/atac_hcasmc/fbs/fastq/CA2463_S6_concat_R1_001.fastq.gz -fastq1_2 ~/atac_hcasmc/fbs/fastq/CA2463_S6_concat_R2_001.fastq.gz
-
-
 # fbs/2510: 
 bds ~/atac_dnase_pipelines/atac.bds -species hg19 -nth 12 \
  -title 2510 -out_dir ~/atac_hcasmc/fbs/2510/out/ \
@@ -59,3 +53,10 @@ bds ~/atac_dnase_pipelines/atac.bds -species hg19 -nth 12 \
 bds ~/atac_dnase_pipelines/atac.bds -species hg19 -nth 12 \
  -title 2989 -out_dir ~/atac_hcasmc/fbs/2989/out/ \
  -fastq1_1 ~/atac_hcasmc/fbs/fastq/CA2989_S7_concat_R1_001.fastq.gz -fastq1_2 ~/atac_hcasmc/fbs/fastq/CA2989_S7_concat_R2_001.fastq.gz
+
+
+# fbs/020805:
+bds ~/atac_dnase_pipelines/atac.bds -species hg19 -nth 12 \
+ -title 020805 -out_dir ~/atac_hcasmc/fbs/020805/out/ \
+ -fastq1_1 ~/atac_hcasmc/fbs/fastq/020805.2_L1_TAAGGCGA_L001_R1.fastq.gz -fastq1_2 ~/atac_hcasmc/fbs/fastq/020805.2_L1_TAAGGCGA_L001_R2.fastq.gz
+

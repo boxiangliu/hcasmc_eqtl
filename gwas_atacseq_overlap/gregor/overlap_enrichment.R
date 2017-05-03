@@ -3,6 +3,16 @@ library(stringr)
 library(cowplot)
 library(gridExtra)
 
+# Variables: 
+in_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks/'
+in_dir_adult='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult/'
+in_dir_adult_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult_filt/'
+in_dir_2007_2012='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_2007_2012/'
+fig_dir='../figures/gwas_atacseq_overlap/gregor/overlap_enrichment/'
+out_dir='../processed_data/gwas_atacseq_overlap/gregor/overlap_enrichment/'
+if (!dir.exists(fig_dir)) {dir.create(fig_dir,recursive=TRUE)}
+if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
+
 # Functions: 
 p_non_identical_binom=function(n,p,s){
 	# using saddle point approximation from Te Grotenhuis 2013
@@ -87,19 +97,13 @@ p_non_identical_binom=function(n,p,s){
 	return(list(u_hat=u_hat,p4=p4_))
 }
 
-# Variables: 
-in_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks/'
-in_dir_adult='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult/'
-fig_dir='../figures/gwas_atacseq_overlap/gregor/overlap_enrichment/'
-if (!dir.exists(fig_dir)) {dir.create(fig_dir,recursive=TRUE)}
-
 # Read GWAS and matched background SNPs (and LD SNPs):
 ld_set=fread('../processed_data/gwas_atacseq_overlap/tmp/ld_set.tsv')
 ld_set[,c('start','end'):=list(pos,pos)]
 setkey(ld_set,chr,start,end)
 
 
-# Calculate enrichment statistics for each tissue/cell line: 
+# Calculate enrichment statistics for all tissue/cell line: 
 fn=list.files(in_dir,pattern='bed')
 pval=c()
 tissue=c()
@@ -136,12 +140,8 @@ for (f in fn){
 pval=data.table(tissue,pval)
 setorder(pval,pval)
 pdf(sprintf('%s/gregor_pval_all_life_stages.pdf',fig_dir));grid.table(head(pval,20));dev.off()
-metadata[`Biosample term name`=='limb',list(`File accession`, `Biosample term name`,`Biosample life stage`)]
-metadata[`Biosample term name`=='eye',list(`File accession`,`Biosample term name`,`Biosample life stage`)]
-metadata[`Biosample term name`=='placenta',list(`File accession`,`Biosample term name`,`Biosample life stage`)]
-metadata[`Biosample term name`=='B cell',list(`File accession`,`Biosample term name`,`Biosample life stage`)]
-metadata[`Biosample term name`=='fibroblast of arm',list(`File accession`,`Biosample term name`,`Biosample life stage`)]
-metadata[`Biosample term name`=='T-helper 1 cell',list(`File accession`,`Biosample term name`,`Biosample life stage`)]
+fwrite(pval,sprintf('%s/gregor_pval_all_life_stages.tsv',out_dir),sep='\t')
+
 
 # Plot correlation between p-value and life stage:
 metadata=fread('../data/encode/dnase_seq/metadata.tsv')
@@ -163,7 +163,7 @@ for (f in fn){
 	sample=str_replace(f,'.merged.bed','')
 	tissue=c(tissue,sample)
 	print(sprintf('INFO - %s',sample))
-	dhs=fread(sprintf('%s/%s',in_dir,f))
+	dhs=fread(sprintf('%s/%s',in_dir_adult,f))
 	setkey(dhs,chr,start,end)
 
 
@@ -191,6 +191,120 @@ for (f in fn){
 }
 pval=data.table(tissue,pval)
 setorder(pval,pval)
-pdf(sprintf('%s/gregor_pval_adult.pdf',fig_dir));grid.table(pval);dev.off()
+pdf(sprintf('%s/gregor_pval_adult.pdf',fig_dir));grid.table(head(pval,20));dev.off()
+fwrite(pval,sprintf('%s/gregor_pval_adult.tsv',out_dir),sep='\t')
 
-# 
+# Calculate enrichment statistics for only adult tissue/cell line (and remove AUDIT ERROR samples): 
+fn=list.files(in_dir_adult_filt,pattern='bed')
+pval=c()
+tissue=c()
+for (f in fn){
+	sample=str_replace(f,'.merged.bed','')
+	tissue=c(tissue,sample)
+	print(sprintf('INFO - %s',sample))
+	dhs=fread(sprintf('%s/%s',in_dir_adult_filt,f))
+	setkey(dhs,chr,start,end)
+
+
+	# Overlap: 
+	overlap=unique(foverlaps(ld_set,dhs[,list(chr,start,end)]))
+	overlap[,c('i.start','i.end'):=NULL]
+
+
+	overlap[,snp_overlap:=!is.na(start)]
+	overlap[,loci_overlap:=any(snp_overlap),by='loci_index']
+	overlap[,c('start','end'):=NULL]
+	overlap=unique(overlap)
+	stopifnot(nrow(overlap)==nrow(ld_set))
+
+
+	overlap=overlap[ld_proxy==FALSE,]
+	overlap[,p:=mean(loci_overlap),by='gwas_index']
+
+
+	# Calculate enrichment p-value:
+	p=overlap[,list(p=unique(p)),by='gwas_index']
+	n=rep(1,length(p$p))
+	s=sum(overlap[snpID==gwas_index,loci_overlap])
+	pval=c(pval,p_non_identical_binom(n,p$p,s)$p4)
+}
+pval=data.table(tissue,pval)
+setorder(pval,pval)
+pdf(sprintf('%s/gregor_pval_adult_filt.pdf',fig_dir));grid.table(head(pval,20));dev.off()
+fwrite(pval,sprintf('%s/gregor_pval_adult_filt.tsv',out_dir),sep='\t')
+
+
+# Calculate enrichment statistics for uniformly processed cell lines from 2007-2012
+fn=list.files(in_dir_2007_2012,pattern='bed')
+pval=c()
+tissue=c()
+for (f in fn){
+	sample=str_replace(f,'.merged.bed','')
+	tissue=c(tissue,sample)
+	print(sprintf('INFO - %s',sample))
+	dhs=fread(sprintf('%s/%s',in_dir_2007_2012,f))
+	setkey(dhs,chr,start,end)
+
+
+	# Overlap: 
+	overlap=unique(foverlaps(ld_set,dhs[,list(chr,start,end)]))
+	overlap[,c('i.start','i.end'):=NULL]
+
+
+	overlap[,snp_overlap:=!is.na(start)]
+	overlap[,loci_overlap:=any(snp_overlap),by='loci_index']
+	overlap[,c('start','end'):=NULL]
+	overlap=unique(overlap)
+	stopifnot(nrow(overlap)==nrow(ld_set))
+
+
+	overlap=overlap[ld_proxy==FALSE,]
+	overlap[,p:=mean(loci_overlap),by='gwas_index']
+
+
+	# Calculate enrichment p-value:
+	p=overlap[,list(p=unique(p)),by='gwas_index']
+	n=rep(1,length(p$p))
+	s=sum(overlap[snpID==gwas_index,loci_overlap])
+	pval=c(pval,p_non_identical_binom(n,p$p,s)$p4)
+}
+pval=data.table(tissue,pval)
+setorder(pval,pval)
+pdf(sprintf('%s/gregor_pval_2007_2012.pdf',fig_dir));grid.table(head(pval,20));dev.off()
+fwrite(pval,sprintf('%s/gregor_pval_2007_2012.tsv',out_dir),sep='\t')
+
+
+# Count the number of SNPs falling into each tissue/cell line:
+fn=list.files(in_dir_adult_filt,pattern='bed')
+n_overlap=c()
+tissue=c()
+gwas_set=ld_set[snpID==gwas_index]
+setkey(gwas_set,chr,start,end)
+for (f in fn){
+	sample=str_replace(f,'.merged.bed','')
+	tissue=c(tissue,sample)
+	print(sprintf('INFO - %s',sample))
+	dhs=fread(sprintf('%s/%s',in_dir_adult_filt,f))
+	setkey(dhs,chr,start,end)
+
+
+	# Overlap: 
+	overlap=unique(foverlaps(gwas_set,dhs[,list(chr,start,end)]))
+	overlap[,c('i.start','i.end'):=NULL]
+
+
+	overlap[,snp_overlap:=!is.na(start)]
+	overlap[,loci_overlap:=any(snp_overlap),by='loci_index']
+	overlap[,c('start','end'):=NULL]
+	overlap=unique(overlap)
+	stopifnot(nrow(overlap)==nrow(gwas_set))
+
+
+	overlap=overlap[ld_proxy==FALSE,]
+	n_overlap=c(n_overlap,unlist(overlap[,list(n=sum(loci_overlap))]))
+}
+
+n_overlap=data.table(tissue,n_overlap)
+setorder(n_overlap,-n_overlap)
+pdf(sprintf('%s/gregor_num_overlap_adult_filt.pdf',fig_dir));grid.table(head(n_overlap,20));dev.off()
+fwrite(n_overlap,sprintf('%s/gregor_num_overlap_adult_filt.tsv',out_dir),sep='\t')
