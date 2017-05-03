@@ -9,7 +9,7 @@ ethnicity=$2 # should be one of EUR, AFR, EAS, AMR or SAS.
 
 
 # paths: 
-processed_data=../processed_data/160526/detect_sample_contamination_model_based/
+processed_data=../processed_data/genotype/quality_control/detect_WGS_contamination/
 
 
 # overwrite 1000G VCF AF field with ${ethnicity}_AF:

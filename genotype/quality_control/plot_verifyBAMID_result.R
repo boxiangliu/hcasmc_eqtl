@@ -9,8 +9,8 @@ library(cowplot)
 library(data.table)
 
 # paths: 
-input_file='../processed_data/160526/detect_WGS_contamination/verifyBAMID.combined.tsv'
-figure_path='../figures/160526/detect_WGS_contamination/'
+input_file='../processed_data/genotype/quality_control/detect_WGS_contamination/verifyBAMID.combined.tsv'
+figure_path='../figures/genotype/quality_control/detect_WGS_contamination/'
 
 # read input:
 input=fread(input_file,header=F)

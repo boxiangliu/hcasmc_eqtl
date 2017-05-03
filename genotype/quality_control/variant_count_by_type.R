@@ -11,8 +11,8 @@ library(cowplot)
 
 
 # paths:
-input_file='../processed_data/160514_variant_count_by_type/count.txt'
-figure_path='../figures/160514_variant_count_by_type/'
+input_file='../processed_data/genotype/quality_control/count.txt'
+figure_path='../figures/genotype/quality_control/variant_count_by_type/'
 
 # read input:
 input=fread(input_file,header=F)

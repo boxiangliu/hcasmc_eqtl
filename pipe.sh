@@ -1,3 +1,6 @@
+# Author: Boxiang Liu
+# Contact: jollier.liu@gmail.com
+
 HG19 = /srv/persistent/bliu2/shared/ucsc_hg19/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa
 GATK =  /usr/bin/GenomeAnalysisTK.jar
 GRCh37 = /srv/persistent/bliu2/shared/genomes/GRCh37/hs37d5.fa
@@ -5,7 +8,7 @@ SHARED = /srv/persistent/bliu2/shared/
 
 #--------- genotypes -------------#
 # Setup: 
-mkdir genotype
+mkdir genotype ../figures/genotype
 
 # Prepare data: 
 bash genotype/preprocessing/copy_WGS_HCASMC_from_valk.sh
@@ -21,451 +24,63 @@ bash genotype/joint_genotyping/genotype_gvcfs.sh
 bash genotype/joint_genotyping/recalibrate_SNP.sh raw_variants.vcf
 bash genotype/joint_genotyping/recalibrate_INDEL.sh recalibrated_snps_raw_indels.vcf
 bash genotype/joint_genotyping/recalibrate_cleanup.sh 
-
-	
-# plot sensitivity vs minVOSLod score: 
-mkdir ../figures/160513_plot_sensitivity/
-subl plot_sensitivity.R
-Rscript plot_sensitivity.R
-# conclusion: seems like 98% sensitivity (elbow) is a good cutoff. 
+Rscript genotype/joint_genotyping/plot_sensitivity.R # seems like 98% sensitivity (elbow) is a good cutoff. 
+bash genotype/joint_genotyping/filter_variants.sh
+bash genotype/joint_genotyping/biallelic_snp.sh
+bash genotype/joint_genotyping/rename_chr.sh
 
 
-
-# 5:53pm
-# BEAGLE genotype refinement sample code: 
-wget https://faculty.washington.edu/browning/beagle/run.beagle.03May16.862.example 
-mv run.beagle.03May16.862.example beagle_example.sh
-subl beagle_example.sh
-
-# 10:50pm
-# testing the beagle's conform-gt module:
-# I flipped the alleles of rs138720731, and conform-gt successfully flipped back
-# I also flipped the strand of rs73387790, and conform-gt reports OPPOSITE_STRAND
-# For alleles not in the reference panel, conform-gt reports REMOVED and NOT_IN_REFERENCE
-# Note that conform-gt reports FAIL for some correct SNPs likely because 
-# the evidence for correct strand is inconclusive. 
-# Since conform-gt incorrectly removes these "FAILED" variants, I need to construct vcf manually
+# Quality control:
+bash genotype/quality_control/vcf_stats.sh
+grep "^SN" ../processed_data/genotype/quality_control/stats.txt | awk 'BEGIN {FS="\t"} {print $0}' > ../processed_data/genotype/quality_control/count.txt
+Rscript genotype/quality_control/variant_count_by_type.R
 
 
-# 11:16pm 
-# download the beagle reference file: 
-mkdir /srv/persistent/bliu2/tools/beagle/reference
-cd /srv/persistent/bliu2/tools/beagle/reference
-for i in $(seq 1 22) X; do
-echo $i
-wget http://bochet.gcc.biostat.washington.edu/beagle/1000_Genomes_phase3_v5a/individual_chromosomes/chr$i.1kg.phase3.v5a.bref
-wget http://bochet.gcc.biostat.washington.edu/beagle/1000_Genomes_phase3_v5a/individual_chromosomes/chr$i.1kg.phase3.v5a.vcf.gz
-wget http://bochet.gcc.biostat.washington.edu/beagle/1000_Genomes_phase3_v5a/individual_chromosomes/chr$i.1kg.phase3.v5a.vcf.gz.tbi
-done 
-
-# download the genetic map: 
-wget http://bochet.gcc.biostat.washington.edu/beagle/genetic_maps/plink.GRCh37.map.zip
-
-# download panel file:
-wget http://bochet.gcc.biostat.washington.edu/beagle/1000_Genomes_phase3_v5a/integrated_call_samples_v3.20130502.ALL.panel 
+# Phasing and imputation: 
+bash genotype/phasing/download.sh
 
 
-# 11:21pm
-# read the BEAGLE genotype imputation paper (AJHJ 2016)
-# takeaway is beagle, impute2 and minimac3 have similar accuracy but 
-# beagle is faster
+# Impute with BEAGLE without reference panels:
+bash genotype/phasing/beagle_no_ref.sh
 
 
-# 2016/05/12
-# 9:38am
-# remap dASE samples using Milo's pipeline, making sure STAR versions are the same. 
-# download STAR 2.4.0j:
-cd /srv/persistent/bliu2/tools/
-wget https://github.com/alexdobin/STAR/archive/STAR_2.4.0j.tar.gz
-tar -xzf STAR_2.4.0j.tar.gz
-
-# Milos will help map the dASE samples on valkyr: 
-mkdir /home/diskstation/RNAseq/dase
-screen -S transfer_to_valk
-rsync -vzh /srv/persistent/bliu2/dase/data/RNAseq_HCASMC/fastq/*.fastq.gz bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase
-
-# Merge fastq files for CA2305:
-screen -S merge_fastq
-cd /srv/persistent/bliu2/dase/data/RNAseq_CA2305_NextSeq_20150512/fastq
-for file in FBS2_S4 FBS4_S5 FBS6_S6 SF4_S1 SF5_S2 SF6_S3; do 
-	for read in R1 R2; do 
-	echo sample: $file
-	echo reads: $read 
-	zcat ${file}_L00{1,2,3,4}_${read}_001.fastq.gz | gzip > ${file}_merged_${read}_001.fastq.gz &
-	done 
-done 
-# Transfer to valk:
-rsync -vzh /srv/persistent/bliu2/dase/data/RNAseq_CA2305_NextSeq_20150512/fastq/*merged*.fastq.gz bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase
+# Post imputation quality control:
+zgrep -v "^#" ../data/joint2/recalibrated_biallelic_SNP.beagle.vcf.gz | awk 'BEGIN {FS="\t|;|="; OFS="\t"; print "CHROM","POS","AR2","DR2","AF"} {print $1,$2,$9,$11,$13}' >  ../processed_data/genotype/phasing/beagle_QC/recalibrated_biallelic_SNP.r2.tsv
+bash genotype/phasing/beagle_QC.R -input=../processed_data/genotype/phasing/beagle_QC/recalibrated_biallelic_SNP.r2.tsv -figure_dir=../figures/160515_beagle_QC/
+bash genotype/phasing/update_sample_names.sh
+Rscript genotype/quality_control/gen_sample_sheet_each_ethnicity.R # output Caucasian.txt, Asian.txt, AA.txt, Hispanic.txt
+bash genotype/quality_control/run_detect_WGS_contamination.sh
 
 
-# 12:36pm 
-# Checked Milo's STAR mapping parameters. He used
-# --sjdbOverhang 100 but the mate length is 125bp. 
-# This is okay. As long as sjdbOverhang > seedSearchStartLmax (default 50bps), 
-# STAR is able to map the seed.
-
-
-
-
-# 5:30pm 
-# read STAR aligner paper by Alex Dobin, added to hcasmc binder
-
-
-
-
-
-# 4:57pm
-# checking possible sample contamination
-mkdir ../processed_data/160513_contamination
-verifyBamID --vcf /srv/persistent/bliu2/shared/1000genomes/phase3v5a/ALL.chr20.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz --bam /mnt/data/WGS_HCASMC/1020301/recal_reads.bam --chip-none --precise --verbose --minAF 0 --minCallRate 0 --out ../processed_data/160513_contamination/chr22
-zcat ../processed_data/dna_contamination/chr20.AF.EUR.2.vcf.gz | head -n10000 > ../processed_data/160513_contamination/chr20.AF.EUR.2.head10000.vcf
-verifyBamID --vcf ../processed_data/160513_contamination/chr20.AF.EUR.2.head10000.vcf --bam /mnt/data/WGS_HCASMC/1020301/recal_reads.bam --chip-none --precise --verbose --minAF 0 --minCallRate 0 --out ../processed_data/160513_contamination/chr22
-# subset bam to chr20
-samtools view -h /mnt/data/WGS_HCASMC/1020301/recal_reads.bam chr20:1-100000 | sed 's/chr20/20/' | samtools view -h -b -o ../processed_data/160513_contamination/recal_reads.chr20.bam -
-samtools index ../processed_data/160513_contamination/recal_reads.chr20.bam
-zcat /srv/persistent/bliu2/shared/1000genomes/phase3v5a/ALL.chr20.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz | head -n10000 > ../processed_data/160513_contamination/chr20.vcf
-verifyBamID --vcf ../processed_data/160513_contamination/chr20.vcf --bam ../processed_data/160513_contamination/recal_reads.chr20.bam --chip-none --precise --verbose --minAF 0 --minCallRate 0 --out ../processed_data/160513_contamination/chr22
-# I decided not to finish this analysis because of the following difficulties
-# 1) for admixed samples, MAF cannot be obtained from 1000 genome
-# 2) called genotypes may be incorrect
-
-
-# 6:26pm 
-# What is considered SNP by bcftools? 
-for type in snps indels mnps other;do
-bcftools view -Ov -o /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/by_chrom/raw_variants.chr20.$type.vcf --types $type /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/by_chrom/raw_variants.chr20.vcf &
-done
-# other means the following for example: 
-# chr20   83252   rs6137896       G       C,<*:DEL>
-
-
-# 2016/05/14:
-# 4:46pm
-# filter out variant that failed the filters:
-screen -S filter_variants
-wd=../data/joint2/
-bcftools view -Ov -o $wd/recalibrated_variants.pass.vcf -f PASS $wd/recalibrated_variants.vcf
-
-
-# calculate Ti/Tv ratio:
-mkdir ../processed_data/160514_Ts_Tv_ratio
-bcftools stats $wd/recalibrated_variants.pass.vcf > ../processed_data/160514_Ts_Tv_ratio/stats.txt
-plot-vcfstats --no-PDF -p ../processed_data/160514_Ts_Tv_ratio/stats ../processed_data/160514_Ts_Tv_ratio/stats.txt
-
-
-# what proportion of variants are biallelic SNPs: 
-screen -S count_variant_by_type
-mkdir ../processed_data/160514_variant_count_by_type
-mkdir ../figures/160514_variant_count_by_type
-cat ../processed_data/160514_Ts_Tv_ratio/stats.txt | grep "^SN" | awk 'BEGIN {FS="\t"} {print $0}' > ../processed_data/160514_variant_count_by_type/count.txt
-subl 160514_plot_variant_count_by_type.R
-
-
-# filter for biallelic snps:
-screen -S filter_biallelic_SNP
-bcftools view -m2 -M2 -v snps -Ov -o $wd/recalibrated_biallelic_SNP.pass.vcf $wd/recalibrated_variants.pass.vcf 
-
-
-# 7:00pm
-# impute with BEAGLE without reference panels:
-screen -S beagle_no_ref
-wd=../data/joint2/
-java=/srv/persistent/bliu2/tools/jre1.8.0_91/bin/java
-beagle=/srv/persistent/bliu2/tools/beagle/beagle.03May16.862.jar
-for i in $(seq 1 22);do
-$java -Xmx4096m -jar $beagle nthreads=2 chrom=chr$i gl=$wd/recalibrated_biallelic_SNP.pass.vcf out=$wd/recalibrated_biallelic_SNP.beagle.chr$i &
-done
-# index each vcf:
-for i in $(seq 1 22); do
-tabix -p vcf recalibrated_biallelic_SNP.beagle.chr$i.vcf.gz
-done 
-# concatenate all chromosomes:
-bcftools concat -Ov -o recalibrated_biallelic_SNP.beagle.vcf recalibrated_biallelic_SNP.beagle.chr{1..22}.vcf.gz
-# I made sure the beagle output is complete by comparing the CHROM and POS fields of 
-# recalibrated_biallelic_SNP.beagle.vcf and recalibrated_biallelic_SNP.pass.vcf
-# move beagle intermediate files to folder: 
-mkdir beagle_no_ref
-mv recalibrated_biallelic_SNP.beagle.chr* beagle_no_ref
-
-
-# 2016/05/15:
-# change chromosome names from "chr*" to "*":
-wd=../data/joint2/
-for i in $(seq 1 22) X Y M; do 
-if [[ $i=="M" ]]; then 
-	echo "chrM MT" >> $wd/hg19_to_GRCh37.txt
-else 
-	echo "chr$i $i" >> $wd/hg19_to_GRCh37.txt
-fi
-done
-screen -S change_chrom_name
-bcftools annotate --rename-chrs $wd/hg19_to_GRCh37.txt -Ov -o $wd/recalibrated_biallelic_SNP.pass.GRCh37.vcf $wd/recalibrated_biallelic_SNP.pass.vcf
-
-
-# beagle with reference panel:
-screen -S beagle_with_ref
-java=/srv/persistent/bliu2/tools/jre1.8.0_91/bin/java
-beagle=/srv/persistent/bliu2/tools/beagle/beagle.03May16.862.jar
-reference_dir=/srv/persistent/bliu2/tools/beagle/reference
-for i in $(seq 1 22);do
-i=22 # test on chr22
-$java -Xmx32g -jar $beagle nthreads=24 chrom=$i ref=$reference_dir/chr$i.1kg.phase3.v5a.vcf.gz map=$reference_dir/plink.chr$i.GRCh37.map impute=false gl=$wd/recalibrated_biallelic_SNP.pass.GRCh37.vcf out=$wd/recalibrated_biallelic_SNP.beagle_1kg.chr$i > $wd/recalibrated_biallelic_SNP.beagle_1kg.chr$i.log2 &
-done
-
-
-# 11:32am 
-# beagle output QC:
-# to plot the dosage R2 as a function of chromosome, allele frequency
-# also to make histogram of dosage R2
-screen -S beagle_QC
-wd=../data/joint2/
-mkdir ../processed_data/160515_beagle_QC
-mkdir ../figures/160515_beagle_QC/
-cat $wd/recalibrated_biallelic_SNP.beagle.vcf | grep -v "^#" | awk 'BEGIN {FS="\t|;|="; OFS="\t"; print "CHROM","POS","AR2","DR2","AF"} {print $1,$2,$9,$11,$13}' >  ../processed_data/160515_beagle_QC/recalibrated_biallelic_SNP.r2.tsv
-subl beagle_QC.R
-Rscript beagle_QC.R \
-	-input=../processed_data/160515_beagle_QC/recalibrated_biallelic_SNP.r2.tsv \
-	-figure_dir=../figures/160515_beagle_QC/
-
-
-# reference on how to calculate genotype R-squared: http://ingenoveritas.net/compare-true-and-imputed-genotypes-by-calculating-r-squared/
-
-
-# 5:45pm 
-# update sample names:
-wd=../data/joint2/
-cd $wd
-echo "CA1401 1401" >> old_to_new_sample_name.txt
-echo "2102 2105" >> old_to_new_sample_name.txt
-echo "2109 1508" >> old_to_new_sample_name.txt
-echo "289727 2999" >> old_to_new_sample_name.txt
-echo "313605 317155" >> old_to_new_sample_name.txt
-screen -S rename
-bcftools reheader -s old_to_new_sample_name.txt -o recalibrated_biallelic_SNP.beagle.rename.vcf recalibrated_biallelic_SNP.beagle.vcf
-
-# filter for variants with dosage R2 >= 0.8:
-bcftools view -e 'INFO/DR2<0.8' -o recalibrated_biallelic_SNP.beagle.rename.dr2.vcf recalibrated_biallelic_SNP.beagle.rename.vcf
- 
-# subset for Caucasian individuals to apply HWE filter:
-cd /srv/persistent/bliu2/HCASMC_eQTL/scripts
-subl caucasian_individual_for_hwe.R
-
-# hwe filtering:
-cd ../data/joint2/
-grep -v "IMP" recalibrated_biallelic_SNP.beagle.rename.dr2.vcf > recalibrated_biallelic_SNP.beagle.rename.dr2.2.vcf
-vcftools --vcf recalibrated_biallelic_SNP.beagle.rename.dr2.2.vcf --keep caucasian_for_hwe.txt --hardy --out hwe_pval
-rm recalibrated_biallelic_SNP.beagle.rename.dr2.2.vcf
-
-# select sites with hwe > 1e-6:
-tail -n +2 hwe_pval.hwe | awk 'BEGIN{OFS="\t"} {if ($6 >= 1e-6) print $1,$2}' > pass_hwe.txt
-bcftools view -T pass_hwe.txt -Ov -o recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.vcf recalibrated_biallelic_SNP.beagle.rename.dr2.vcf
-
-
-# transfer the vcf file to valk: 
+# Post imputation filtering:
+bash genotype/phasing/filter_r2.sh
+bash genotype/phasing/filter_hwe.sh
 rsync -vzh /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.vcf bosh@valkyr.stanford.edu:/home/diskstation/wgs/WGS_HCASMC_working_data_set/
+Rscript genotype/phasing/make_sample_list.R
+bash genotype/phasing/extract_dosage.sh
 
 
-# make sample list
-# list only contains unique sample names sorted alphanumerically for the 52 samples in the working set
-subl make_sample_list.R
-
-# extract dosage field:
-# the output column order will be the same as that in sample_list.txt
-wd=../data/joint2/
-cd /srv/persistent/bliu2/HCASMC_eQTL/scripts
-mkdir ../processed_data/160515_dosage
-screen -S extract_DS
-bcftools query -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%DS]\n' -o ../processed_data/160515_dosage/dosage.tsv $wd/recalibrated_biallelic_SNP.beagle.rename.vcf &
-bcftools query -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%GT]\n' -o ../processed_data/160515_dosage/genotype.tsv $wd/recalibrated_biallelic_SNP.beagle.rename.vcf &
-bcftools query -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%GP]\n' -o ../processed_data/160515_dosage/genotype_probability.tsv $wd/recalibrated_biallelic_SNP.beagle.rename.vcf &
+# Genotype PC:
+bash genotype/genotype_pc/genotype_pc.sh
 
 
-
-
-# 7:49pm
-# archive some files:
-screen -S archive
-bgzip raw_variants.vcf &
-bgzip recalibrated_variants.vcf &
-bgzip recalibrated_variants.pass.vcf &
-bgzip recalibrated_biallelic_SNP.pass.vcf &
-bgzip recalibrated_biallelic_SNP.beagle.vcf &
-
-
-
-# 2016/05/16
-# Milos used STAR v2.5.1 instead of v2.4.0. So I need to remap. 
-# The three samples I need are FBS2_S4_merged_R1_001.fastq.gz (most reads among replicates)
-# S7_run0002_lane5_index7_1.fastq.gz (20805), pS17_1.fastq.gz (9052004)
-# on valk: 
-cd /home/diskstation/RNAseq/dase
-cp commands commands2
-vim commands2 
-# changed STAR to $STAR for pass2
-screen -S STAR
-bash commands2
-# I don't have permission to write...
-
-
-# 12:00pm
-# detect RNAseq experssion outliers: 
-mkdir ../figures/160516_detect_expression_outlier/
-subl 160516_detect_expression_outlier.R
-# 2135, 2305 and 9070202 are outliers
-# 9070202 have low mapping rate (23%) so should use the remapped reads
-# 2135 has double peaked bioanalyzer result
-# 2305 is sequenced on a NextSeq separately from all other samples.
-
-
-# does omitting covariate decrease power?
-mkdir ../figures/160516_sim_study_on_covariates/
-subl 160516_sim_study_on_covariates.R
-# conclusion: omitting covariates will decrease power.
-
-
-# 5:48pm
-# prepare matrix eQTL genotype: 
-wd=../data/joint2
-dir1=../processed_data/160516_genotype
-mkdir $dir1
-bcftools query -H -e 'INFO/DR2<0.8' -t chr22 -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%DS]\n' -o $dir1/chr22.gneotype.tmp $wd/recalibrated_biallelic_SNP.beagle.rename.vcf
-sed -e "s/# \[1\]CHROM_\[2\]POS_\[3\]REF_\[4\]ALT/id/" -e "s/\[[[:digit:]]\+\]//g" -e "s/:DS//g" -e "s/chr//" $dir1/chr22.gneotype.tmp > $dir1/chr22.genotype.txt
-
-# filter for genotype with maf>=0.05:
-subl 160516_subset_genotype_by_maf.R 
-Rscript 160516_subset_genotype_by_maf.R $dir1/chr22.genotype.txt $dir1/chr22.genotype.maf.txt
-
-# prepare snp location:
-subl 160516_gen_snps_loc.R
-Rscript 160516_gen_snps_loc.R $dir1/chr22.genotype.maf.txt $dir1/chr22.genotype_loc.maf.txt
-
-# prepare gene expression:
-# gene expression is already prepared 
-
-
-# 7:00pm
-# on 16/05/16 12:00pm we determined that there are 3 outliers, 
-# here we determine whether including them will decrease power.
-# prepare genotype and expression files without the 3 outliers, which 
-# are columns 30, 34, and 50
-cut -f-29,31-33,35-49,51- $dir1/chr22.genotype.maf.txt > $dir1/chr22.genotype.maf.cut.txt
-cut -f-29,31-33,35-49,51- ../processed_data/031_prepare_matrix_eQTL_expression/expression.txt > $dir1/expression.cut.txt
-screen -S matrixeqtl
-mkdir ../figures/160516_matrix_eQTL/
-subl 160516_matrix_eQTL.R $dir1/chr22.genotype.maf.txt $dir1/chr22.genotype_loc.maf.txt ../processed_data/031_prepare_matrix_eQTL_expression/expression.txt ../processed_data/031_gen_gene_loc/gene_loc.txt "" $dir1
-
-
-# 2016/05/17
-# 6:41pm
-# get a clean set of gene expression data (also transfer some RNAseq data from valk)
+#--------------- RNAseq ----------------# 
+# Setup: 
 mkdir ../data/rnaseq2
-# saved ../processed_data/rna_wgs_match.reduced_050616.xlsx into txt file 
-# use vim to turn all ^M into \r
-bash 160517_get_rnaseq_data.sh
-
-# sort and index some bam and sam files: 
-samtools sort -o 2305/Aligned.out.sorted.bam -O bam -@8 2305/Aligned.out.sam &
-samtools sort -o 9070202/Aligned.out.sorted.bam -O bam -@8 9070202/Aligned.out.bam &
-samtools sort -o 9052004/Aligned.out.sorted.bam -O bam -@8 9052004/Aligned.out.bam &
-samtools sort -o 20805/Aligned.out.sorted.bam -O bam -@8 20805/Aligned.out.sam &
-samtools index 2305/Aligned.out.sorted.bam & 
-samtools index 9070202/Aligned.out.sorted.bam & 
-samtools index 9052004/Aligned.out.sorted.bam & 
-samtools index 20805/Aligned.out.sorted.bam & 
-rm 2305/Aligned.out.sam 9070202/Aligned.out.bam 9052004/Aligned.out.bam 20805/Aligned.out.sam
-
-# cehck that all files are intact:
-samtools quickcheck */Aligned.out.sorted.bam
-# all files are intact. 
 
 
-# 11:35pm
-# create sequence dictionary:
-CreateSequenceDictionary=/software/picard-tools/1.92/CreateSequenceDictionary.jar
-java -jar $CreateSequenceDictionary R=/srv/persistent/bliu2/shared/genomes/hg19/hg19.fa O=/srv/persistent/bliu2/shared/genomes/hg19/hg19.dict
-
-# run RNAseq-QC: 
-subl 160517_run_RNAseQC.sh
-
-
-# 16/05/19:
-# combine all RPKMs:
-cd /srv/persistent/bliu2/HCASMC_eQTL/scripts
-mkdir ../processed_data/160519_rpkm/
-wd=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments
-
-tail -n +3 $wd/1020301/report/genes.rpkm.gct | cut -f1-2 > ../processed_data/160519_rpkm/combined.rpkm
-samples=($(ls -d $wd/*/))
-
-for sample in ${samples[@]};do
-sample=$(basename $sample)
-sample=${sample///}
-echo $sample
-tail -n +3 $wd/$sample/report/genes.rpkm.gct | cut -f3 > ../processed_data/160519_rpkm/$sample.rpkm.tmp
-cp ../processed_data/160519_rpkm/combined.rpkm ../processed_data/160519_rpkm/combined.rpkm.tmp
-paste -d "\t" ../processed_data/160519_rpkm/combined.rpkm.tmp ../processed_data/160519_rpkm/$sample.rpkm.tmp > ../processed_data/160519_rpkm/combined.rpkm
-done
-rm ../processed_data/160519_rpkm/*.tmp
+# Preprocessing:
+bash rnaseq/preprocess/get_rnaseq_data.sh
+bash rnaseq/preprocess/sort_and_index.sh
+bash rnaseq/preprocess/quickcheck.sh
+bash rnaseq/preprocess/RNAseQC.sh
+bash rnaseq/preprocess/copy_rpkm.sh
+bash rnaseq/preprocess/combine_rpkm.sh
 
 
-# calculate the sample-sample correlation:
-mkdir ../figures/160519_rpkm
-subl 160519_calc_sample_correlation.R
+# Quality control:
+Rscript rnaseq/quality_control/sample_correlation.R
 
-
-# 5:01pm 
-# convert VCF to plink BED file:
-mkdir ../processed_data/160519_genotype_PCA
-plink --vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.vcf --keep-allele-order --make-bed --out ../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2
-
-# find genotype PCs: 
-# Bruna shared script to call genotype PCs through slack:
-mkdir ../figures/160519_genotype_PCA
-subl 160519_genotype_PCA.R 
-
-# create sample_info directory and sample_list.txt:
-mkdir /srv/persistent/bliu2/HCASMC_eQTL/data/sample_info
-ln /srv/persistent/bliu2/HCASMC_eQTL/processed_data/rna_wgs_match.reduced_050616.xlsx /srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx
-
-# subset to 52 individuals with RNAseq sample:
-subl 160519_subset_genotype_PCs.R
-Rscript 160519_subset_genotype_PCs.R \
-	../processed_data/160519_genotype_PCA/genotype_pcs.tsv \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx \
-	../processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv
-
-# seems that 1020301 is an outlier? It has low heterozygosity rate (from the plink/seq analysis)
-
-# 16/05/20
-# 3:07pm
-# On 16/05/19 I showed that sample 9052004 (Stanford 2nd round sequencing) is an outlier. 
-# Here we analyze the dASE version of 9052004. 
-mv ../data/rnaseq2/alignments/9052004 ../data/rnaseq2/alignments/.9052004 # hide the bad sample
-dst=../data/rnaseq2/alignments/
-rsync -azvh bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase/pS17_1.fastq.gz_pS17_2.fastq.gz/Pass2/{Aligned.out.sam,Log.final.out,Log.out,Log.progress.out} $dst/9052004 &
-subl rerun_rnaseqc_for_9052004_dase.sh
-screen -S rerun_for_9042004
-bash rerun_rnaseqc_for_9052004_dase.sh
-
-wd=../data/rnaseq2/alignments/
-mkdir ../processed_data/160520_rpkm/
-tail -n +3 $wd/1020301/report/genes.rpkm.gct | cut -f1-2 > ../processed_data/160520_rpkm/combined.rpkm
-samples=($(ls -d $wd/*/))
-for sample in ${samples[@]};do
-sample=$(basename $sample)
-sample=${sample///}
-echo $sample
-tail -n +3 $wd/$sample/report/genes.rpkm.gct | cut -f3 > ../processed_data/160520_rpkm/$sample.rpkm.tmp
-cp ../processed_data/160520_rpkm/combined.rpkm ../processed_data/160520_rpkm/combined.rpkm.tmp
-paste -d "\t" ../processed_data/160520_rpkm/combined.rpkm.tmp ../processed_data/160520_rpkm/$sample.rpkm.tmp > ../processed_data/160520_rpkm/combined.rpkm
-done
-rm ../processed_data/160520_rpkm/*.tmp
-
-
-# calculate the sample-sample correlation:
-mkdir ../figures/160520_rpkm
-subl 160520_calc_sample_correlation.R
-Rscript 160520_calc_sample_correlation.R
 
 
 # 16/05/26
@@ -476,25 +91,7 @@ processed_data=../processed_data/160526
 mkdir $processed_data
 
 
-#--- sample contamination ----
-# make sample file for each ethnicity:
-dir1=../processed_data/160526/detect_WGS_contamination
-mkdir $dir1
-Rscript $scripts/gen_sample_sheet_each_ethnicity.R # output Caucasian.txt, Asian.txt, AA.txt, Hispanic.txt
-vim $dir1/Caucasian.txt # changed 1508 to 2109, 2999 to 289727, 317155 to 313605
-vim $dir1/Hispanic.txt # changed 1401 to CA1401, 2105 to 2102, added 1848 and 1858
-vim $dir1/AA.txt # added 24635
 
-# run verifyBamID:
-subl $scripts/detect_WGS_contamination.sh
-screen -S detect_WGS_contamination
-subl $scripts/run_detect_WGS_contamination.sh
-bash $scripts/run_detect_WGS_contamination.sh
-
-# plot verifyBamID result:
-cat $dir1/verifyBAMID.*.selfSM | awk 'BEGIN{OFS="\t"} {if ($1!="#SEQ_ID") print $1,$7}' > $dir1/verifyBAMID.combined.tsv
-mkdir -p ../figures/160526/detect_WGS_contamination/
-subl $scripts/plot_verifyBAMID_result.R
 
 
 # 16/05/27
@@ -504,32 +101,14 @@ mkdir $scripts
 processed_data=../processed_data/160527
 mkdir $processed_data
 
-# On 16/05/19 I performed RNAseq correlation analysis and 
-# showed that 9052004 and 9070202 are outliers
-# I replaced 9052004 with the dASE version on 16/05/20 and
-# Today I replaced 9070202 with 90702_Nextseq
-# Instead of writing new scripts, I instead changed my scripts on 16/05/19
-mv /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/9070202  /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/.9070202
-mv /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/9070202_Nextseq  /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/9070202
-
-# move logs to a folder: 
-mkdir /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/.logs
-mv /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/*.log /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/logs
 
 
-# create a folder for rpkm files:
-rpkm=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/rpkm
-mkdir $rpkm
 
 
-# copy rpkm files to the rpkm folder: 
-subl 160527/copy_rpkm.sh
-bash 160527/copy_rpkm.sh
-vim ../data/rnaseq2/rpkm/9070202/genes.rpkm # changed 9070202_Nextseq to 9070202 (Voodoo :-)
+
 
 
 # combine all rpkm into one file: 
-subl $scripts/combine_rpkm.sh
 bash $scripts/combine_rpkm.sh
 
 

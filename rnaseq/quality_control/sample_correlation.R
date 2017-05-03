@@ -12,8 +12,8 @@ library(cowplot)
 
 
 # paths:
-input_file='../processed_data/160519_rpkm/combined.rpkm'
-figure_path='../figures/160519_rpkm/'
+input_file='../processed_data/rnaseq/preprocess/combine_rpkm/combined.rpkm'
+figure_path='../figures/rnaseq/quality_control/sample_correlation/'
 
 
 # read rpkm:

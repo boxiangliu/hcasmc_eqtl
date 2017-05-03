@@ -7,8 +7,8 @@
 # get genotype PCs
 
 # paths:
-figure_path='../figures/160519_genotype_PCA/'
-output_file='../processed_data/160519_genotype_PCA/genotype_pcs.tsv'
+figure_path='../figures/genotype/genotype_pc/'
+output_file='../processed_data/genotype/genotype_pc/genotype_pcs.tsv'
 
 
 # source("http://bioconductor.org/biocLite.R")
@@ -19,13 +19,13 @@ library('XLConnect')
 
 # Convert the PLINK files to the GDS file
 # Data should be QC-ed for missing rate, MAF and HWE!
-bed.fn <- "../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2.bed"
-fam.fn <- "../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2.fam"
-bim.fn <- "../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2.bim"
+bed.fn <- "../processed_data/genotype/genotype_pc/recalibrated_biallelic_SNP.beagle.rename.dr2.bed"
+fam.fn <- "../processed_data/genotype/genotype_pc/recalibrated_biallelic_SNP.beagle.rename.dr2.fam"
+bim.fn <- "../processed_data/genotype/genotype_pc/recalibrated_biallelic_SNP.beagle.rename.dr2.bim"
 
 # convert
-snpgdsBED2GDS(bed.fn, fam.fn, bim.fn, "../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2.gds")
-genofile <- snpgdsOpen("../processed_data/160519_genotype_PCA/recalibrated_biallelic_SNP.beagle.rename.dr2.gds")
+snpgdsBED2GDS(bed.fn, fam.fn, bim.fn, "../processed_data/genotype/genotype_pc/recalibrated_biallelic_SNP.beagle.rename.dr2.gds")
+genofile <- snpgdsOpen("../processed_data/genotype/genotype_pc/recalibrated_biallelic_SNP.beagle.rename.dr2.gds")
 
 # read sample sheet: 
 sample_sheet=readWorksheet(loadWorkbook("../processed_data/rna_wgs_match.reduced_050616.xlsx"),sheet=4)

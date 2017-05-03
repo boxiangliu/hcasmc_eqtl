@@ -1,5 +1,7 @@
-# Between genotypes > prepare data 
-# And joint genotyping
+# After:
+# Genotypes / Prepare data 
+# Before:
+# Joint genotyping
 
 # Quanlity control: 
 # plot genotype correlation: 
@@ -589,5 +591,108 @@ open ../figures/160511_analyze_ibd/pi_hat.pdf
 # 317155 
 
 
+
+# After: 
+# Post imputation filtering
+# Before: 
+# RNAseq / Setup: 
+
+# 2016/05/12
+# 9:38am
+# remap dASE samples using Milo's pipeline, making sure STAR versions are the same. 
+# download STAR 2.4.0j:
+cd /srv/persistent/bliu2/tools/
+wget https://github.com/alexdobin/STAR/archive/STAR_2.4.0j.tar.gz
+tar -xzf STAR_2.4.0j.tar.gz
+
+# Milos will help map the dASE samples on valkyr: 
+mkdir /home/diskstation/RNAseq/dase
+screen -S transfer_to_valk
+rsync -vzh /srv/persistent/bliu2/dase/data/RNAseq_HCASMC/fastq/*.fastq.gz bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase
+
+# Merge fastq files for CA2305:
+screen -S merge_fastq
+cd /srv/persistent/bliu2/dase/data/RNAseq_CA2305_NextSeq_20150512/fastq
+for file in FBS2_S4 FBS4_S5 FBS6_S6 SF4_S1 SF5_S2 SF6_S3; do 
+	for read in R1 R2; do 
+	echo sample: $file
+	echo reads: $read 
+	zcat ${file}_L00{1,2,3,4}_${read}_001.fastq.gz | gzip > ${file}_merged_${read}_001.fastq.gz &
+	done 
+done 
+# Transfer to valk:
+rsync -vzh /srv/persistent/bliu2/dase/data/RNAseq_CA2305_NextSeq_20150512/fastq/*merged*.fastq.gz bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase
+
+
+# 12:36pm 
+# Checked Milo's STAR mapping parameters. He used
+# --sjdbOverhang 100 but the mate length is 125bp. 
+# This is okay. As long as sjdbOverhang > seedSearchStartLmax (default 50bps), 
+# STAR is able to map the seed.
+
+
+
+
+
+# 2016/05/16
+# Milos used STAR v2.5.1 instead of v2.4.0. So I need to remap. 
+# The three samples I need are FBS2_S4_merged_R1_001.fastq.gz (most reads among replicates)
+# S7_run0002_lane5_index7_1.fastq.gz (20805), pS17_1.fastq.gz (9052004)
+# on valk: 
+cd /home/diskstation/RNAseq/dase
+cp commands commands2
+vim commands2 
+# changed STAR to $STAR for pass2
+screen -S STAR
+bash commands2
+# I don't have permission to write...
+
+
+# 12:00pm
+# detect RNAseq experssion outliers: 
+mkdir ../figures/160516_detect_expression_outlier/
+subl 160516_detect_expression_outlier.R
+# 2135, 2305 and 9070202 are outliers
+# 9070202 have low mapping rate (23%) so should use the remapped reads
+# 2135 has double peaked bioanalyzer result
+# 2305 is sequenced on a NextSeq separately from all other samples.
+
+
+# does omitting covariate decrease power?
+mkdir ../figures/160516_sim_study_on_covariates/
+subl 160516_sim_study_on_covariates.R
+# conclusion: omitting covariates will decrease power.
+
+
+# 5:48pm
+# prepare matrix eQTL genotype: 
+wd=../data/joint2
+dir1=../processed_data/160516_genotype
+mkdir $dir1
+bcftools query -H -e 'INFO/DR2<0.8' -t chr22 -S $wd/sample_list.txt -f '%CHROM\_%POS\_%REF\_%ALT[\t%DS]\n' -o $dir1/chr22.gneotype.tmp $wd/recalibrated_biallelic_SNP.beagle.rename.vcf
+sed -e "s/# \[1\]CHROM_\[2\]POS_\[3\]REF_\[4\]ALT/id/" -e "s/\[[[:digit:]]\+\]//g" -e "s/:DS//g" -e "s/chr//" $dir1/chr22.gneotype.tmp > $dir1/chr22.genotype.txt
+
+# filter for genotype with maf>=0.05:
+subl 160516_subset_genotype_by_maf.R 
+Rscript 160516_subset_genotype_by_maf.R $dir1/chr22.genotype.txt $dir1/chr22.genotype.maf.txt
+
+# prepare snp location:
+subl 160516_gen_snps_loc.R
+Rscript 160516_gen_snps_loc.R $dir1/chr22.genotype.maf.txt $dir1/chr22.genotype_loc.maf.txt
+
+# prepare gene expression:
+# gene expression is already prepared 
+
+
+# 7:00pm
+# on 16/05/16 12:00pm we determined that there are 3 outliers, 
+# here we determine whether including them will decrease power.
+# prepare genotype and expression files without the 3 outliers, which 
+# are columns 30, 34, and 50
+cut -f-29,31-33,35-49,51- $dir1/chr22.genotype.maf.txt > $dir1/chr22.genotype.maf.cut.txt
+cut -f-29,31-33,35-49,51- ../processed_data/031_prepare_matrix_eQTL_expression/expression.txt > $dir1/expression.cut.txt
+screen -S matrixeqtl
+mkdir ../figures/160516_matrix_eQTL/
+subl 160516_matrix_eQTL.R $dir1/chr22.genotype.maf.txt $dir1/chr22.genotype_loc.maf.txt ../processed_data/031_prepare_matrix_eQTL_expression/expression.txt ../processed_data/031_gen_gene_loc/gene_loc.txt "" $dir1
 
 

@@ -1,0 +1,8 @@
+# testing the beagle's conform-gt module:
+# I flipped the alleles of rs138720731, and conform-gt successfully flipped back
+# I also flipped the strand of rs73387790, and conform-gt reports OPPOSITE_STRAND
+# For alleles not in the reference panel, conform-gt reports REMOVED and NOT_IN_REFERENCE
+# Note that conform-gt reports FAIL for some correct SNPs likely because 
+# the evidence for correct strand is inconclusive. 
+# Since conform-gt incorrectly removes these "FAILED" variants, I need to construct vcf manually
+

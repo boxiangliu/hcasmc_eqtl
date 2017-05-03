@@ -128,3 +128,17 @@ rsync -azvh bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/HCASMC/Mapped_File
 rsync -azvh bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase/FBS2_S4_merged_R1_001.fastq.gz_FBS2_S4_merged_R2_001.fastq.gz/Pass2/{Aligned.out.sam,Log.final.out,Log.out,Log.progress.out} $dst/2305 &
 rsync -azvh bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase/S7_run0002_lane5_index7_1.fastq.gz_S7_run0002_lane5_index7_2.fastq.gz/Pass2/{Aligned.out.sam,Log.final.out,Log.out,Log.progress.out} $dst/20805 &
 
+
+# IN RNAseq correlation analysis sample 9052004 (Stanford 2nd round sequencing) is an outlier. 
+# Here we replace it with the dASE version of 9052004. 
+mv ../data/rnaseq2/alignments/9052004 ../data/rnaseq2/alignments/.9052004 # hide the bad sample
+dst=../data/rnaseq2/alignments/
+rsync -azvh bosh@valkyr.stanford.edu:/home/diskstation/RNAseq/dase/pS17_1.fastq.gz_pS17_2.fastq.gz/Pass2/{Aligned.out.sam,Log.final.out,Log.out,Log.progress.out} $dst/9052004
+bash rerun_rnaseqc_for_9052004_dase.sh
+
+
+# In RNAseq correlation analysis 9070202 is an outliers
+# Here we replaced 9070202 with 90702_Nextseq
+mv /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/9070202  /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/.9070202
+mv /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/9070202_Nextseq  /srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/9070202
+

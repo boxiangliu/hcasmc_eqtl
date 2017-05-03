@@ -135,7 +135,7 @@ sample=${sample///} # remove the backslash
 
 if [[ $(grep "Finished Successfully" rnaseqc.$sample.log) == "" ]]; then 
 echo $sample
-java -Xmx6g -jar $rnaseqc -n 1000 -s "$sample|$sample/Aligned.out.sorted.rg.uniq.dup.bam|$sample" -t $gencode19 -r $hg19 -o $sample/report -noDoC -strictMode > rnaseqc.$sample.log &
+java -Xmx6g -jar $rnaseqc -n 1000 -s "$sample|$sample/Aligned.out.sorted.rg.uniq.dup.bam|$sample" -t $gencode19 -r $hg19 -o $sample/report -noDoC -strictMode > ../logs/rnaseqc/rnaseqc.$sample.log &
 # java -Xmx6g -jar $rnaseqc -n 1000 -s "$sample|$sample/Aligned.out.sorted.rg.uniq.dup.bam|$sample" -t $gencode19 -r $hg19 -o report -strictMode > rnaseqc.$sample.log &
 
 fi
