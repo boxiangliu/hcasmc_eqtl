@@ -1,0 +1,2 @@
+parallel -j6 "grep chr{} /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf | python rasqual/make_input.py ../processed_data/genotype/phasing_with_1kg/phased_and_imputed_gprobs/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz 1000000 > ../processed_data/rasqual/input/rasqual.input.chr{}.txt" ::: {1..22} X
+cat ../processed_data/rasqual/input/rasqual.input.chr{1..22}.txt > ../processed_data/rasqual/input/rasqual.input.autosome.txt

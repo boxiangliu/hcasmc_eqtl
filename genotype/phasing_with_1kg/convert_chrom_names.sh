@@ -9,7 +9,4 @@ input=$1
 output=$2
 old_to_new=$3
 
-bcftools annotate \
-	--rename-chrs $old_to_new \
-	-Ov -o $output \
-	$input
+bcftools annotate --rename-chrs $old_to_new -Oz -o $output $input

@@ -6,9 +6,10 @@ GATK =  /usr/bin/GenomeAnalysisTK.jar
 GRCh37 = /srv/persistent/bliu2/shared/genomes/GRCh37/hs37d5.fa
 SHARED = /srv/persistent/bliu2/shared/
 
-#--------- genotypes -------------#
+#--------- Genotypes -------------#
 # Setup: 
 mkdir genotype ../figures/genotype
+
 
 # Prepare data: 
 bash genotype/preprocessing/copy_WGS_HCASMC_from_valk.sh
@@ -17,6 +18,7 @@ python genotype/preprocessing/check_finished_sample.py /mnt/data/WGS_HCASMC samp
 python genotype/preprocessing/copy_bam_and_vcf_to_valk.sh /mnt/data/WGS_HCASMC/sample_list.txt
 python genotype/preprocessing/concat_1000G_vcfs.py ../../shared/1000genomes/phase3v5a sample_list.txt ALL.concat.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.vcf
 bash genotype/preprocessing/fasta_dict.sh
+
 
 # Joint genotyping and recalibration: 
 mkdir ../data/joint2
@@ -36,32 +38,35 @@ grep "^SN" ../processed_data/genotype/quality_control/stats.txt | awk 'BEGIN {FS
 Rscript genotype/quality_control/variant_count_by_type.R
 
 
-# Phasing and imputation: 
-bash genotype/phasing/download.sh
-
-
-# Impute with BEAGLE without reference panels:
-bash genotype/phasing/beagle_no_ref.sh
+# Phasing (and imputation) without reference panels: 
+bash genotype/phasing_no_ref/download.sh
+bash genotype/phasing_no_ref/beagle_no_ref.sh
 
 
 # Post imputation quality control:
-zgrep -v "^#" ../data/joint2/recalibrated_biallelic_SNP.beagle.vcf.gz | awk 'BEGIN {FS="\t|;|="; OFS="\t"; print "CHROM","POS","AR2","DR2","AF"} {print $1,$2,$9,$11,$13}' >  ../processed_data/genotype/phasing/beagle_QC/recalibrated_biallelic_SNP.r2.tsv
-bash genotype/phasing/beagle_QC.R -input=../processed_data/genotype/phasing/beagle_QC/recalibrated_biallelic_SNP.r2.tsv -figure_dir=../figures/160515_beagle_QC/
-bash genotype/phasing/update_sample_names.sh
+zgrep -v "^#" ../data/joint2/recalibrated_biallelic_SNP.beagle.vcf.gz | awk 'BEGIN {FS="\t|;|="; OFS="\t"; print "CHROM","POS","AR2","DR2","AF"} {print $1,$2,$9,$11,$13}' >  ../processed_data/genotype/phasing_no_ref/beagle_QC/recalibrated_biallelic_SNP.r2.tsv
+bash genotype/phasing_no_ref/beagle_QC.R -input=../processed_data/genotype/phasing_no_ref/beagle_QC/recalibrated_biallelic_SNP.r2.tsv -figure_dir=../figures/160515_beagle_QC/
+bash genotype/phasing_no_ref/update_sample_names.sh
 Rscript genotype/quality_control/gen_sample_sheet_each_ethnicity.R # output Caucasian.txt, Asian.txt, AA.txt, Hispanic.txt
 bash genotype/quality_control/run_detect_WGS_contamination.sh
 
 
 # Post imputation filtering:
-bash genotype/phasing/filter_r2.sh
-bash genotype/phasing/filter_hwe.sh
+bash genotype/phasing_no_ref/filter_r2.sh
+bash genotype/phasing_no_ref/filter_hwe.sh
 rsync -vzh /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.vcf bosh@valkyr.stanford.edu:/home/diskstation/wgs/WGS_HCASMC_working_data_set/
-Rscript genotype/phasing/make_sample_list.R
-bash genotype/phasing/extract_dosage.sh
+Rscript genotype/phasing_no_ref/make_sample_list.R
+bash genotype/phasing_no_ref/extract_dosage.sh
 
 
 # Genotype PC:
 bash genotype/genotype_pc/genotype_pc.sh
+
+
+# Phasing (and imputation) with 1000 Genome Reference Panel: 
+bash genotype/phasing_with_1kg/conform_gt.sh
+bash genotype/phasing_with_1kg/phasing_with_1kg.sh
+
 
 
 #--------------- RNAseq ----------------# 
@@ -76,6 +81,7 @@ bash rnaseq/preprocess/quickcheck.sh
 bash rnaseq/preprocess/RNAseQC.sh
 bash rnaseq/preprocess/copy_rpkm.sh
 bash rnaseq/preprocess/combine_rpkm.sh
+Rscript rnaseq/preprocess/filter_rpkm.R 0.1 10 ../processed_data/rnaseq/preprocess/combine_rpkm/combined.rpkm ../processed_data/rnaseq/preprocess/combine_rpkm/combined.filter.rpkm
 
 
 # Quality control:
@@ -83,222 +89,95 @@ Rscript rnaseq/quality_control/sample_correlation.R
 
 
 
-# 16/05/26
-# setup: 
-scripts=./160526
-mkdir $scripts
-processed_data=../processed_data/160526
-mkdir $processed_data
+#----------------- eQTL ------------------------
+# Setup:
+mkdir eqtl ../processed_data/eqtl ../figures/eqtl
 
+# extract PEER factors:
+bash eqtl/peer/peer_factor.sh
+Rscript eqtl/peer/peer_factor_correlation.R
 
 
+# Matrix eQTL:
+bash eqtl/matrix_eqtl/combine_covariates.sh
+Rscript eqtl/matrix_eqtl/covariates_correlation.R
+bash eqtl/matrix_eqtl/matrix_eqtl.sh
 
 
-# 16/05/27
-# setup
-scripts=./160527
-mkdir $scripts
-processed_data=../processed_data/160527
-mkdir $processed_data
+# FastQTL:
+bash eqtl/fastqtl/fastqtl.sh
 
 
+#------------------ RASQUAL ---------------------
+# Setup:  
+mkdir rasqual ../figures/rasqual ../processed_data/rasqual
 
 
+# Preprocessing:
+bash rasqual/count_table.sh
+python rasqual/calc_gcc.py /mnt/lab_data/montgomery/shared/genomes/hg19/hg19.fa /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf exon > ../processed_data/rasqual/expression/gcc.exon.txt
+bash rasqual/calc_offset.sh
+bash rasqual/vcf2asvcf.wrapper.sh
+bash rasqual/make_input.sh
+Rscript $scripts/rasqual/combine_covariates.R --genotype_pc=../processed_data/genotype/genotype_pc/genotype_pcs.52samples.tsv --peer=../processed_data/eqtl/peer/factors.tsv --sample_info=../data/sample_info/sample_info.xlsx --output=../processed_data/rasqual/X.txt --gender_coding=numerical --num_geno_pc=4 --num_peer_factor=8
+R --vanilla --quiet --args ../processed_data/rasqual/Y.tidy.txt ../processed_data/rasqual/K.txt ../processed_data/rasqual/X.txt < ../../tools/rasqual/R/txt2bin.R 
 
 
+# Run RASQUAL:
+bash rasqual/rasqual.wrapper.sh
 
 
-# combine all rpkm into one file: 
-bash $scripts/combine_rpkm.sh
+# Calculate p-value:
+cat ../processed_data/rasqual/input/rasqual.input.autosome.txt | awk '{print $1"_"$2}' > ../processed_data/rasqual/tmp.rasqual_output_file.txt
+parallel Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/{}.txt ../processed_data/rasqual/output/{}.pval.txt :::: ../processed_data/rasqual/tmp.rasqual_output_file.txt
 
 
-# filter >=10 individuals with >0.1 RPKM
-subl $scripts/filter_rpkm.R
-Rscript $scripts/filter_rpkm.R 0.1 10 $processed_data/combined.rpkm $processed_data/combined.filter.rpkm
+# Combined RASQUAL output for all "expressed" genes: 
+mkdir ../data/eQTL/rasqual/
+bash rasqual/combine_rasqual_output.sh
 
 
+# Adjust p-value for all "expressed" genes:
+bash rasqual/adjust_pvalue.sh
 
-#--- run PEER correction -----
-# subset to top 10000 genes: 
-subl $scripts/subset_top_genes.R
-Rscript $scripts/subset_top_genes.R $processed_data/combined.filter.rpkm $processed_data/combined.filter.top10000.rpkm 10000
 
-# quantile normalize rpkm against other samples and 
-# quantile normalize rpkm for each gene: 
-subl $scripts/normalize_rpkm.R
-Rscript $scripts/normalize_rpkm.R $processed_data/combined.filter.top10000.rpkm $processed_data/combined.filter.top10000.norm.rpkm
+# Gene-wise bonferroni adjustment: 
 
-# transpose rpkm: 
-subl $scripts/transpose_rpkm.R 
-Rscript $scripts/transpose_rpkm.R $processed_data/combined.filter.top10000.norm.rpkm $processed_data/combined.filter.top10000.norm.t.rpkm
 
 
+# concatenate all priortized genes: 
+bash rasqual/rasqual_output2eCAVIAR_input.sh \
+../processed_data/rasqual/prioritized_genes.output_file.txt \
+../processed_data/rasqual/merged_output/prioritized_genes.allpairs.txt
 
-# The data matrix is assumed to have N rows and G columns, where N is the number of samples, and G is the number of genes:
-# an example input file is at /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160527/Whole_Blood.rpkm.log2.ztrans.txt
-subl $scripts/get_peer_correction.Extended.R
-subl $scripts/GetPeerExtended.sh 
-bash $scripts/GetPeerExtended.sh $processed_data/combined.filter.top10000.norm.t.rpkm $processed_data
 
 
-# 16/05/30
-# setup:
-scripts=./160530/
-processed_data=../processed_data/160530/
-figures=../figures/160530/
-mkdir $scripts $processed_data $figures
+# make locuszoom for TCF21 at rs2327429:
+mkdir ../figures/rasqual/locuszoom/
+cut -f2,26 ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.pval.txt > ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.metal
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.metal --pvalcol pval --markercol rsid --refsnp rs2327429 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (TCF21)" --prefix ../figures/rasqual/locuszoom/TCF21_eQTL
 
-# prepare covariates: 
-# top three genotype PCs
-# 15 PEER factors 
-# gender
-# example: /mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/eqtl_data/eQTLInputFiles/covariates/
-subl $scripts/combine_covariates.R 
-Rscript $scripts/combine_covariates.R \
-	--genotype_pc=../processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv \
-	--peer=../processed_data/160527/factors.tsv \
-	--sample_info=/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx \
-	--output=$processed_data/covariates.tsv \
-	--gender_coding=numerical
 
+# make locuszoom for TCF21 at rs12190287:
+locuszoom --metal ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.metal --pvalcol pval --markercol rsid --refsnp rs12190287 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (TCF21)" --prefix ../figures/rasqual/locuszoom/TCF21_eQTL
 
-# prepare genotype data
-# filter minor allele frequency 0.05: 
-bcftools view \
-	--min-af 0.05 --max-af 0.95 \
-	-Ov -o ../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf \
-	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.vcf
 
-bcftools query -H \
-	-S ../data/joint2/sample_list.txt \
-	-f '%CHROM\_%POS\_%REF\_%ALT[\t%DS]\n' \
-	-o $processed_data/dosage.tsv \
-	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf
+# make locuszoom for GWAS at rs12190287:
+locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs12190287 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="GWAS (rs12190287)" --prefix ../figures/rasqual/locuszoom/TCF21_gwas
 
-cp $processed_data/dosage.tsv $processed_data/dosage.tmp
 
-sed -e "s/# \[1\]CHROM_\[2\]POS_\[3\]REF_\[4\]ALT/id/" \
-	-e "s/\[[[:digit:]]\+\]//g" -e "s/:DS//g" \
-	$processed_data/dosage.tmp > $processed_data/dosage.tsv
-rm $processed_data/dosage.tmp
 
-# prepare expression data: 
-ln ../processed_data/160527/combined.filter.rpkm $processed_data/combined.filter.rpkm
-Rscript 160527/normalize_rpkm.R $processed_data/combined.filter.rpkm $processed_data/combined.filter.norm.rpkm
+#---------------- RASQUAL and fastQTL ------------# 
+# Setup: 
+mkdir compare_rasqual_and_fastqtl ../processed_data/compare_rasqual_and_fastqtl
 
+# Subset the gene, SNP, p-value, q-value, and effect size column of fastQTL and RASQUAL result: 
+bash compare_rasqual_and_fastqtl/subset.sh
 
-# prepare genotype location: 
-cp 031_gen_snps_loc.R $scripts/gen_snps_loc.R
-Rscript $scripts/gen_snps_loc.R $processed_data/dosage.tsv $processed_data/genotype_loc.txt
+# Calculate the percentage of RASQUAL eQTL also discovered fastQTL: 
+bash compare_rasqual_and_fastqtl/compare.R
 
 
-# prepare gene location: 
-cp 031_gen_gene_loc.R $scripts/gen_gene_loc.R
-subl $scripts/gen_gene_loc.R
-Rscript $scripts/gen_gene_loc.R /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf $processed_data/gene_loc.txt
-
-
-# find optimum number of PEER factors:
-mkdir $processed_data/find_optimum_num_PEER_factors_matrixeqtl
-bash $scripts/find_optimal_num_PEER_factors_matrix_eQTL.sh 
-bash $scripts/run_count_num_sig_association.sh 
-Rscript $scripts/plot_num_eqtl_vs_cov.R \
-	$processed_data/find_optimum_num_PEER_factors_matrixeqtl/num_eqtls_vs_cov.fdr.txt \
-	$figures/num_eqtls_vs_cov.fdr.pdf
-
-
-# run matrix eQTL:
-cp 160516_matrix_eQTL.R $scripts/run_matrix_eQTL.R
-# Rscript $scripts/run_matrix_eQTL.R \
-# 	$processed_data/dosage.tsv \
-# 	$processed_data/genotype_loc.txt \
-# 	$processed_data/combined.filter.norm.rpkm \
-# 	$processed_data/gene_loc.txt \
-# 	$processed_data/covariates.tsv \
-# 	$processed_data/
-# Use $processed_data/find_optimum_num_PEER_factors_matrixeqtl/pc3.peer8.2.cis.txt
-
-
-# make qqplot and histogram of p-value distribution: 
-mkdir ../figures/160530
-Rscript $scripts/qqplot_pvalue.R ../processed_data/160530/cis.txt ../figures/160530/
-
-
-#------ run fastQTL --------
-# Prepare genotype data for fastQTL: 
-bgzip /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf && tabix -p vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.gz
-bcftools annotate -Oz -o /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.gz
-tabix -p vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz
-
-
-# Prepare expression data for fastQTL: 
-Rscript $scripts/160530/gen_bed.R $processed_data/160530/gene_loc.txt $processed_data/160530/combined.filter.norm.rpkm $processed_data/160530/combined.filter.norm.bed
-bgzip $processed_data/160530/combined.filter.norm.bed
-tabix -p bed $processed_data/160530/combined.filter.norm.bed.gz
-
-
-# Prepare covariates for fastQTL: 
-Rscript $scripts/combine_covariates.R --genotype_pc=../processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv --peer=../processed_data/160527/factors.tsv --sample_info=/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx --output=$processed_data/covariates.fastqtl.tsv --gender_coding=letter
-bgzip $processed_data/covariates.fastqtl.tsv
-
-
-# Run fastQTL (nominal pass):
-n=0
-for i in {1..22}; do 
-n=$(($n+1))
-if [[ n -gt 10 ]]; then wait; n=0; fi 
-bash $scripts/run_fastqtl.nominal.sh /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz $processed_data/combined.filter.norm.bed.gz $processed_data/find_optimum_num_PEER_factors/covariates.fastqtl.pc3.peer8.tsv.gz $processed_data/fastqtl_nominal/fastqtl.chr$i.pc3.peer8.txt.gz chr$i > $processed_data/fastqtl_nominal/run_fastqtl.chr$i.log &
-done 
-zcat $processed_data/fastqtl_nominal/fastqtl.chr{1..22}.pc3.peer8.txt.gz > $processed_data/fastqtl_nominal/fastqtl.allpairs.pc3.peer8.txt
-
-
-# Create symbolic link from fastQTL result of the nominal pass to the data directory: 
-ln -s /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160530/fastqtl_nominal/ /srv/persistent/bliu2/HCASMC_eQTL/data/eQTL/fastqtl/
-
-# Adjust p-value for fastQTL result from nominal pass: 
-Rscript $scripts/160530/fastqtl_pvalue_corrections.nominal_pass.R $data/eQTL/fastqtl/fastqtl_nominal/fastqtl.allpairs.pc3.peer8.txt $data/eQTL/fastqtl/fastqtl_nominal/fastqtl.allpairs.pc3.peer8.padj.txt
-
-
-# Make histogram and qqplot of fastQTL nominal p-values:
-Rscript $scripts/qqplot_fastqtl_pvalue.R $processed_data/fastqtl.txt $figures/fastqtl_histogram.pdf $figures/fastqtl_qqplot.pdf
-
-
-# find optimal number of PEER factors:
-mkdir $processed_data/find_optimum_num_PEER_factors/
-bash $scripts/find_optimal_num_PEER_factors.sh
-Rscript $scripts/plot_num_egene_vs_cov.R $figures/num_egene_vs_cov.pdf
-
-
-# Copy the optimal eQTL set and remove the rest: 
-mkdir $processed_data/160530/fastqtl_perm/
-cp $processed_data/160530/find_optimum_num_PEER_factors/fastqtl.pc4.peer8* $processed_data/160530/fastqtl_perm/
-rm -r $processed_data/160530/find_optimum_num_PEER_factors/
-
-
-# Create symbolic link from fastQTL result of the permutation pass to the data directory:
-ln -s /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160530/fastqtl_perm/ /srv/persistent/bliu2/HCASMC_eQTL/data/eQTL/fastqtl/fastqtl_perm
-
-
-# How does our discover compare with GTEx: 
-Rscript $scripts/plot_num_egenes_vs_sample_size.R \
-	$processed_data/gtex.v6p.egenes.summary.txt \
-	$processed_data/find_optimum_num_PEER_factors/fastqtl.pc4.peer8.padj.txt \
-	$figures/num_egenes_vs_sample_size.pdf
-
-
-
-#------- Interpret eGenes -------
-# num eGenes discovered by FDR: 
-Rscript $scripts/plot_num_egene_by_fdr.R $processed_data/fastqtl.padj.txt $figures/num_egenes_by_fdr.pdf 
-
-
-# investigate the top 5 eGenes:
-Rscript $scripts/plot_expression_vs_genotype.R \
-	$processed_data/combined.filter.norm.rpkm \
-	$processed_data/dosage.tsv \
-	$processed_data/covariates.tsv \
-	$processed_data/fastqtl.padj.txt \
-	$figures
 
 
 #----- trans eQTL -------
@@ -397,139 +276,6 @@ Rscript $scripts/mds.R \
 
 
 
-#### phasing 
-# 16/06/04:
-# setup:
-scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160604_phasing
-processed_data=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing
-figures=/srv/persistent/bliu2/HCASMC_eQTL/figures/160604_phasing
-mkdir $scripts $processed_data $figures
-
-
-# convert hg19 coordinate to GRCh37 coordinate:
-bash $scripts/convert_chrom_names.sh \
-	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.vcf \
-	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.vcf \
-	../data/joint2/hg19_to_GRCh37.txt
-bgzip ../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.vcf && tabix -p vcf ../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.vcf.gz
-
-
-bash $scripts/convert_chrom_names.sh \
-	/srv/persistent/bliu2/HCASMC_eQTL/data//joint3/recalibrated_variants.pass.vcf.gz \
-	/srv/persistent/bliu2/HCASMC_eQTL/data//joint3/recalibrated_variants.pass.GRCh37.vcf \
-	../data/joint2/hg19_to_GRCh37.txt
-bgzip /srv/persistent/bliu2/HCASMC_eQTL/data//joint3/recalibrated_variants.pass.GRCh37.vcf && tabix -p vcf /srv/persistent/bliu2/HCASMC_eQTL/data//joint3/recalibrated_variants.pass.GRCh37.vcf.gz
-
-
-# subset vcf to first chrom, pos, ref, alt: 
-bash $scripts/subset_vcf_to_first_4_col.sh \
-	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.vcf \
-	$processed_data/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.txt &
-
-# check variants in VCF and reference are on the same strand:
-Rscript compare_vcf_with_reference.scratch.R
-
-
-# make a list of non-european samples:
-Rscript $scripts/make_list_of_non_caucasian_samples.hcasmc.R \
-	../processed_data/rna_wgs_match.reduced_050616.xlsx \
-	$processed_data/non_caucasian.hcasmc.txt
-bash $scripts/make_list_of_non_EUR_samples.1kg.sh \
-	/srv/persistent/bliu2/tools/beagle/reference/integrated_call_samples_v3.20130502.ALL.panel \
-	$processed_data/non_caucasian.1kg.txt
-cat $processed_data/non_caucasian.1kg.txt $processed_data/non_caucasian.hcasmc.txt > $processed_data/non_caucasian.txt
-
-
-# run comform-gt on filtered variants: 
-mkdir $processed_data/conform_gt/
-for i in {1..22} X; do
-bash $scripts/run_conform_gt.sh \
-	/srv/persistent/bliu2/tools/beagle/reference/chr$i.1kg.phase3.v5a.vcf.gz \
-	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.vcf.gz \
-	$i \
-	$processed_data/conform_gt/mod.chr$i \
-	$processed_data/non_caucasian.txt &
-done
-
-
-# Beagle phasing with reference no imputation:
-mkdir $processed_data/phased/
-n=0
-for i in $(seq 1 22);do
-bash $scripts/run_beagle_phasing.sh \
-	$processed_data/conform_gt/mod.chr$i.vcf.gz \
-	$processed_data/phased/phased.chr$i \
-	/srv/persistent/bliu2/tools/beagle/reference/chr$i.1kg.phase3.v5a.vcf.gz \
-	/srv/persistent/bliu2/tools/beagle/reference/plink.chr$i.GRCh37.map \
-	$i &
-n=$(($n+1))
-if [[ $n -gt 10 ]]; then wait; n=0; fi
-done
-
-# merge vcf: 
-bcftools concat -Oz -o $processed_data/phased/phased.vcf.gz $processed_data/phased/phased.{1..22}.vcf.gz
-
-# run comform-gt on all recalibrated variants: 
-mkdir $processed_data/conform_gt2/
-parallel -j6 bash $scripts/run_conform_gt.sh \
-	/srv/persistent/bliu2/tools/beagle/reference/chr{}.1kg.phase3.v5a.vcf.gz \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/joint3/recalibrated_variants.pass.GRCh37.vcf.gz \
-	{} \
-	$processed_data/conform_gt2/mod.chr{} \
-	$processed_data/non_caucasian.txt ::: {1..22} X
-
-
-# Beagle phasing with reference with imputation:
-mkdir ../processed_data/160604_phasing/phased_and_imputed
-parallel -j6 /srv/persistent/bliu2/tools/jre1.8.0_91/bin/java -Xmx8g -jar \
-	/srv/persistent/bliu2/tools/beagle/beagle.27Jul16.86a.jar \
-	nthreads=4 \
-	chrom={} \
-	gt=../processed_data/160604_phasing/conform_gt2/mod.chr{}.vcf.gz \
-	out=../processed_data/160604_phasing/phased_and_imputed/phased_and_imputed.chr{} \
-	ref=/srv/persistent/bliu2/tools/beagle/reference/chr{}.1kg.phase3.v5a.bref \
-	map=/srv/persistent/bliu2/tools/beagle/reference/plink.chr{}.GRCh37.map \
-	impute=true ::: {1..22} X
-
-
-# Beagle phasing with reference with imputation:
-mkdir ../processed_data/160604_phasing/phased_and_imputed_gprobs
-parallel -j12 /srv/persistent/bliu2/tools/jre1.8.0_91/bin/java -Xmx8g -jar \
-	/srv/persistent/bliu2/tools/beagle/beagle.27Jul16.86a.jar \
-	nthreads=2 \
-	chrom={} \
-	gt=../processed_data/160604_phasing/conform_gt2/mod.chr{}.vcf.gz \
-	out=../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{} \
-	ref=/srv/persistent/bliu2/tools/beagle/reference/chr{}.1kg.phase3.v5a.bref \
-	map=/srv/persistent/bliu2/tools/beagle/reference/plink.chr{}.GRCh37.map \
-	impute=true gprobs=true ::: {1..22} X
-
-# link result to data directory: 
-ln -s /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_and_imputed_gprobs /srv/persistent/bliu2/HCASMC_eQTL/data/joint3/phased_imputed
-
-
-# Beagle phasing without reference: 
-mkdir $processed_data/phased_no_ref/
-n=0
-for i in $(seq 1 22);do
-bash $scripts/run_beagle_phasing_without_reference.sh \
-	../data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.GRCh37.vcf.gz \
-	$processed_data/phased_no_ref/phased_no_ref.chr$i \
-	/srv/persistent/bliu2/tools/beagle/reference/plink.chr$i.GRCh37.map \
-	$i &
-n=$(($n+1))
-if [[ $n -gt 10 ]]; then wait; n=0; fi
-done
-
-# merge vcf:
-for i in {1..22}; do tabix -p vcf $processed_data/phased_no_ref/phased_no_ref.chr$i.vcf.gz; done
-bcftools concat -Oz -o $processed_data/phased_no_ref/phased_no_ref.vcf.gz $processed_data/phased_no_ref/phased_no_ref.chr{1..22}.vcf.gz
-
-# convert GRCh37 to hg19: 
-bash $scripts/convert_chrom_names.sh \
-	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_no_ref/phased_no_ref.vcf.gz \
-	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_no_ref/phased_no_ref.hg19.vcf \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/joint2/GRCh37_to_hg19.txt
 
 
 # 16/06/14
@@ -1864,127 +1610,6 @@ Rscript tarid/pm_plot.R ../figures/tarid/tmem120b_rs148608463.size52.pmplot.pdf 
 
 #### end tarid
 
-
-#------------------ RASQUAL ---------------------:
-# Setup:  
-mkdir rasqual ../figures/rasqual ../processed_data/rasqual
-
-
-# Prepare RASQUAL read count table: 
-cat ../data/rnaseq2/read_count/rnaseqc/rnaseqc.hcasmc_eqtl.reads.gct | grep -v -e "#1.2" -e "56238" -e "Name" | cut -f1,3- > ../processed_data/rasqual/Y.txt
-
-
-# Calculate GC content (both gene and exon level): 
-python rasqual/calc_gcc.py /mnt/lab_data/montgomery/shared/genomes/hg19/hg19.fa /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf gene > ../processed_data/rasqual/gcc.gene.txt
-python rasqual/calc_gcc.py /mnt/lab_data/montgomery/shared/genomes/hg19/hg19.fa /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf exon > ../processed_data/rasqual/gcc.exon.txt
-
-
-# Calculate RASQUAL offset:
-Rscript reorder_gcc_by_Y.R ../processed_data/rasqual/Y.txt ../processed_data/rasqual/gcc.exon.txt ../processed_data/rasqual/Y.tidy.txt ../processed_data/rasqual/gcc.exon.tidy.txt
-cut -f2-2 ../processed_data/rasqual/gcc.exon.tidy.txt > ../processed_data/rasqual/gcc.exon.tidy.cut.txt
-cp /srv/persistent/bliu2/tools/rasqual/R/{makeOffset.R,gcCor.R} rasqual
-R --vanilla --quiet --args ../processed_data/rasqual/Y.tidy.txt ../processed_data/rasqual/gcc.exon.tidy.cut.txt ../processed_data/rasqual/K.txt < rasqual/makeOffset.R
-
-
-# Calculate allele specific reads for RASQUAL (ASVCF): 
-parallel -j12 bash rasqual/vcf2asvcf.sh ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.vcf.gz ::: {1..22} X
-parallel tabix -p vcf ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz ::: {1..22} X
-bcftools concat -Oz -o ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{1..22}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chrX.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
-tabix -p vcf ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
-
-
-# Change rsid to chr_pos_ref_alt_b37:
-bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT\_b37' -Oz -o ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.rsid.vcf.new.gz ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz
-tabix -p vcf ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.rsid.vcf.new.gz
-zcat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.rsid.vcf.new.gz | sed 's/chr//g' | bgzip > /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.GRCh37.rsid.vcf.new.gz
-tabix -p vcf /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.GRCh37.rsid.vcf.new.gz
-
-
-# Cleanup intermediate files generated by ASVCF: 
-parallel -j12 bash rasqual/vcf2asvcf.cleanup.sh ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.vcf.gz ::: {1..22} X
-
-
-# make rasqual input: 
-parallel -j6 "grep chr{} /srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf | python rasqual/make_input.py ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz 1000000 > ../processed_data/rasqual/input/rasqual.input.new.chr{}.txt" ::: {1..22} X
-
-
-# create rasqual covariates: 
-cp $scripts/160530/combine_covariates.R $scripts/rasqual/combine_covariates.R
-Rscript $scripts/rasqual/combine_covariates.R --genotype_pc=$processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv --peer=$processed_data/160527/factors.tsv --sample_info=$data/sample_info/sample_info.xlsx --output=$processed_data/rasqual/X.txt --gender_coding=numerical --num_geno_pc=4 --num_peer_factor=8
-
-
-# compress: 
-R --vanilla --quiet --args ../processed_data/rasqual/Y.tidy.txt ../processed_data/rasqual/K.txt ../processed_data/rasqual/X.txt < $tools/rasqual/R/txt2bin.R 
-
-
-# combine 2015 CAD and Metabochip variants: 
-cat ../data/gwas/gwas_loci.cad.all.genomewide_fdr_merged.txt \
-<(grep -v markername ../data/gwas/metabochip_novel_lead_variants.txt) > \
-../data/gwas/gwas.cad.mi.recessive.metabochip.txt
-
-
-# Select genes close to CAD GWAS hits (from the 2015 CAD and 2016 Metabochip variants): 
-Rscript rasqual/select_genes.R 
-
-
-# Run RASQUAL for all selected genes: 
-grep -f ../processed_data/rasqual/prioritized_genes.txt -n ../processed_data/rasqual/input/rasqual.input.autosome.txt | awk '{print $1}' | awk 'BEGIN{FS=":"}{print $1}' > ../processed_data/rasqual/prioritized_genes.number.txt
-parallel bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.autosome.txt {} ../processed_data/rasqual/Y.tidy.bin ../processed_data/rasqual/K.bin ../processed_data/rasqual/X.bin ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz :::: ../processed_data/rasqual/prioritized_genes.number.txt 
-
-
-# Run RASQUAL for other genes: 
-parallel -j10 bash rasqual/rasqual.sh ../processed_data/rasqual/input/rasqual.input.all.txt {} ../processed_data/rasqual/Y.tidy.bin ../processed_data/rasqual/K.bin ../processed_data/rasqual/X.bin ../processed_data/160604_phasing/phased_and_imputed_gprobs/phased_and_imputed.all.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz :::: ../processed_data/rasqual/unprioritized_genes.number.txt 
-
-
-# Calculate p-value:
-cat ../processed_data/rasqual/input/rasqual.input.autosome.txt | awk '{print $1"_"$2}' > ../processed_data/rasqual/tmp.rasqual_output_file.txt
-parallel Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/{}.txt ../processed_data/rasqual/output/{}.pval.txt :::: ../processed_data/rasqual/tmp.rasqual_output_file.txt
-
-
-# Combined RASQUAL output for all "expressed" genes: 
-mkdir ../data/eQTL/rasqual/
-bash rasqual/combine_rasqual_output.sh
-
-
-# Adjust p-value for all "expressed" genes:
-bash rasqual/adjust_pvalue.sh
-
-
-# Gene-wise bonferroni adjustment: 
-
-
-
-# concatenate all priortized genes: 
-bash rasqual/rasqual_output2eCAVIAR_input.sh \
-../processed_data/rasqual/prioritized_genes.output_file.txt \
-../processed_data/rasqual/merged_output/prioritized_genes.allpairs.txt
-
-
-
-# make locuszoom for TCF21 at rs2327429:
-mkdir ../figures/rasqual/locuszoom/
-cut -f2,26 ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.pval.txt > ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.metal
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.metal --pvalcol pval --markercol rsid --refsnp rs2327429 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (TCF21)" --prefix ../figures/rasqual/locuszoom/TCF21_eQTL
-
-
-# make locuszoom for TCF21 at rs12190287:
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.metal --pvalcol pval --markercol rsid --refsnp rs12190287 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (TCF21)" --prefix ../figures/rasqual/locuszoom/TCF21_eQTL
-
-
-# make locuszoom for GWAS at rs12190287:
-locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs12190287 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="GWAS (rs12190287)" --prefix ../figures/rasqual/locuszoom/TCF21_gwas
-
-
-
-#---------------- RASQUAL and fastQTL ------------# 
-# Setup: 
-mkdir compare_rasqual_and_fastqtl ../processed_data/compare_rasqual_and_fastqtl
-
-# Subset the gene, SNP, p-value, q-value, and effect size column of fastQTL and RASQUAL result: 
-bash compare_rasqual_and_fastqtl/subset.sh
-
-# Calculate the percentage of RASQUAL eQTL also discovered fastQTL: 
-bash compare_rasqual_and_fastqtl/compare.R
 
 
 

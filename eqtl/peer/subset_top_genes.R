@@ -6,11 +6,9 @@
 # command args: 
 args=commandArgs(T)
 input_file=args[1]
-input_file='../processed_data/160527/combined.filter.rpkm'
 output_file=args[2]
-output_file='../processed_data/160527/combined.filter.top10000.rpkm'
 n=args[3]
-n=10000
+
 
 # read input: 
 input=fread(input_file,header=T)

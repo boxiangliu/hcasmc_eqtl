@@ -4,13 +4,9 @@ beagle=/srv/persistent/bliu2/tools/beagle/beagle.03May16.862.jar
 
 # impute and phase:
 for i in $(seq 1 22);do
-$java -Xmx4096m -jar $beagle nthreads=2 chrom=chr$i gl=$wd/recalibrated_biallelic_SNP.pass.vcf out=$wd/recalibrated_biallelic_SNP.beagle.chr$i &
+	$java -Xmx4096m -jar $beagle nthreads=2 chrom=chr$i gl=$wd/recalibrated_biallelic_SNP.pass.vcf out=$wd/recalibrated_biallelic_SNP.beagle.chr$i &
+	tabix -p vcf $wd/recalibrated_biallelic_SNP.beagle.chr$i.vcf.gz
 done
-
-# index each vcf:
-for i in $(seq 1 22); do
-tabix -p vcf recalibrated_biallelic_SNP.beagle.chr$i.vcf.gz
-done 
 
 
 # concatenate all chromosomes:

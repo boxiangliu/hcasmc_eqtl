@@ -17,7 +17,6 @@ OutDir=$2
 tissue=hcasmc
 
 echo "Rscript $scripts/get_peer_correction.Extended.R $TraitsFileName $MaxFactorsN $MaxIterations $BoundTol $VarTol $e_pa $e_pb $a_pa $a_pb $OutDir $tissue"
-# R -f /users/joed3/goats/code/PEER/get_peer_correction.Extended.R --vanilla --slave --args $TraitsFileName $MaxFactorsN $MaxIterations $BoundTol $VarTol $e_pa $e_pb $a_pa $a_pb $OutDir $tissue
 Rscript /srv/persistent/bliu2/HCASMC_eQTL/scripts/160527/get_peer_correction.Extended.R $TraitsFileName $MaxFactorsN $MaxIterations $BoundTol $VarTol $e_pa $e_pb $a_pa $a_pb $OutDir $tissue
 
 echo "GetPeerExtended.sh DONE"

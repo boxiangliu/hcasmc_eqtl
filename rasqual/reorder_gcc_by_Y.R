@@ -1,4 +1,5 @@
 library(data.table)
+
 args=commandArgs(T)
 Y_file=args[1]
 gcc_file=args[2]
@@ -13,8 +14,6 @@ gcc_out=args[4]
 
 Y=fread(Y_file)
 gcc=fread(gcc_file)
-
-
 
 # remove any element in Y that is not in gcc: 
 Y=Y[Y$V1%in%gcc$V1,]
