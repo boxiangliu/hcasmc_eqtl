@@ -4,11 +4,14 @@
 # durga
 # generate gene location file
 
+library(data.table)
+library(stringr)
+
 # command args: 
 args=commandArgs(T)
 gencode_file=args[1]
 output_file=args[2]
-
+if (!dir.exists(dirname(output_file))) {dir.create(dirname(output_file),recursive=TRUE)}
 
 # read gene code annotation:
 gencode=fread(gencode_file,header=F)

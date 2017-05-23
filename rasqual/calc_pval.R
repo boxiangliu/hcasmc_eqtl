@@ -18,5 +18,5 @@ res[,pval:=pchisq(q=chisq,df=1,lower.tail=F)]
 res[,rank:=rank(res$pval)]
 
 
-# write metal file:
+# output file:
 write.table(res,file=out_file,quote=F,sep='\t',row.names=F,col.names=T)

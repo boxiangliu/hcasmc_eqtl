@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 # bosh liu
 # generate input bed file for fastQTL
+library(data.table)
 
 # command args: 
 args=commandArgs(T)

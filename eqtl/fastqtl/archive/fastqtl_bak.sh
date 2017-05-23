@@ -1,9 +1,9 @@
 scripts=eqtl/fastqtl/
-processed_data=../processed_data/160530/
-figures=../figures/160530
+processed_data=../processed_data/eqtl/fastqtl/
+figures=../figures/eqtl/fastqtl/
 
 # Prepare genotype data for fastQTL: 
-bcftools annotate -Oz -o /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.gz
+bcftools annotate -Oz -o ../data/joint3/asvcf/phased_and_imputed.chr$i.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT_b37' /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.gz
 tabix -p vcf /srv/persistent/bliu2/HCASMC_eQTL/data/joint2/recalibrated_biallelic_SNP.beagle.rename.dr2.hwe.maf.vcf.id.gz
 
 

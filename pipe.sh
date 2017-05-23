@@ -1,5 +1,9 @@
-# Author: Boxiang Liu
-# Contact: jollier.liu@gmail.com
+###################################
+# Pipeline for HCASCM project     #
+# Author: Boxiang Liu 			  #
+# Contact: jollier.liu@gmail.com  #
+###################################
+
 
 HG19 = /srv/persistent/bliu2/shared/ucsc_hg19/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa
 GATK =  /usr/bin/GenomeAnalysisTK.jar
@@ -105,8 +109,9 @@ bash eqtl/matrix_eqtl/matrix_eqtl.sh
 
 
 # FastQTL:
-bash eqtl/fastqtl/fastqtl.sh
-
+bash eqtl/fastqtl/change_sid.sh
+bash eqtl/fastqtl/fastqtl.nominal.sh
+bash eqtl/fastqtl/adjust_pvalue.nominal.sh
 
 #------------------ RASQUAL ---------------------
 # Setup:  
@@ -125,23 +130,9 @@ R --vanilla --quiet --args ../processed_data/rasqual/Y.tidy.txt ../processed_dat
 
 # Run RASQUAL:
 bash rasqual/rasqual.wrapper.sh
-
-
-# Calculate p-value:
-cat ../processed_data/rasqual/input/rasqual.input.autosome.txt | awk '{print $1"_"$2}' > ../processed_data/rasqual/tmp.rasqual_output_file.txt
-parallel Rscript rasqual/calc_pval.R ../processed_data/rasqual/output/{}.txt ../processed_data/rasqual/output/{}.pval.txt :::: ../processed_data/rasqual/tmp.rasqual_output_file.txt
-
-
-# Combined RASQUAL output for all "expressed" genes: 
-mkdir ../data/eQTL/rasqual/
-bash rasqual/combine_rasqual_output.sh
-
-
-# Adjust p-value for all "expressed" genes:
+bash rasqual/calc_pval.wrapper.sh
+bash rasqual/merge_output.sh
 bash rasqual/adjust_pvalue.sh
-
-
-# Gene-wise bonferroni adjustment: 
 
 
 
@@ -167,7 +158,7 @@ locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --
 
 
 
-#---------------- RASQUAL and fastQTL ------------# 
+#---------------- Compare RASQUAL and fastQTL ------------# 
 # Setup: 
 mkdir compare_rasqual_and_fastqtl ../processed_data/compare_rasqual_and_fastqtl
 
@@ -177,7 +168,13 @@ bash compare_rasqual_and_fastqtl/subset.sh
 # Calculate the percentage of RASQUAL eQTL also discovered fastQTL: 
 bash compare_rasqual_and_fastqtl/compare.R
 
+# Replication in GTEx:
+bash compare_rasqual_and_fastqtl/define_gtex_eqtl.sh
+bash compare_rasqual_and_fastqtl/gtex_replication.R
 
+# Overlap with ATACseq:
+bash compare_rasqual_and_fastqtl/top_snp_per_gene.R
+bash compare_rasqual_and_fastqtl/atacseq_overlap.R
 
 
 #----- trans eQTL -------
