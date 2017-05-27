@@ -171,11 +171,13 @@ colnames(tissue_color)=c('tissue','color')
 
 
 # Plot some HCASMC-specific genes:
-pdf('../figures/160715/hcasmc_specific_gene.quant_norm.pdf')
-for (gene in c('MMP1','MTRNR2L12','LINC00973','CXCL6','C7orf69','CALD1','VIM','MYH10','TPM4','RBP1')){
+pdf('../figures/160715/hcasmc_specific_gene.quant_norm.pdf',height=4,width=4)
+for (gene in c('MMP1','MTRNR2L12','LINC00973','CXCL6','C7orf69','CALD1','VIM','MYH10','TPM4','RBP1','RPS18')){
 	print(make_plot(rpkmn,rowdata,coldata,gene,tissue_color))
 }
 dev.off()
+
+
 
 # Calculate ESI for all tissues (take minutes): 
 esi_ls=calculate_esi_tissue_list(tissue_median,colnames(tissue_median))

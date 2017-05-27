@@ -1,3 +1,7 @@
+# Calculate eQTL and ATACseq overlap. eQTLs are stratified by s-value
+# defined as p(HCASMC)*\prod{(1-p(GTEx tissue))}
+# where p is the m-value returned by metasoft. 
+
 ## Library: 
 library(data.table)
 library(dplyr)

@@ -815,7 +815,9 @@ cp -r /Users/boshliu/gsea_home/output/aug09/hcasmc_vs_gtex_all.c2.cp.kegg.GseaPr
 # Find HCASMC specific gene using information theory: 
 bash 160715/prepare_gct_file.sh 
 Rscript 160715/find_hcasmc_specific_genes.info_theory.R
-
+Rscript 160715/find_hcasmc_specific_genes.info_theory.quant_norm.R
+Rscript 160715/parse_gtf.R
+Rscript 160715/manhattan.R
 
 # Overlap HCASMC specific gene and GWAS: 
 Rscript 160715/hcasmc_specific_gene_and_GWAS.R 
@@ -1632,6 +1634,11 @@ ln ../processed_data/hcasmc_specific_eqtl/eqtl_specificity_index/* ../processed_
 Rscript eqtl_and_atacseq/overlap_hcasmc_specific_eqtl_and_atacseq.entropy.R
 
 
+# Gregor: 
+Rscript eqtl_and_atacseq/gregor/LD_proxy.R
+Rscript eqtl_and_atacseq/gregor/overlap_enrichment.R
+
+
 #----------------- Brian's genes ---------------# 
 # Setup: 
 mkdir -p ../figures/brian/locuszoom brian ../processed_data/brian
@@ -1834,11 +1841,12 @@ Rscript shared/tissue_color.R   # shared/tissue_color.txt
 # Setup:
 mkdir -p ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc_filt/ ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc
 ln /srv/persistent/bliu2/HCASMC_eQTL/processed_data/mpra/DHS_expanded/* ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc
+ln ../data/atacseq/fbs/*/out/peak/macs2/overlap/*.naive_overlap.narrowPeak.gz ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc
 
 
 # Preprocess encode data: 
 Rscript hcasmc_specific_open_chromatin/process_encode_data.R
-
+Rscript hcasmc_specific_open_chromatin/process_encode_data_without_taking_max.R
 
 # Find shared peaks: 
 python hcasmc_specific_open_chromatin/find_shared_peaks.py

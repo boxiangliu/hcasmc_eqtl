@@ -1,10 +1,10 @@
 library(data.table)
 library(stringr)
 library(cowplot)
-
+library(gridExtra)
 
 # Variables: 
-in_fn='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult_filt/HCASMC.merged.bed'
+in_dir_adult_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult_filt/'
 fig_dir='../figures/eqtl_and_atacseq/gregor/overlap_enrichment/'
 out_dir='../processed_data/eqtl_and_atacseq/gregor/overlap_enrichment/'
 if (!dir.exists(fig_dir)) {dir.create(fig_dir,recursive=TRUE)}
@@ -103,25 +103,35 @@ setkey(ld_set,chr,start,end)
 
 # Calculate enrichment statistics for only adult tissue/cell line (and remove AUDIT ERROR samples): 
 # Read HCASMC ATACseq:
-dhs=fread(in_fn)
-dhs[,c('start','end'):=list(start-500,end+500),]
-setkey(dhs,chr,start,end)
+fn=list.files(in_dir_adult_filt,pattern='bed')
+pval=c()
+tissue=c()
+for (f in fn){
+	sample=str_replace(f,'.merged.bed','')
+	tissue=c(tissue,sample)
+	print(sprintf('INFO - %s',sample))
+	dhs=fread(sprintf('%s/%s',in_dir_adult_filt,f))
+	dhs[,c('start','end'):=list(start-500,end+500),]
+	setkey(dhs,chr,start,end)
+
+	# Overlap: 
+	overlap=unique(foverlaps(ld_set,dhs[,list(chr,start,end)]))
+	overlap[,c('i.start','i.end'):=NULL]
 
 
-# Overlap: 
-overlap=unique(foverlaps(ld_set,dhs[,list(chr,start,end)]))
-overlap[,c('i.start','i.end'):=NULL]
+	overlap[,loci_overlap:=!is.na(start)]
+	overlap[,c('start','end'):=NULL]
+	overlap=unique(overlap)
+	overlap[,p:=mean(loci_overlap),by='eqtl']
 
 
-overlap[,loci_overlap:=!is.na(start)]
-overlap[,c('start','end'):=NULL]
-overlap=unique(overlap)
-overlap[,p:=mean(loci_overlap),by='eqtl']
-
-
-# Calculate enrichment p-value:
-p=overlap[,list(p=unique(p)),by='eqtl']
-n=rep(1,length(p$p))
-s=sum(overlap[snpID==eqtl,loci_overlap])
-pval=p_non_identical_binom(n,p$p,s)$p4
-# 3.03409e-05
+	# Calculate enrichment p-value:
+	p=overlap[,list(p=unique(p)),by='eqtl']
+	n=rep(1,length(p$p))
+	s=sum(overlap[snpID==eqtl,loci_overlap])
+	pval=c(pval,p_non_identical_binom(n,p$p,s)$p4)
+}
+pval=data.table(tissue,pval)
+setorder(pval,pval)
+pdf(sprintf('%s/gregor_pval_adult_filt.pdf',fig_dir),height=10);grid.table(pval);dev.off()
+fwrite(pval,sprintf('%s/gregor_pval_adult_filt.tsv',out_dir),sep='\t')

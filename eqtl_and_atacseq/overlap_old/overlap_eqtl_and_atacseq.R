@@ -113,7 +113,7 @@ if (!dir.exists(fig_dir)){dir.create(fig_dir,recursive=T)}
 
 
 ## main: 
-# Read eQTL and ATACseq data: 
+# Read eQTL and ATACseq data:
 eqtl=fread(paste0("cat ", eqtl_file, ' | cut -f1,2,3,4,5,6,7,12,25,26,29'))
 atac_hcasmc=fread(atacseq_file)
 setnames(atac_hcasmc,c('chrom','chromStart','chromEnd','name','score','strand','signalValue','pValue','qValue','peak'))
