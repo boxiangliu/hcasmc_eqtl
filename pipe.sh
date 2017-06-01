@@ -1551,8 +1551,12 @@ Rscript gwas_atacseq_overlap/gregor/overlap_enrichment.R
 mkdir gwas_eqtl_overlap ../processed_data/gwas_eqtl_overlap ../figures/gwas_eqtl_overlap
 
 
-# overlap analysis: 
-Rscript gwas_eqtl_overlap/overlap.metasoft.R
+# Method 1: Overlap with all GWAS variants pass threshold.
+Rscript gwas_eqtl_overlap/gwas_thresholding/overlap.metasoft.R
+
+
+# Method 2: Gregor:
+Rscript gregor/overlap_enrichment.R
 
 #### end GWAS eQTL overlap
 
@@ -1874,7 +1878,7 @@ Rscript hcasmc_specific_open_chromatin/get_min_index.R
 
 
 # Assign peak specificity score to raw peaks:
-
+Rscript hcasmc_specific_open_chromatin/assign_raw_peak_specificity.Rscript
 
 # Plot the distribution of number of tissues sharing each peak in HCASMC:
 Rscript hcasmc_specific_open_chromatin/plot_distribution_of_tissue_sharing.R

@@ -148,11 +148,11 @@ metadata=fread('../data/encode/dnase_seq/metadata.tsv')
 metadata=metadata[`Biosample type`%in%c('tissue','primary cell')]
 
 tmp=metadata[,list(adult_pct=mean(`Biosample life stage`=='adult'),fetus_pct=mean(`Biosample life stage`=='fetal')),by='Biosample term name']
-tmp=rbind(tmp,data.table(tissue='HCASMC',adult_pct=1,fetus_pct=0))
+tmp=rbind(tmp,data.table(`Biosample term name`='HCASMC',adult_pct=1,fetus_pct=0))
 
 merged=merge(pval,tmp,by.x='tissue',by.y='Biosample term name',sort=F)
 p1=ggplot(merged[(adult_pct==1)|(fetus_pct==1),],aes(pval,fill=ifelse(adult_pct==1,'adult','fetal')))+geom_histogram(position=position_dodge(width=0.15),binwidth=0.2)+scale_fill_discrete(name='Life stage')
-save_plot(sprintf('%s/adult_vs_fetal.pdf',fig_dir),p1)
+save_plot(sprintf('%s/adult_vs_fetal.pdf',fig_dir),p1,base_height=6)
 
 
 # Calculate enrichment statistics for only adult tissue/cell line: 
@@ -232,7 +232,9 @@ pval=data.table(tissue,pval)
 setorder(pval,pval)
 pdf(sprintf('%s/gregor_pval_adult_filt.pdf',fig_dir));grid.table(head(pval,20));dev.off()
 fwrite(pval,sprintf('%s/gregor_pval_adult_filt.tsv',out_dir),sep='\t')
-
+pval[,tissue:=factor(tissue,levels=tissue)]
+p1=ggplot(pval,aes(tissue,-log10(pval)))+geom_point()+theme(axis.text.x=element_text(angle=90,vjust=0.5,hjust=1))
+save_plot(sprintf('%s/gregor_pval_adult_filt.scatter.pdf',fig_dir),p1,base_height=6)
 
 # Calculate enrichment statistics for uniformly processed cell lines from 2007-2012
 fn=list.files(in_dir_2007_2012,pattern='bed')
