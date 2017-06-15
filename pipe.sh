@@ -1890,3 +1890,11 @@ Rscript hcasmc_specific_open_chromatin/mds_open_chromatin.R
 
 # Classifying peaks based on TSS, gene body, intergenic:
 Rscript hcasmc_specific_open_chromatin/classify_peaks.R
+
+
+#--------------- Finemapping ------------
+# Setup:
+mkdir -p finemap/{enloc,finemap} 
+
+# Finemap: 
+Rscript finemap/finemap/howson_data.R
