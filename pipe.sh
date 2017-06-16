@@ -1898,3 +1898,4 @@ mkdir -p finemap/{enloc,finemap}
 
 # Finemap: 
 Rscript finemap/finemap/howson_data.R
+bash finemap/finemap/howson_ld.sh
