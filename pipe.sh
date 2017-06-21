@@ -1897,5 +1897,6 @@ Rscript hcasmc_specific_open_chromatin/classify_peaks.R
 mkdir -p finemap/{enloc,finemap} 
 
 # Finemap: 
+bash finemap/finemap/howson_preprocess.sh
 Rscript finemap/finemap/howson_data.R
-bash finemap/finemap/howson_ld.sh
+bash finemap/finemap/finemap.sh
