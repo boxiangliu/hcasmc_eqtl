@@ -1900,3 +1900,7 @@ mkdir -p finemap/{enloc,finemap}
 bash finemap/finemap/howson_preprocess.sh
 Rscript finemap/finemap/howson_data.R
 bash finemap/finemap/finemap.sh
+
+Rscript finemap/finemap/rasqual_data.R
+Rscript finemap/finemap/howson_rasqual_coloc.R
+

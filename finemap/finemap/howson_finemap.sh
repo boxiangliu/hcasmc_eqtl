@@ -1,5 +1,5 @@
 in_dir=../processed_data/finemap/finemap/howson_data/
-out_dir=../processed_data/finemap/finemap/finemap/
+out_dir=../processed_data/finemap/finemap/howson_finemap/
 [[ ! -d $out_dir ]] && mkdir -p $out_dir
 
 input_fn=$out_dir/data
@@ -16,28 +16,21 @@ for f in `ls $in_dir/*.z`;do
 done
 
 
-for r in {1..1699}; do
-/users/bliu2/tools/finemap_v1.1_x86_64/finemap --sss \
---in-files $input_fn --regions $r
-done
+parallel -j30 /users/bliu2/tools/finemap_v1.1_x86_64/finemap --sss --in-files $input_fn --regions {} ::: {1..1699}
 
 mkdir -p $out_dir/default/
 mv $in_dir/*.{snp,config} $out_dir/default/
 
 
-for r in {1..1699}; do
-/users/bliu2/tools/finemap_v1.1_x86_64/finemap --sss \
---in-files $input_fn --regions $r --n-causal-max 1
-done
+
+parallel -j30 /users/bliu2/tools/finemap_v1.1_x86_64/finemap --sss --in-files $input_fn --regions {} --n-causal-max 1 ::: {1..1699}
 
 mkdir -p $out_dir/n_causal_max_1/
 mv $in_dir/*.{snp,config} $out_dir/n_causal_max_1/
 
 
-for r in {1..1699}; do
-/users/bliu2/tools/finemap_v1.1_x86_64/finemap --sss \
---in-files $input_fn --regions $r --n-causal-max 2
-done
+
+parallel -j30 /users/bliu2/tools/finemap_v1.1_x86_64/finemap --sss --in-files $input_fn --regions {} --n-causal-max 2 ::: {1..1699}
 
 mkdir -p $out_dir/n_causal_max_2/
 mv $in_dir/*.{snp,config} $out_dir/n_causal_max_2/

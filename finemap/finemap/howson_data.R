@@ -31,6 +31,7 @@ setkey(ld_block,chr,start,end)
 overlap=foverlaps(gwas[,list(chr,start,end,rsid,snpID,
 	ref,alt,n,chrpos_b37,zscore)],
 	ld_block,nomatch=0)
+
 overlap[,pos:=i.start]
 overlap[,c('i.start','i.end'):=NULL]
 
@@ -47,14 +48,6 @@ for (id in unique(overlap$lociID)){
 	out_fn=sprintf('%s/%s.n',out_dir,id)
 	n=overlap[lociID==id,round(mean(n))]
 	write.table(n,out_fn,quote=F,row.names=F,col.names=F)
-}
-
-# Output z-score:
-for (id in unique(overlap$lociID)){
-	print(sprintf('INFO - %s',id))
-	output=overlap[lociID==id,list(chrpos_b37,zscore)]
-	out_fn=sprintf('%s/%s.z',out_dir,id)
-	write.table(output,out_fn,col.names=F,row.names=F,quote=F,sep=' ')
 }
 
 
@@ -75,6 +68,18 @@ foreach(id=unique(overlap$lociID))%dopar%{
 	system(command)
 	
 	file.remove(paste0(out_prefix,'.nosex'),paste0(out_prefix,'.log'))
+}
+
+
+# Output z-score:
+overlap[,snpID:=str_replace_all(snpID,':','_')]
+overlap[,snpID:=str_replace_all(snpID,'chr','')]
+overlap[,snpID:=paste0(snpID,'_b37')]
+for (id in unique(overlap$lociID)){
+	print(sprintf('INFO - %s',id))
+	output=overlap[lociID==id,list(snpID,zscore)]
+	out_fn=sprintf('%s/%s.z',out_dir,id)
+	write.table(output,out_fn,col.names=F,row.names=F,quote=F,sep=' ')
 }
 
 # Sanity checks: 
