@@ -1904,3 +1904,5 @@ bash finemap/finemap/finemap.sh
 Rscript finemap/finemap/rasqual_data.R
 Rscript finemap/finemap/howson_rasqual_coloc.R
 
+Rscript finemap/finemap/nikpay_rasqual_coloc.R
+
