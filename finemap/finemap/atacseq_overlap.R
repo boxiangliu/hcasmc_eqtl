@@ -5,7 +5,17 @@ library(rtracklayer)
 library(ggrepel)
 
 atac_dir='../data/atacseq/fbs/'
-bw_fn='../data/atacseq/fbs/2305/out/signal/macs2/pooled_rep/CA2305-FBS1_S1_concat_R1_001.trim.PE2SE.nodup.tn5_pooled.pf.fc.signal.bigwig'
+
+bw_fn=c("../data/atacseq/fbs/1346/out/signal/macs2/rep1/CA1346_L2_TCCTGAGC_L002_R1.trim.PE2SE.nodup.tn5.pf.fc.signal.bigwig",
+	"../data/atacseq/fbs/1508/out/signal/macs2/pooled_rep/CA1508_L1_TAAGGCGA_L001_R1.trim.PE2SE.nodup.tn5_pooled.pf.fc.signal.bigwig",
+	"../data/atacseq/fbs/1522/out/signal/macs2/rep1/CA1522_S8_concat_R1_001.trim.PE2SE.nodup.tn5.pf.fc.signal.bigwig",
+	"../data/atacseq/fbs/200212/out/signal/macs2/rep1/200212_L2_CGTACTAG_L002_R1.trim.PE2SE.nodup.tn5.pf.fc.signal.bigwig",
+	"../data/atacseq/fbs/2108/out/signal/macs2/rep1/CA2108_S4_concat_R1_001.trim.PE2SE.nodup.tn5.pf.fc.signal.bigwig",
+	"../data/atacseq/fbs/2305/out/signal/macs2/pooled_rep/CA2305-FBS1_S1_concat_R1_001.trim.PE2SE.nodup.tn5_pooled.pf.fc.signal.bigwig",
+	"../data/atacseq/fbs/2356/out/signal/macs2/rep1/CA2356_S7_concat_R1_001.trim.PE2SE.nodup.tn5.pf.fc.signal.bigwig",
+	"../data/atacseq/fbs/2510/out/signal/macs2/rep1/CA2510_S5_concat_R1_001.trim.PE2SE.nodup.tn5.pf.fc.signal.bigwig",
+	"../data/atacseq/fbs/2989/out/signal/macs2/rep1/CA2989_S7_concat_R1_001.trim.PE2SE.nodup.tn5.pf.fc.signal.bigwig")
+
 fig_dir='../figures/finemap/finemap/atacseq_overlap/'
 if (!dir.exists(fig_dir)) {dir.create(fig_dir,recursive=TRUE)}
 
@@ -13,7 +23,7 @@ if (!dir.exists(fig_dir)) {dir.create(fig_dir,recursive=TRUE)}
 get_bw=function(f,seq,start,end){
 	gr=GRanges(seqnames = seq,
 		ranges = IRanges(start = start, end = end))
-	
+
 	bw=import(f,which=gr)
 	bw=as.data.frame(bw)
 	setDT(bw)
@@ -34,17 +44,27 @@ combine_data=function(bigwig_fn,nikpay,howson,eqtl,chr,start,end){
 	start_=start 
 	end_=end
 
+	container=list()
+	for (f in bigwig_fn){
+		print(f)
+		bw=get_bw(f,seq=chr_,start_,end_)
+		bw$rsid='.'
+		sample=str_extract(f,'(?<=/)([0-9]+?)(?=/)')
+		bw$data=paste0('ATAC:',sample)
+		container[[f]]=bw
+	}
+	bw=Reduce(rbind,container)
 
-	bw=get_bw(bigwig_fn,seq=chr_,start_,end_)
-	bw$rsid='.'
-
+	print('nikpay')
 	ni=nikpay[chr==chr_&pos>=start_&pos<=end_,]
 
+	print('howson')
 	ho=howson[chr==chr_&pos>=start_&pos<=end_,]
 
+	print('eqtl')
 	eq=eqtl[chr==chr_&pos>=start_&pos<=end_,]
 
-	to_plot=rbind(bw[,list(chr=seqnames,pos,logp=score,rsid,data='ATACseq')],
+	to_plot=rbind(bw[,list(chr=seqnames,pos,logp=score,rsid,data)],
 		ni[,list(chr,pos,logp,rsid,data='Nikpay')],
 		ho[,list(chr,pos,logp,rsid,data='Howson')],
 		eq[,list(chr,pos,logp,rsid,data='RASQUAL')])
@@ -87,23 +107,29 @@ start=134e6
 end=134.4e6
 eqtl_fn='../processed_data/rasqual/output_pval/chr6/ENSG00000118526.6_TCF21.pval.txt'
 
-to_plot=combine_data(bw_fn,nikpay,howson,eqtl_fn,chr,start,end)
+eqtl=fread(eqtl_fn)
+eqtl[,logp:=-log10(pval)]
 
+to_plot=combine_data(bw_fn,nikpay,howson,eqtl,chr,start,end)
+
+subset=to_plot
 p1=ggplot(to_plot,aes(pos,logp))+facet_grid(data~.,scales='free_y')+
 	geom_point(data=to_plot[data%in%c('Nikpay','Howson','RASQUAL'),])+
-	geom_area(data=to_plot[data=='ATACseq',])+theme_bw()
+	geom_area(data=to_plot[str_detect(data,'ATAC'),])+theme_bw()+
+	xlab(chr)+ylab('Signal')
 
-to_plot2=to_plot[pos>=134209800&pos<=134215600]
-p2=ggplot(to_plot2,aes(pos,logp))+
+subset=to_plot[pos>=134209800&pos<=134215600]
+p2=ggplot(subset,aes(pos,logp))+
 	facet_grid(data~.,scales='free_y')+
-	geom_point(data=to_plot2[data%in%c('Nikpay','Howson','RASQUAL'),])+
-	geom_area(data=to_plot2[data=='ATACseq',])+theme_bw()+
-	geom_text(aes(label=ifelse(pos%in%c(134209837,134214525),rsid,'')),hjust=-0.1)
+	geom_point(data=subset[data%in%c('Nikpay','Howson','RASQUAL'),])+
+	geom_area(data=subset[str_detect(data,'ATAC'),])+theme_bw()+
+	geom_text(aes(label=ifelse(pos%in%c(134209837,134214525),rsid,'')),hjust=-0.1)+
+	xlab(chr)+ylab('Signal')
 
-p3=plot_ase(eq[rsid=='rs2327429',],'rs2327429')
-p4=plot_ase(eq[rsid=='rs12190287',],'rs2327429')
+p3=plot_ase(eqtl[rsid=='rs2327429',],'rs2327429')
+p4=plot_ase(eqtl[rsid=='rs12190287',],'rs2327429')
 
-pdf(sprintf('%s/tcf21.pdf',fig_dir))
+pdf(sprintf('%s/tcf21.pdf',fig_dir),height=20)
 p1;p2;p3;p4
 dev.off()
 

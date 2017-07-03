@@ -1,0 +1,8 @@
+/srv/persistent/bliu2/HCASMC_eQTL/data/atacseq/fbs/wasp/rmdup/1346.keep.merge.rmdup.sort.bam
+/srv/persistent/bliu2/HCASMC_eQTL/data/atacseq/fbs/wasp/rmdup/1508.keep.merge.rmdup.sort.bam
+/srv/persistent/bliu2/HCASMC_eQTL/data/atacseq/fbs/wasp/rmdup/1522.keep.merge.rmdup.sort.bam
+/srv/persistent/bliu2/HCASMC_eQTL/data/atacseq/fbs/wasp/rmdup/200212.keep.merge.rmdup.sort.bam
+/srv/persistent/bliu2/HCASMC_eQTL/data/atacseq/fbs/wasp/rmdup/2305.keep.merge.rmdup.sort.bam
+/srv/persistent/bliu2/HCASMC_eQTL/data/atacseq/fbs/wasp/rmdup/2356.keep.merge.rmdup.sort.bam
+/srv/persistent/bliu2/HCASMC_eQTL/data/atacseq/fbs/wasp/rmdup/2510.keep.merge.rmdup.sort.bam
+/srv/persistent/bliu2/HCASMC_eQTL/data/atacseq/fbs/wasp/rmdup/2989.keep.merge.rmdup.sort.bam

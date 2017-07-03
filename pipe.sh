@@ -1527,6 +1527,11 @@ bash atacseq/run_fbs.sh
 bash atacseq/run_sf.sh
 
 
+# Run WASP:
+cd atacseq/wasp/; snakemake --cores 10
+
+# Count ASE (ASVCF):
+bash atacseq/asvcf/vcf2asvcf.sh
 
 #------------ GWAS ATACseq overlap -------------#
 # setup: 

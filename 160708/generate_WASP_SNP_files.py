@@ -3,8 +3,9 @@ import gzip,sys
 sys.path.append('/srv/persistent/bliu2/HCASMC_eQTL/scripts')
 from utils import *
 debug = False
-# read VCF file: 
-def readVCF(vcf): 
+# read VCF file:
+
+def readVCF(vcf):
 	snps = []
 	with gzip.open(vcf, 'r') as f: 
 		for line in f: 
