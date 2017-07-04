@@ -1533,6 +1533,10 @@ cd atacseq/wasp/; snakemake --cores 10
 # Count ASE (ASVCF):
 bash atacseq/asvcf/vcf2asvcf.sh
 
+
+# Count peak coverage: 
+bash atacseq/count/define_peak.sh
+
 #------------ GWAS ATACseq overlap -------------#
 # setup: 
 mkdir gwas_atacseq_overlap ../processed_data/gwas_atacseq_overlap ../figures/gwas_atacseq_overlap

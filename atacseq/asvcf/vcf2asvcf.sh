@@ -18,3 +18,6 @@ bash /srv/persistent/bliu2/tools/rasqual/src/ASVCF/createASVCF.sh \
 /srv/persistent/bliu2/HCASMC_eQTL/scripts/atacseq/asvcf/bam.list.txt \
 $atac_dir/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.atacsample.hg19.vcf.gz ::: {1..22}
 
+
+parallel -j 22 \
+tabix -p vcf $atac_dir/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.atacsample.hg19.vcf.new.gz ::: {1..22}
