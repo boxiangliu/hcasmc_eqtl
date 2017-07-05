@@ -6,8 +6,8 @@ import sys
 from Bio.SeqUtils import GC
 genome_file=sys.argv[1]
 annotation_file=sys.argv[2]
-genome_file='/mnt/lab_data/montgomery/shared/genomes/hg19/hg19.fa'
-annotation_file='/srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf'
+# genome_file='/mnt/lab_data/montgomery/shared/genomes/hg19/hg19.fa'
+# annotation_file='/srv/persistent/bliu2/shared/annotation/gtex/gencode.v19.genes.v6p.hg19.gtf'
 
 genome = Fasta(genome_file)
 
@@ -47,7 +47,8 @@ elif sys.argv[3]=='exon':
 				start=int(split_line[3])-1
 				end=int(split_line[4])
 				seq+=genome[chrom][start:end].seq
-
+		gcc=GC(seq)
+		sys.stdout.write("%s\t%s\n"%(gene_id,gcc))
 
 else: 
 	sys.stderr.write('3rd option must be either gene or exon')

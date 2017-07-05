@@ -1530,12 +1530,19 @@ bash atacseq/run_sf.sh
 # Run WASP:
 cd atacseq/wasp/; snakemake --cores 10
 
+
 # Count ASE (ASVCF):
 bash atacseq/asvcf/vcf2asvcf.sh
+bash atacseq/asvcf/concordance.sh
 
 
 # Count peak coverage: 
 bash atacseq/count/define_peak.sh
+
+
+# RASQUAL:
+bash atacseq/rasqual/make_input.sh
+
 
 #------------ GWAS ATACseq overlap -------------#
 # setup: 

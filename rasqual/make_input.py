@@ -64,9 +64,10 @@ for line in sys.stdin:
 			sys.stderr.write(chrom+' not found in '+vcf_file+'\n')
 
 		#### update: 
-		# gene id and name: 
+		# gene id and name:
 		gene_id=p_gene_id.search(split_line[8]).group()
 		gene_name=p_gene_name.search(split_line[8]).group()
+
 		
 		# retrieve TSS:
 		if split_line[6]=='+': # plus strand
