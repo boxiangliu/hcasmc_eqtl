@@ -1542,6 +1542,8 @@ bash atacseq/count/define_peak.sh
 
 # RASQUAL:
 bash atacseq/rasqual/make_input.sh
+bash atacseq/rasqual/rasqual.wrapper.sh
+
 
 
 #------------ GWAS ATACseq overlap -------------#

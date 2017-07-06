@@ -32,6 +32,7 @@ rm colname.txt
 
 
 # Calculate RASQUAL offset:
+cd /srv/persistent/bliu2/HCASMC_eQTL/scripts
 cut -f2-2 $out_dir/expression/gcc.txt > $out_dir/expression/gcc.cut.txt
 R --vanilla --quiet --args $out_dir/expression/Y.txt $out_dir/expression/gcc.cut.txt $out_dir/expression/K.txt < rasqual/makeOffset.R
 
