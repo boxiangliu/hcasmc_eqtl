@@ -6,7 +6,7 @@ for i in {1..22}; do
 
 	n_lines=$(wc -l $in_dir/input/rasqual.input.chr$i.txt | cut -d" " -f1)
 
-	parallel -j12 bash atacseq/rasqual/rasqual.sh \
+	parallel -j15 bash atacseq/rasqual/rasqual.sh \
 	$in_dir/input/rasqual.input.chr$i.txt {} \
 	$in_dir/expression/Y.bin \
 	$in_dir/expression/K.bin \

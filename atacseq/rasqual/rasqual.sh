@@ -41,5 +41,5 @@ else
     --imputation-quality 0.8 --imputation-quality-fsnp 0.8 \
     --cis-window-size $window_size \
     -f $gene_id --n_threads 1 \
-    --force -v > $out_dir/${gene_id}.txt
+    --force > $out_dir/${gene_id}.txt
 fi 

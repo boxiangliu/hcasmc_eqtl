@@ -1,0 +1,5 @@
+HCASMC	h3k27ac	chromatin/out/h3k27ac/align/rep1/h3k27ac_1.PE2SE.nodup.bam	chromatin/out/h3k27ac/align/ctl1/h3k27ac_IgG_1.PE2SE.nodup.bam
+HCASMC	h3k27me3	chromatin/out/h3k27me3/align/rep1/h3k27me3.nodup.bam
+HCASMC	h3k4me1	chromatin/out/h3k4me1/align/rep1/h3k4me1.nodup.bam
+HCASMC	h3k4me3	chromatin/out/h3k4me3/align/rep1/h3k4me3.nodup.bam
+HCASMC	atacseq	atacseq/fbs/1508/out/align/rep1/CA1508_L1_TAAGGCGA_L001_R1.trim.PE2SE.nodup.bam
