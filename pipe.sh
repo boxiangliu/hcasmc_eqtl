@@ -1924,3 +1924,7 @@ Rscript finemap/finemap/howson_rasqual_coloc.R
 
 Rscript finemap/finemap/nikpay_rasqual_coloc.R
 
+Rscript finemap/finemap/atacseq_overlap.R
+Rscript finemap/finemap/atacseq_overlap.gviz.R
+
+Rscript finemap/finemap/motif_match.R
