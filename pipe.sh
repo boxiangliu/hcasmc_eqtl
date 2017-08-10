@@ -1928,3 +1928,5 @@ Rscript finemap/finemap/atacseq_overlap.R
 Rscript finemap/finemap/atacseq_overlap.gviz.R
 
 Rscript finemap/finemap/motif_match.R
+
+Rscript finemap/finemap/tarid_tcf21_coloc.R

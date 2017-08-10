@@ -46,39 +46,6 @@ get_bw=function(f,seq,start,end){
 	return(bw2)
 }
 
-# combine_data=function(bigwig_fn,nikpay,howson,eqtl,chr,start,end){
-	
-# 	chr_=chr
-# 	start_=start 
-# 	end_=end
-
-# 	container=list()
-# 	for (f in bigwig_fn){
-# 		print(f)
-# 		bw=get_bw(f,seq=chr_,start_,end_)
-# 		bw$rsid='.'
-# 		sample=str_extract(f,'(?<=/)([0-9]+?)(?=/)')
-# 		bw$data=paste0('ATAC:',sample)
-# 		container[[f]]=bw
-# 	}
-# 	bw=Reduce(rbind,container)
-
-# 	print('nikpay')
-# 	ni=nikpay[chr==chr_&pos>=start_&pos<=end_,]
-
-# 	print('howson')
-# 	ho=howson[chr==chr_&pos>=start_&pos<=end_,]
-
-# 	print('eqtl')
-# 	eq=eqtl[chr==chr_&pos>=start_&pos<=end_,]
-
-# 	to_plot=rbind(bw[,list(chr=seqnames,pos,logp=score,rsid,data)],
-# 		ni[,list(chr,pos,logp,rsid,data='Nikpay')],
-# 		ho[,list(chr,pos,logp,rsid,data='Howson')],
-# 		eq[,list(chr,pos,logp,rsid,data='RASQUAL')])
-
-# 	return(to_plot)
-# }
 
 chromHMM2GRanges=function(file){
 	chromHMM=fread(file,sep='\t',skip=1,
