@@ -18,6 +18,8 @@ output_file=args$output
 gender_coding=args$gender_coding
 num_geno_pc=args$num_geno_pc
 num_peer_factor=args$num_peer_factor
+row_and_colnames=FALSE
+
 # genotype_pc_file='../processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv'
 # peer_file='../processed_data/160527/factors.tsv'
 # sample_sheet_file='/srv/persistent/bliu2/HCASMC_eQTL/data/sample_info/sample_info.xlsx'
@@ -59,5 +61,9 @@ covariates[,ID:=NULL]
 # transpose covariates: 
 covariates=t(covariates)
 
-# write output: 
-write.table(covariates,file=output_file,sep='\t',col.names=F,row.names=F,quote=F)
+# write output:
+if (row_and_colnames){
+	write.table(covariates,file=output_file,sep='\t',col.names=T,row.names=T,quote=F)
+} else {
+	write.table(covariates,file=output_file,sep='\t',col.names=F,row.names=F,quote=F)
+}
