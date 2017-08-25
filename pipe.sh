@@ -72,6 +72,8 @@ bash genotype/phasing_with_1kg/conform_gt.sh
 bash genotype/phasing_with_1kg/phasing_with_1kg.sh
 
 
+# Merge 15 array with 52 WGS data:
+bash genotype/merge52and15/merge.ar2-0.4.sh 
 
 #--------------- RNAseq ----------------# 
 # Setup: 
