@@ -30,7 +30,7 @@ Esophagus - Gastroesophageal Junction	ESPGEJ	Esophagus_Gastroesophageal_Junction
 Esophagus - Mucosa	ESPMCS	Esophagus_Mucosa	Esophagus	#552200	85,34,0
 Esophagus - Muscularis	ESPMSL	Esophagus_Muscularis	Esophagus	#BB9988	187,153,136
 Fallopian Tube	FLLPNT	Fallopian_Tube	Fallopian Tube	#FFCCCC	255,204,204
-HCASMC	HCASMC	HCASMC	HCASMC	#FF0066	255,0,102
+HCASMC	HCASMC	hcasmc.rpkm	HCASMC	#FF0066	255,0,102
 Heart - Atrial Appendage	HRTAA	Heart_Atrial_Appendage	Heart	#9900FF	153,0,255
 Heart - Left Ventricle	HRTLV	Heart_Left_Ventricle	Heart	#660099	102,0,153
 Kidney - Cortex	KDNCTX	Kidney_Cortex	Kidney	#22FFDD	34,255,221
@@ -43,7 +43,7 @@ Ovary	OVARY	Ovary	Ovary	#FFAAFF	255,170,255
 Pancreas	PNCREAS	Pancreas	Pancreas	#995522	153,85,34
 Pituitary	PTTARY	Pituitary	Pituitary	#AAFF99	170,255,153
 Prostate	PRSTTE	Prostate	Prostate	#DDDDDD	221,221,221
-SF	SF	SF	HCASMC	#FF0066	255,0,102
+SF	SF	dase.sf.rpkm	HCASMC	#FF0066	255,0,102
 Skin - Not Sun Exposed (Suprapubic)	SKINNS	Skin_Not_Sun_Exposed_Suprapubic	Skin	#0000FF	0,0,255
 Skin - Sun Exposed (Lower leg)	SKINS	Skin_Sun_Exposed_Lower_leg	Skin	#7777FF	119,119,255
 Small Intestine - Terminal Ileum	SNTTRM	Small_Intestine_Terminal_Ileum	Small Intestine	#555522	85,85,34

@@ -20,6 +20,8 @@ rpkm_file=args$rpkm
 coldata_file=args$coldata
 tissue_names_file=args$tissue_names
 figure_path=args$figure
+color_file='shared/tissue_color.txt'
+
 # rpkm_file='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.rpkm'
 # coldata_file='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.col'
 # tissue_names_file='/srv/persistent/bliu2/HCASMC_eQTL/scripts/160603/collapsed_tissue_names.2.txt'
@@ -58,26 +60,62 @@ col_data$collapsed=tissue_names$collapsed[idx]
 mds=data.table(mds_res$points,keep.rownames=T)
 colnames(mds)=c('sample','x','y')
 tissue=factor(col_data$collapsed,levels=unique(col_data$collapsed))
-mds$tissue=tissue
-mds[,x_centroid:=median(x),by='tissue']
-mds[,y_centroid:=median(y),by='tissue']
-mds[,tissue_abb:=toupper(substr(tissue,1,3))]
+mds$tissue=col_data$tissue
+mds$collapsed=col_data$collapsed
+mds[,x_centroid:=median(x),by='collapsed']
+mds[,y_centroid:=median(y),by='collapsed']
+
 
 
 # prepare color palette: 
-color=as.numeric(tissue)
-qualitative_color=brewer.pal(12, "Paired")
-pal=colorRampPalette(qualitative_color)
-pal=pal(length(levels(tissue)))
+color=fread(color_file,select=c(3,5),col.names=c('tissue','color'))
+color=merge(color,tissue_names,by.x='tissue',by.y='original')
+color_map=color$color
+names(color_map)=color$collapsed
 
 
 # make scatter plot:
 message('plotting...')
 set.seed(42)
-mds_centroid=unique(mds[,.(tissue,x_centroid,y_centroid)])
-p1=ggplot(mds,aes(x=x,y=y,color=tissue))+geom_point()+geom_text_repel(data=mds_centroid,aes(x=x_centroid,y=y_centroid,label=tissue),color='black')+theme_bw()+xlab('MDS Coordinate 1')+ylab('MDS Coordinate 2')+theme(axis.title=element_text(size=15))
-save_plot(paste0(figure_path,'/mds.pdf'),p1,base_height=6,base_width=8.5)
-p2=ggplot(mds,aes(x=x,y=y,color=tissue))+geom_point()+xlim(-0.1,0.1)+ylim(-0,0.2)+geom_text_repel(data=mds_centroid,aes(x=x_centroid,y=y_centroid,label=tissue),size=7,force=3,color='black')+theme_bw()+scale_color_discrete(guide=F)+theme(axis.text=element_blank(),axis.title=element_blank())
-save_plot(paste0(figure_path,'/mds.cropped.pdf'),p2)
-save.image('../processed_data/160603/mds.Rdata')
+mds_centroid=unique(mds[,list(collapsed,x_centroid,y_centroid)])
+mds_centroid[,label:=ifelse(collapsed %in% c('Liver','Muscle',
+	'HCASMC','Fibroblasts','Heart','Brain','Blood','LCL',
+	'Testis','Pancreas','Spleen','Pituitary'),as.character(collapsed),'')]
 
+p1=ggplot(mds,aes(x=x,y=y,color=collapsed))+
+	geom_point()+scale_color_manual(values=color_map)+
+	geom_text(data=mds_centroid,aes(x=x_centroid,
+		y=y_centroid,label=label),color='black',
+		fontface=ifelse(mds_centroid$label=='HCASMC','bold','plain'))+
+	theme_bw()+xlab('MDS Coordinate 1')+ylab('MDS Coordinate 2')+
+	theme(axis.title=element_text(size=15),
+		legend.position = c(0.18,0.73),
+		legend.title=element_blank(),
+		legend.box.margin=margin(0,0,0,0),
+		legend.background=element_rect(fill=alpha('white',0)))
+
+
+save_plot(paste0(figure_path,'/mds.pdf'),p1,base_height=6,base_width=8.5)
+
+p2=ggplot(mds,aes(x=x,y=y,color=collapsed))+
+	geom_point(alpha=ifelse(mds$collapsed%in%c('HCASMC','Muscle',
+		'Fibroblasts','Skin','Artery','Heart',
+		'Esophagus','Adipose','Vagina','Colon',
+		'Uterus','Nerve'),1,0))+xlim(-0.1,0.1)+
+	ylim(-0,0.2)+
+	geom_text_repel(data=mds_centroid,
+		aes(x=x_centroid,y=y_centroid,label=collapsed),
+		fontface=ifelse(mds_centroid$label=='HCASMC','bold','plain'),
+		force=3,color='black')+
+	theme_bw()+
+	scale_color_manual(guide='none',values=color_map)+
+	theme(axis.text=element_blank(),
+		axis.title=element_blank())
+
+save_plot(paste0(figure_path,'/mds.cropped.pdf'),p2)
+
+p3=ggdraw()+draw_plot(p1+theme(axis.title.x=element_text(hjust=0.75)),0,0,1,1)+draw_plot(p2,0,0,0.55,0.4)
+save_plot(sprintf('%s/mds.inset.pdf',figure_path),p3, base_aspect_ratio = 1.0, base_height=7)
+
+save.image('../processed_data/160603/mds.Rdata')
+# load('../processed_data/160603/mds.Rdata')
