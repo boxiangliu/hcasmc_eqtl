@@ -35,7 +35,7 @@ with open(fn,'r') as f:
 					try:
 						out_line+=out[field]+'\t'
 					except KeyError:
-						out_line+='NA\t'
+						out_line+='missing\t'
 
 				out_line=out_line.strip()+'\n'
 				sys.stdout.write(out_line)

@@ -1,5 +1,6 @@
 library(data.table)
 library(xlsx)
+library(stringr)
 
 # Variables:
 in_dir='../data/encode/dnase_seq/'
@@ -10,16 +11,56 @@ out_dir_adult='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult/'
 out_dir_adult_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult_filt/'
 out_dir_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_filt/'
 out_dir_2007_2012='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_2007_2012/'
+out_dir_2007_2012_noCancer='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_2007_2012_noCancer/'
 
+for (d in c(out_dir,
+			out_dir_adult,
+			out_dir_adult_filt,
+			out_dir_filt,
+			out_dir_2007_2012,
+			out_dir_2007_2012_noCancer)){
+	if (!dir.exists(d)) {dir.create(d,recursive=TRUE)}
+}
 
-if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
-if (!dir.exists(out_dir_adult)) {dir.create(out_dir_adult,recursive=TRUE)}
-if (!dir.exists(out_dir_adult_filt)) {dir.create(out_dir_adult_filt,recursive=TRUE)}
-if (!dir.exists(out_dir_filt)) {dir.create(out_dir_filt,recursive=TRUE)}
-if (!dir.exists(out_dir_2007_2012)) {dir.create(out_dir_2007_2012,recursive=TRUE)}
+# Functions:
+parse_annotation=function(annotation){
+	dataType=str_extract(annotation,'(?<=dataType=)(.+?)(?=;)')
+	cell=str_extract(annotation,'(?<=cell=)(.+?)(?=;)')
+	treatment=str_extract(annotation,'(?<=treatment=)(.+?)(?=;)')
+	type=str_extract(annotation,'(?<=type=)(.+?)(?=;)')
+	list(dataType,
+		 cell,
+		 treatment,
+		 type)
+}
+
+merge_encode_2007_2012_cell_lines=function(metadata,in_dir,out_dir){
+	for (tissue in unique(metadata[,broad_tissue_category])){
+		print(sprintf('INFO - %s',tissue))
+		out_fn=sprintf('%s/%s.merged.bed',out_dir,tissue)
+		if (file.exists(out_fn)){
+			print(sprintf('INFO - %s exist. Skipping...',out_fn))
+			next()
+		}
+		container=list()
+		for (fn in metadata[broad_tissue_category==tissue,BED_File]){
+			fn=list.files(in_dir,pattern=fn,full.names=T,recursive=T)
+			print(sprintf("INFO - reading %s",fn))
+			x=fread(sprintf('zcat %s',fn),col.names=c('chr','start','end','name','score','strand','signalValue','pValue','qValue','peak'))
+			if (!all(unlist(x[1:10,list((end-start)==150)]))){
+				x[,c('start','end'):=list(start+peak-75,start+peak+75)]
+			}
+			stopifnot(all(unlist(x[1:10,list((end-start)==150)])))
+			container[[fn]]=x[,list(chr,start,end)]
+		}
+		y=unique(Reduce(rbind,container))
+		fwrite(y,sprintf('%s/%s.merged.bed',out_dir,tissue),sep='\t')
+	}
+	print('Done!')
+}
 
 # HCASMC:
-in_fn=list.files('../data/atacseq/tmp_from_bliu2_atac_hcasmc/fbs/',full.names=T,pattern='naive_overlap.narrowPeak.gz',recursive=T)
+in_fn=list.files('../data/atacseq/fbs/',full.names=T,pattern='naive_overlap.narrowPeak.gz',recursive=T)
 
 container=list(length(in_fn))
 for (i in 1:length(in_fn)){
@@ -32,11 +73,18 @@ dhs=dhs[,list(chr,start,end,peak)]
 dhs[,c('start','end'):=list(start+peak-75,start+peak+75)]
 dhs[,peak:=NULL]
 dhs=unique(dhs)
-fwrite(dhs,sprintf('%s/HCASMC.merged.bed',out_dir),sep='\t')
-fwrite(dhs,sprintf('%s/HCASMC.merged.bed',out_dir_adult),sep='\t')
-fwrite(dhs,sprintf('%s/HCASMC.merged.bed',out_dir_adult_filt),sep='\t')
-fwrite(dhs,sprintf('%s/HCASMC.merged.bed',out_dir_filt),sep='\t',col.names=F)
-fwrite(dhs,sprintf('%s/HCASMC.merged.bed',out_dir_2007_2012),sep='\t')
+setorder(dhs,chr,start)
+
+
+for (d in c(out_dir,
+			out_dir_adult,
+			out_dir_adult_filt,
+			out_dir_filt,
+			out_dir_2007_2012,
+			out_dir_2007_2012_noCancer)){
+	fwrite(dhs,sprintf('%s/HCASMC.merged.bed',d),sep='\t')
+}
+
 
 
 # ENCODE (all life stages):
@@ -133,24 +181,38 @@ for (b in biosample){
 # ENCODE 125 Uniformly processed cell lines, categorized into tissue groups:
 metadata=read.xlsx('gwas_atacseq_overlap/papers/GREGOR_SuppTable1.xlsx',sheetIndex=1,startRow=3, header=TRUE,colClasses="character")
 metadata=as.data.table(apply(metadata,2,as.character))
-for (tissue in unique(metadata[,broad_tissue_category])){
-	print(sprintf('INFO - %s',tissue))
-	out_fn=sprintf('%s/%s.merged.bed',out_dir_2007_2012,tissue)
-	if (file.exists(out_fn)){
-		print(sprintf('INFO - %s exist. Skipping...',out_fn))
-		next()
-	}
-	container=list()
-	for (fn in metadata[broad_tissue_category==tissue,BED_File]){
-		fn=list.files(in_dir_2007_2012,pattern=fn,full.names=T,recursive=T)
-		print(sprintf("INFO - reading %s",fn))
-		x=fread(sprintf('zcat %s',fn),col.names=c('chr','start','end','name','score','strand','signalValue','pValue','qValue','peak'))
-		if (!all(unlist(x[1:10,list((end-start)==150)]))){
-			x[,c('start','end'):=list(start+peak-75,start+peak+75)]
-		}
-		stopifnot(all(unlist(x[1:10,list((end-start)==150)])))
-		container[[fn]]=x[,list(chr,start,end)]
-	}
-	y=unique(Reduce(rbind,container))
-	fwrite(y,sprintf('%s/%s.merged.bed',out_dir_2007_2012,tissue),sep='\t')
+merge_encode_2007_2012_cell_lines(metadata,in_dir_2007_2012,out_dir_2007_2012)
+
+
+
+# ENCODE 125 Uniformly processed cell lines (minus cancer lines), categorized into tissue groups:
+encode_human_cell_type_fn='../data/encode/dnase_seq_2007_2012/controlled_vocabulary/human_cell_types.txt'
+encode_human_cell_type=fread(encode_human_cell_type_fn)
+encode_human_cell_type[term=='Ishikawa',karyotype:='cancer']
+
+sample_annotation_fn=list.files('../data/encode/dnase_seq_2007_2012/',pattern='files.txt',full.names=TRUE,recursive=TRUE)
+
+container=list()
+for (f in sample_annotation_fn){
+	container[[f]]=fread(f,header=FALSE,col.names=c('filename','annotation'))
 }
+sample_annotation=Reduce(rbind,container)
+
+sample_annotation=sample_annotation[str_detect(filename,'narrowPeak')]
+sample_annotation[,filename:=str_replace(filename,'.gz','')]
+sample_annotation[,c('dataType',
+					 'cell',
+					 'treatment',
+					 'type'):=parse_annotation(annotation)]
+sample_annotation[,annotation:=NULL]
+
+sample_annotation=merge(sample_annotation,encode_human_cell_type[,list(term,karyotype)],by.x='cell',by.y='term')
+sample_annotation_noCancer=sample_annotation[karyotype!='cancer']
+
+metadata=read.xlsx('gwas_atacseq_overlap/papers/GREGOR_SuppTable1.xlsx',sheetIndex=1,startRow=3, header=TRUE,colClasses="character")
+metadata=as.data.table(apply(metadata,2,as.character))
+
+metadata_noCancer=merge(metadata,sample_annotation_noCancer,by.x='BED_File',by.y='filename')
+metadata_noCancer[broad_tissue_category=='epithelium']
+
+merge_encode_2007_2012_cell_lines(metadata_noCancer,in_dir_2007_2012,out_dir_2007_2012_noCancer)
