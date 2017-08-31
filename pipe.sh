@@ -1562,6 +1562,7 @@ Rscript gwas_atacseq_overlap/gwas_thresholding/gwas_thresholding.R
 # Preprocessing: 
 Rscript gwas_atacseq_overlap/gregor/LD_proxy.R 
 Rscript gwas_atacseq_overlap/gregor/merge_peaks.R
+python gwas_atacseq_overlap/gregor/parse_encode_vocabulary.py > ../data/encode/dnase_seq_2007_2012/controlled_vocabulary/human_cell_types.txt
 
 # Perform overlap and calculate enrichment statistics: 
 Rscript gwas_atacseq_overlap/gregor/overlap_enrichment.R
@@ -1898,7 +1899,7 @@ Rscript hcasmc_specific_open_chromatin/get_min_index.R
 
 
 # Assign peak specificity score to raw peaks:
-Rscript hcasmc_specific_open_chromatin/assign_raw_peak_specificity.Rscript
+Rscript hcasmc_specific_open_chromatin/assign_raw_peak_specificity.R
 
 # Plot the distribution of number of tissues sharing each peak in HCASMC:
 Rscript hcasmc_specific_open_chromatin/plot_distribution_of_tissue_sharing.R

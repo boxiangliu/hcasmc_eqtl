@@ -35,15 +35,16 @@ parse_annotation=function(annotation){
 }
 
 merge_encode_2007_2012_cell_lines=function(metadata,in_dir,out_dir){
-	for (tissue in unique(metadata[,broad_tissue_category])){
-		print(sprintf('INFO - %s',tissue))
-		out_fn=sprintf('%s/%s.merged.bed',out_dir,tissue)
+	for (t in unique(metadata[,broad_tissue_category])){
+		print(sprintf('INFO - %s',t))
+		print(nrow(metadata[broad_tissue_category==t,]))
+		out_fn=sprintf('%s/%s.merged.bed',out_dir,t)
 		if (file.exists(out_fn)){
 			print(sprintf('INFO - %s exist. Skipping...',out_fn))
 			next()
 		}
 		container=list()
-		for (fn in metadata[broad_tissue_category==tissue,BED_File]){
+		for (fn in metadata[broad_tissue_category==t,BED_File]){
 			fn=list.files(in_dir,pattern=fn,full.names=T,recursive=T)
 			print(sprintf("INFO - reading %s",fn))
 			x=fread(sprintf('zcat %s',fn),col.names=c('chr','start','end','name','score','strand','signalValue','pValue','qValue','peak'))
@@ -54,7 +55,7 @@ merge_encode_2007_2012_cell_lines=function(metadata,in_dir,out_dir){
 			container[[fn]]=x[,list(chr,start,end)]
 		}
 		y=unique(Reduce(rbind,container))
-		fwrite(y,sprintf('%s/%s.merged.bed',out_dir,tissue),sep='\t')
+		fwrite(y,sprintf('%s/%s.merged.bed',out_dir,t),sep='\t')
 	}
 	print('Done!')
 }
@@ -190,6 +191,7 @@ encode_human_cell_type_fn='../data/encode/dnase_seq_2007_2012/controlled_vocabul
 encode_human_cell_type=fread(encode_human_cell_type_fn)
 encode_human_cell_type[term=='Ishikawa',karyotype:='cancer']
 
+
 sample_annotation_fn=list.files('../data/encode/dnase_seq_2007_2012/',pattern='files.txt',full.names=TRUE,recursive=TRUE)
 
 container=list()
@@ -206,13 +208,12 @@ sample_annotation[,c('dataType',
 					 'type'):=parse_annotation(annotation)]
 sample_annotation[,annotation:=NULL]
 
-sample_annotation=merge(sample_annotation,encode_human_cell_type[,list(term,karyotype)],by.x='cell',by.y='term')
+sample_annotation=merge(sample_annotation,encode_human_cell_type[,list(term,karyotype,tissue)],by.x='cell',by.y='term')
 sample_annotation_noCancer=sample_annotation[karyotype!='cancer']
 
 metadata=read.xlsx('gwas_atacseq_overlap/papers/GREGOR_SuppTable1.xlsx',sheetIndex=1,startRow=3, header=TRUE,colClasses="character")
 metadata=as.data.table(apply(metadata,2,as.character))
 
 metadata_noCancer=merge(metadata,sample_annotation_noCancer,by.x='BED_File',by.y='filename')
-metadata_noCancer[broad_tissue_category=='epithelium']
 
 merge_encode_2007_2012_cell_lines(metadata_noCancer,in_dir_2007_2012,out_dir_2007_2012_noCancer)

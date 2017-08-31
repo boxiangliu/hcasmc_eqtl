@@ -94,6 +94,7 @@ detect_duplicates=function(x){
 #----------- Using Jaccard index to measure distance ------------#
 annotation=data.table(file=list.files(bed_dir,pattern='.bed'))
 annotation[,epigenome:=str_replace(file,'.bed','')]
+annotation
 sort_bed(annotation,bed_dir,sorted_bed_dir)
 
 jaccard=calculate_jaccard(annotation,sorted_bed_dir)
