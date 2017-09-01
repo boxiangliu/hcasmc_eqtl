@@ -5,6 +5,7 @@ library(gridExtra)
 
 # Variables: 
 in_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks/'
+in_dir_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_filt/'
 in_dir_adult='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult/'
 in_dir_adult_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult_filt/'
 in_dir_2007_2012='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_2007_2012/'
@@ -106,7 +107,7 @@ calc_enrichment_stat=function(peak_dir,ld_set){
 		sample=str_replace(f,'.merged.bed','')
 		tissue=c(tissue,sample)
 		print(sprintf('INFO - %s',sample))
-		dhs=fread(sprintf('%s/%s',peak_dir,f))
+		dhs=fread(sprintf('%s/%s',peak_dir,f),col.names=c('chr','start','end'))
 		setkey(dhs,chr,start,end)
 
 
@@ -150,41 +151,7 @@ setkey(ld_set,chr,start,end)
 
 
 # Calculate enrichment statistics for all tissue/cell line: 
-fn=list.files(in_dir,pattern='bed')
-pval=c()
-tissue=c()
-for (f in fn){
-	sample=str_replace(f,'.merged.bed','')
-	tissue=c(tissue,sample)
-	print(sprintf('INFO - %s',sample))
-	dhs=fread(sprintf('%s/%s',in_dir,f))
-	setkey(dhs,chr,start,end)
-
-
-	# Overlap: 
-	overlap=unique(foverlaps(ld_set,dhs[,list(chr,start,end)]))
-	overlap[,c('i.start','i.end'):=NULL]
-
-
-	overlap[,snp_overlap:=!is.na(start)]
-	overlap[,loci_overlap:=any(snp_overlap),by='loci_index']
-	overlap[,c('start','end'):=NULL]
-	overlap=unique(overlap)
-	stopifnot(nrow(overlap)==nrow(ld_set))
-
-
-	overlap=overlap[ld_proxy==FALSE,]
-	overlap[,p:=mean(loci_overlap),by='gwas_index']
-
-
-	# Calculate enrichment p-value:
-	p=overlap[,list(p=unique(p)),by='gwas_index']
-	n=rep(1,length(p$p))
-	s=sum(overlap[snpID==gwas_index,loci_overlap])
-	pval=c(pval,p_non_identical_binom(n,p$p,s)$p4)
-}
-pval=data.table(tissue,pval)
-setorder(pval,pval)
+pval=calc_enrichment_stat(in_dir,ld_set)
 pdf(sprintf('%s/gregor_pval_all_life_stages.pdf',fig_dir));grid.table(head(pval,20));dev.off()
 fwrite(pval,sprintf('%s/gregor_pval_all_life_stages.tsv',out_dir),sep='\t')
 
@@ -199,6 +166,12 @@ tmp=rbind(tmp,data.table(`Biosample term name`='HCASMC',adult_pct=1,fetus_pct=0)
 merged=merge(pval,tmp,by.x='tissue',by.y='Biosample term name',sort=F)
 p1=ggplot(merged[(adult_pct==1)|(fetus_pct==1),],aes(pval,fill=ifelse(adult_pct==1,'adult','fetal')))+geom_histogram(position=position_dodge(width=0.15),binwidth=0.2)+scale_fill_discrete(name='Life stage')
 save_plot(sprintf('%s/adult_vs_fetal.pdf',fig_dir),p1,base_height=6)
+
+
+# Calculate enrichment statistics for all tissue/cell line (but without audit error):
+pval=calc_enrichment_stat(in_dir_filt,ld_set)
+pdf(sprintf('%s/gregor_pval_all_life_stages_filt.pdf',fig_dir));grid.table(head(pval,20));dev.off()
+fwrite(pval,sprintf('%s/gregor_pval_all_life_stages_filt.tsv',out_dir),sep='\t')
 
 
 # Calculate enrichment statistics for only adult tissue/cell line: 
@@ -327,6 +300,7 @@ fwrite(pval,sprintf('%s/gregor_pval_2007_2012.tsv',out_dir),sep='\t')
 pval=calc_enrichment_stat(in_dir_2007_2012_noCancer,ld_set)
 pdf(sprintf('%s/gregor_pval_2007_2012_noCancer.pdf',fig_dir));grid.table(head(pval,20));dev.off()
 fwrite(pval,sprintf('%s/gregor_pval_2007_2012_noCancer.tsv',out_dir),sep='\t')
+
 
 # Count the number of SNPs falling into each tissue/cell line:
 fn=list.files(in_dir_adult_filt,pattern='bed')
