@@ -7,16 +7,18 @@ in_dir='../data/encode/dnase_seq/'
 in_dir_2007_2012='../data/encode/dnase_seq_2007_2012/'
 
 out_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks/'
+out_dir_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_filt/'
+out_dir_released='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released/'
 out_dir_adult='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult/' # subsetted to adult samples (no fetal, child, postnatal or newborn)
 out_dir_adult_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult_filt/'
-out_dir_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_filt/'
 out_dir_2007_2012='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_2007_2012/'
 out_dir_2007_2012_noCancer='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_2007_2012_noCancer/'
 
 for (d in c(out_dir,
+			out_dir_filt,
+			out_dir_released,
 			out_dir_adult,
 			out_dir_adult_filt,
-			out_dir_filt,
 			out_dir_2007_2012,
 			out_dir_2007_2012_noCancer)){
 	if (!dir.exists(d)) {dir.create(d,recursive=TRUE)}
@@ -33,6 +35,28 @@ parse_annotation=function(annotation){
 		 treatment,
 		 type)
 }
+
+
+merge_encode=function(metadata,in_dir,out_dir){
+	biosample=unique(metadata$`Biosample term name`)
+	for (b in biosample){
+		print(sprintf('INFO - %s',b))
+		tmp=metadata[`Biosample term name`==b,list(`File accession`,`Biosample term name`,peak_type)]
+
+		container=list()
+		for (i in 1:nrow(tmp)){
+			x=fread(sprintf('zcat %s/%s.bed.gz',in_dir,tmp$`File accession`[i]),col.names=c('chr','start','end','name','score','strand','signalValue','pValue','qValue','peak'))
+
+			if (tmp$peak_type[i]=='raw'){
+				x[,c('start','end'):=list(start+peak-75,start+peak+75)]
+			}
+			container[[i]]=x[,list(chr,start,end)]
+		}
+		y=unique(Reduce(rbind,container))
+		fwrite(y,sprintf('%s/%s.merged.bed',out_dir,b),sep='\t')
+	}
+}
+
 
 merge_encode_2007_2012_cell_lines=function(metadata,in_dir,out_dir){
 	for (t in unique(metadata[,broad_tissue_category])){
@@ -78,9 +102,10 @@ setorder(dhs,chr,start)
 
 
 for (d in c(out_dir,
+			out_dir_filt,
+			out_dir_released,
 			out_dir_adult,
 			out_dir_adult_filt,
-			out_dir_filt,
 			out_dir_2007_2012,
 			out_dir_2007_2012_noCancer)){
 	fwrite(dhs,sprintf('%s/HCASMC.merged.bed',d),sep='\t')
@@ -91,92 +116,34 @@ for (d in c(out_dir,
 # ENCODE (all life stages):
 metadata=fread('../data/encode/dnase_seq/metadata.tsv')
 metadata=metadata[`Biosample type`%in%c('tissue','primary cell')]
-biosample=unique(metadata$`Biosample term name`)
-for (b in biosample){
-	print(sprintf('INFO - %s',b))
-	tmp=metadata[`Biosample term name`==b,list(`File accession`,`Biosample term name`,peak_type)]
+merge_encode(metadata)
 
-	container=list()
-	for (i in 1:nrow(tmp)){
-		x=fread(sprintf('zcat %s/%s.bed.gz',in_dir,tmp$`File accession`[i]),col.names=c('chr','start','end','name','score','strand','signalValue','pValue','qValue','peak'))
 
-		if (tmp$peak_type[i]=='raw'){
-			x[,c('start','end'):=list(start+peak-75,start+peak+75)]
-		}
-		container[[i]]=x[,list(chr,start,end)]
-	}
-	y=unique(Reduce(rbind,container))
-	fwrite(y,sprintf('%s/%s.merged.bed',out_dir,b),sep='\t')
-}
+# ENCODE (all life stages, remove low quality sample):
+metadata=fread('../data/encode/dnase_seq/metadata.tsv')
+metadata=metadata[`Biosample type`%in%c('tissue','primary cell')&`Audit ERROR`=='']
+merge_encode(metadata)
 
+
+# ENCODE (all released samples):
+metadata=fread('../data/encode/dnase_seq/metadata.tsv')
+metadata=metadata[`Biosample type`%in%c('tissue','primary cell')&`File Status`=='released']
+merge_encode(metadata,in_dir,out_dir_released)
 
 
 # ENCODE (life stages=adult):
 metadata=fread('../data/encode/dnase_seq/metadata.tsv')
 metadata=metadata[`Biosample type`%in%c('tissue','primary cell')&`Biosample life stage`=='adult']
-biosample=unique(metadata$`Biosample term name`)
-
-for (b in biosample){
-	print(sprintf('INFO - %s',b))
-	tmp=metadata[`Biosample term name`==b,list(`File accession`,`Biosample term name`,peak_type)]
-
-	container=list()
-	for (i in 1:nrow(tmp)){
-		x=fread(sprintf('zcat %s/%s.bed.gz',in_dir,tmp$`File accession`[i]),col.names=c('chr','start','end','name','score','strand','signalValue','pValue','qValue','peak'))
-
-		if (tmp$peak_type[i]=='raw'){
-			x[,c('start','end'):=list(start+peak-75,start+peak+75)]
-		}
-		container[[i]]=x[,list(chr,start,end)]
-	}
-	y=unique(Reduce(rbind,container))
-	fwrite(y,sprintf('%s/%s.merged.bed',out_dir_adult,b),sep='\t')
-}
+merge_encode(metadata)
 
 
 # ENCODE (life stages=adult, remove low quality sample):
 metadata=fread('../data/encode/dnase_seq/metadata.tsv')
 metadata=metadata[`Biosample type`%in%c('tissue','primary cell')&`Biosample life stage`=='adult'&`Audit ERROR`=='']
-biosample=unique(metadata$`Biosample term name`)
+merge_encode(metadata)
 
-for (b in biosample){
-	print(sprintf('INFO - %s',b))
-	tmp=metadata[`Biosample term name`==b,list(`File accession`,`Biosample term name`,peak_type)]
 
-	container=list()
-	for (i in 1:nrow(tmp)){
-		x=fread(sprintf('zcat %s/%s.bed.gz',in_dir,tmp$`File accession`[i]),col.names=c('chr','start','end','name','score','strand','signalValue','pValue','qValue','peak'))
 
-		if (tmp$peak_type[i]=='raw'){
-			x[,c('start','end'):=list(start+peak-75,start+peak+75)]
-		}
-		container[[i]]=x[,list(chr,start,end)]
-	}
-	y=unique(Reduce(rbind,container))
-	fwrite(y,sprintf('%s/%s.merged.bed',out_dir_adult_filt,b),sep='\t')
-}
-
-# ENCODE (all life stages, remove low quality sample):
-metadata=fread('../data/encode/dnase_seq/metadata.tsv')
-metadata=metadata[`Biosample type`%in%c('tissue','primary cell')&`Audit ERROR`=='']
-biosample=unique(metadata$`Biosample term name`)
-
-for (b in biosample){
-	print(sprintf('INFO - %s',b))
-	tmp=metadata[`Biosample term name`==b,list(`File accession`,`Biosample term name`,peak_type)]
-
-	container=list()
-	for (i in 1:nrow(tmp)){
-		x=fread(sprintf('zcat %s/%s.bed.gz',in_dir,tmp$`File accession`[i]),col.names=c('chr','start','end','name','score','strand','signalValue','pValue','qValue','peak'))
-
-		if (tmp$peak_type[i]=='raw'){
-			x[,c('start','end'):=list(start+peak-75,start+peak+75)]
-		}
-		container[[i]]=x[,list(chr,start,end)]
-	}
-	y=unique(Reduce(rbind,container))
-	fwrite(y,sprintf('%s/%s.merged.bed',out_dir_filt,b),sep='\t',col.names=F)
-}
 
 
 # ENCODE 125 Uniformly processed cell lines, categorized into tissue groups:

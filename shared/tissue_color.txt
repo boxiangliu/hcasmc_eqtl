@@ -21,7 +21,7 @@ Brain - Spinal cord (cervical c-1)	BRNSPC	Brain_Spinal_cord_cervical_c-1	Brain	#
 Brain - Substantia nigra	BRNSNG	Brain_Substantia_nigra	Brain	#EEEE00	238,238,0	Brain
 Breast - Mammary Tissue	BREAST	Breast_Mammary_Tissue	Breast	#33CCCC	51,204,204	Breast
 Cells - EBV-transformed lymphocytes	LCL	Cells_EBV-transformed_lymphocytes	Blood Vessel	#CC66FF	204,102,255	LCL
-Cells - Transformed fibroblasts	FIBRBLS	Cells_Transformed_fibroblasts	Skin	#AAEEFF	170,238,255	Fibroblast
+Cells - Transformed fibroblasts	FIBRBLS	Cells_Transformed_fibroblasts	Skin	#AAEEFF	170,238,255	Fibroblasts
 Cervix - Ectocervix	CVXECT	Cervix_Ectocervix	Cervix Uteri	#FFCCCC	255,204,204	Cervix Uteri
 Cervix - Endocervix	CVSEND	Cervix_Endocervix	Cervix Uteri	#CCAADD	204,170,221	Cervix Uteri
 Colon - Sigmoid	CLNSGM	Colon_Sigmoid	Colon	#EEBB77	238,187,119	Colon
