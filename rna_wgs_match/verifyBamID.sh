@@ -16,4 +16,4 @@ run_verifyBamID(){
 
 export -f run_verifyBamID
 
-parallel run_verifyBamID :::: ../data/rnaseq2/alignments/sample_list.txt
+parallel -j20 run_verifyBamID :::: ../data/rnaseq2/alignments/sample_list.txt
