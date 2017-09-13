@@ -2,7 +2,7 @@ library(data.table)
 library(stringr)
 library(cowplot)
 
-in_dir='../processed_data/verifyBamID/'
+in_dir='../processed_data/rna_wgs_match/verifyBamID/'
 in_fn=list.files(in_dir,pattern='bestSM',full.names=TRUE)
 fig_dir='../figures/rna_wgs_match/merge_bestSM_files/'
 if (!dir.exists(fig_dir)) {dir.create(fig_dir,recursive=TRUE)}

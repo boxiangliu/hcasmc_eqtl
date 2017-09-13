@@ -1,6 +1,6 @@
 export bam_dir=../rna_wgs_match/hg19toGRCh37/
 export vcf_fn=../processed_data/subset_vcf_to_coding_region/chr22.vcf.gz
-export out_dir=../processed_data/verifyBamID/
+export out_dir=../processed_data/rna_wgs_match/verifyBamID/
 mkdir -p $out_dir
 
 run_verifyBamID(){

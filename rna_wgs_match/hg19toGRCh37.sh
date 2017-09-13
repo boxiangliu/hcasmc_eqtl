@@ -1,4 +1,4 @@
-export out_dir=../rna_wgs_match/hg19toGRCh37/
+export out_dir=../processed_data/rna_wgs_match/hg19toGRCh37/
 mkdir -p $out_dir
 
 
