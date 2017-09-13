@@ -166,45 +166,6 @@ $(output22):$(input22)
 	# sample 2913 is in /home/diskstation/RNAseq/HCASMC/Raw_Data/Penn_2nd_round_RNAseq_GOOD_cvrg_8-11-15/
 
 
-#------- RNA-WGS match -------#
-input17 = ../data/joint/recalibrated_variants.vcf.gz
-genotype17 = ../data/joint/recalibrated_variants.GT.FORMAT
-variants17 = ../processed_data/rna_wgs_match/variants.chr1_chr11_chr22.bed
-mpileup_dir17 = ../processed_data/rna_wgs_match/mpileup
-count_dir17= ../processed_data/rna_wgs_match/variant_count/
-# sample_list17 = rna_wgs_match.pileup.sample_list.txt
-# sample_list17 = rna_wgs_match.pileup.sample_list.2.txt
-# sample_list17 = rna_wgs_match.pileup.sample_list.3.txt
-sample_list17 = rna_wgs_match.pileup.sample_list.4.txt
-# sample_list17_2 = rna_wgs_match.variant_counts.sample_list.txt
-# sample_list17_2 = rna_wgs_match.variant_counts.sample_list.2.txt
-# sample_list17_2 = rna_wgs_match.variant_counts.sample_list.3.txt
-sample_list17_2 = rna_wgs_match.variant_counts.sample_list.4.txt
-sample_list17_3 = rna_wgs_match.R.sample_list.txt
-figure17 = ../figures/rna_wgs_match.pdf
-table17 = ../processed_data/rna_wgs_match.tsv
-$(variants17): $(input17)
-	# extract variant sites on chr22:
-	zcat $(input17) | awk 'BEGIN {OFS = "\t"} {if ( ($$1 == "chr1" || $$1 == "chr11" || $$1 == "chr22") && $$7 == "PASS") print $$1,$$2-1,$$2}' > $(variants17)
-
-.rna_wgs_match.mpileup.sh.done: $(variants17) $(sample_list17)
-	# samtools mpileup at variant sites: 
-	bash rna_wgs_match.mpileup.sh ../data/rnaseq/alignments/ $(sample_list17) $(mpileup_dir17) $(variants17) 
-
-.rna_wgs_match.variant_counts.sh.done: .rna_wgs_match.mpileup.sh.done $(sample_list17_2)
-	# convert mpileup to variant counts: 
-	bash rna_wgs_match.variant_counts.sh ../processed_data/rna_wgs_match/mpileup/ $(sample_list17_2) $(count_dir17)
-
-
-$(figure17): .rna_wgs_match.variant_counts.sh.done $(sample_list17_3)
-	# extract genotype from WGS VCF file: 
-	# vcftools --gzvcf $(input17) --extract-FORMAT-info GT --out $(genotype17:.GT.FORMAT=)
-
-	# check RNA-WGS concordance: 
-	Rscript rna_wgs_match.R $(genotype17) $(count_dir17) $(sample_list17_3) $(figure17) $(table17)
-
-
-
 #----- pre-imputation QC ------# 
 # input8 = ../data/joint/recalibrated_variants.GRCh37.pass.vcf.gz
 # input8 = ../data/joint/recalibrated_variants.GRCh37.pass.id.vcf.gzary

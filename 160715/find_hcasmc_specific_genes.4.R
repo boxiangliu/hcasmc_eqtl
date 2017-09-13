@@ -358,7 +358,7 @@ write.table(output,file='../processed_data/160715/hcasmc_vs_gtex_heart.rnk',quot
 
 
 
-#### heart: 
+#### fibroblast: 
 # setup:
 target_tissue=c('Cells_Transformed_fibroblasts')
 contrast=c(length(target_tissue),rep(-1,50))/(length(target_tissue)+1)

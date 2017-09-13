@@ -4,6 +4,10 @@ library(data.table)
 library(dplyr)
 library(preprocessCore)
 
+# Variables:
+out_dir='../processed_data/160715/find_hcasmc_specific_genes.info_theory.quant_norm/'
+if (!dir.create(out_dir)) {dir.create(out_dir)}
+
 # Functions: 
 subset_genes=function(x,keep){
 	stopifnot(class(keep)=='character')
@@ -154,6 +158,12 @@ coldata=coldata[match(colnames(rpkm),coldata$sample)]
 # Calculate median of each tissue and each gene (takes time):
 tissue_median=median2(rpkmn,coldata)
 rownames(tissue_median)=rowdata$Name
+saveRDS(list(rpkm=rpkm,
+			 rpkmn=rpkmn,
+			 tissue_median=tissue_median,
+			 rowdata=rowdata,coldata=coldata),
+		sprintf('%s/rpkm.rds',out_dir))
+
 
 
 # Calculate ESI:

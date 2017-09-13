@@ -94,6 +94,10 @@ Rscript rnaseq/preprocess/filter_rpkm.R 0.1 10 ../processed_data/rnaseq/preproce
 Rscript rnaseq/quality_control/sample_correlation.R
 
 
+#----------------- RNA-WGS match -------------#
+bash rna_wgs_match/hg19toGRCh37.sh
+bash rna_wgs_match/verifyBamID.sh 
+
 
 #----------------- eQTL ------------------------
 # Setup:
@@ -1862,7 +1866,7 @@ Rscript shared/tissue_color.R   # shared/tissue_color.txt
 
 
 
-#------------------ HCASMC specific open chromatin ---------
+#------------------ HCASMC-specific open chromatin ---------
 # Setup:
 mkdir -p ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc_filt/ ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc
 ln /srv/persistent/bliu2/HCASMC_eQTL/processed_data/mpra/DHS_expanded/* ../processed_data/hcasmc_specific_open_chromatin/encode_plus_hcasmc
