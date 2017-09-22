@@ -5,7 +5,7 @@ gtex_rpkm_fn='/mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-0
 gtex_sample_annotation_fn='/mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/sample_annotations/GTEx_Analysis_2015-01-12_Annotations_SampleAttributesDS.txt'
 hcasmc_rpkm_fn='../processed_data/rnaseq/preprocess/combine_rpkm/combined.rpkm'
 gene_annotation_fn='../data/gtex/gencode.v19.genes.v6p.hg19.bed'
-out_dir='../processed_data/gwas_gene_overlap/ldscore_regression/preprocessing/'
+out_dir='../processed_data/gwas_gene_overlap/ldscore_regression/tissue_specific_gene/'
 if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
 
 
@@ -22,7 +22,6 @@ hcasmc=fread(hcasmc_rpkm_fn,header=TRUE)
 # Calculate median RPKM per tissue: 
 gtex_long=melt(gtex,id.vars=c('Name','Description'),variable.name='sample_id',value.name='rpkm')
 gtex_long=merge(gtex_long,gtex_sample_annotation,by='sample_id')
-saveRDS(gtex_long,sprintf('%s/gtex_long.rds',out_dir))
 gtex_median_rpkm=gtex_long[,list(median_rpkm=median(rpkm)),by=c('Name','tissue')]
 
 
@@ -83,12 +82,11 @@ kept_tissue_rpkm_sd=apply(kept_tissue_rpkm,1,sd)
 kept_tissue_rpkm_mean=apply(kept_tissue_rpkm,1,mean)
 if(!dir.exists(sprintf('%s/tissue_specific_gene/',out_dir))) {dir.create(sprintf('%s/tissue_specific_gene/',out_dir))}
 
-for (tissue in names(kept_tissue_rpkm)){
-	tissue_specific_gene=names(which(kept_tissue_rpkm[,tissue]>kept_tissue_rpkm_mean+4*kept_tissue_rpkm_sd))
-	tissue_specific_gene_rpkm=kept_tissue_rpkm[rownames(kept_tissue_rpkm)%in%tissue_specific_gene,] 
+for (tissue in names(combined_rpkm)){
+	tissue_specific_gene=names(which(combined_rpkm[,tissue]>kept_tissue_rpkm_mean+4*kept_tissue_rpkm_sd))
+	tissue_specific_gene_rpkm=combined_rpkm[rownames(combined_rpkm)%in%tissue_specific_gene,] 
 	fwrite(tissue_specific_gene_rpkm,sprintf('%s/tissue_specific_gene/%s.rpkm',out_dir,tissue),sep='\t')
 
-	
 	tissue_specific_gene_annotation=gene_annotation[Name%in%tissue_specific_gene,]
 	fwrite(tissue_specific_gene_annotation,sprintf('%s/tissue_specific_gene/%s.txt',out_dir,tissue),sep='\t')
 }

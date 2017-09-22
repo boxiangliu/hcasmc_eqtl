@@ -1940,4 +1940,4 @@ Rscript finemap/finemap/tarid_tcf21_coloc.R
 
 
 #--------------- GWAS gene overlap ------------# 
-Rscript gwas_gene_overlap/ldscore_regression/preprocessing.R
+Rscript gwas_gene_overlap/ldscore_regression/tissue_specific_gene.R
