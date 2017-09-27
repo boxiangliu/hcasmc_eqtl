@@ -6,12 +6,11 @@ library(stringr)
 
 # Variables:
 tissue_specific_gene_dir='../processed_data/gwas_gene_overlap/ldscore_regression/tissue_specific_gene/tissue_specific_gene/'
+kept_tissue_fn='../processed_data/gwas_gene_overlap/ldscore_regression/tissue_specific_gene/kept_tissue.txt'
 gene_annotation_fn='/mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/reference_files/gencode.v19.genes.v6p.patched_contigs.gtf.gz'
-plink_dir='/srv/persistent/bliu2/shared/ldscore/1000G_EUR_Phase3_plink/'
-hapmap_dir='/srv/persistent/bliu2/shared/ldscore/hapmap3_snps/'
+plink_dir='/srv/persistent/bliu2/shared/ldscore/1000G_plinkfiles/'
 out_dir='../processed_data/gwas_gene_overlap/ldscore_regression/tissue_specific_snp_annotation/'
 if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
-
 
 # Read and merge PLINK bim files: 
 bim_fn_list=list.files(plink_dir,'bim',full.names=TRUE)
@@ -79,3 +78,41 @@ for (i in seq_along(annot_list)){
 		write.table(annot[CHR==chr],out_fn,sep='\t',quote=FALSE,col.names=T,row.names=F)
 	}
 }
+
+
+# Combine tissue-specific annotations for independent tissues:
+kept_tissue=fread(kept_tissue_fn,sep='\t',header=FALSE,col.names='tissue')
+kept_tissue[tissue=='Artery - Aorta',tissue:="Artery - Coronary"]
+kept_tissue[,tissue:=str_replace_all(tissue,' ','_')]
+
+merged_annot=annot_list[[1]][['annot']]
+setnames(merged_annot,'ANNOT',str_replace_all(annot_list[[1]][['tissue']],' ','_'))
+for(i in 2:length(annot_list)){
+	
+	tissue=str_replace_all(annot_list[[i]][['tissue']],' ','_')
+	
+	if (tissue %in% kept_tissue$tissue){
+	
+		message(tissue)
+	
+		annot=annot_list[[i]][['annot']]
+
+		if ('ANNOT' %in% colnames(annot)){
+			setnames(annot,'ANNOT',tissue)
+		}
+	
+		merged_annot=merge(merged_annot,annot,by=c('CHR','BP','SNP','CM'))
+	}
+}
+
+
+# Output merged annotation by chromosome: 
+if(!dir.exists(sprintf('%s/merged',out_dir))){dir.create(sprintf('%s/merged',out_dir))}
+
+foreach(chr=seq(22))%dopar%{
+	message(chr)
+	out_fn=gzfile(sprintf('%s/merged/merged.%s.annot.gz',out_dir,chr))
+	write.table(merged_annot[CHR==chr],out_fn,sep='\t',quote=FALSE,col.names=T,row.names=F)
+}
+
+
