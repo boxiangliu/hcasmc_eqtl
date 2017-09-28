@@ -1,17 +1,19 @@
 unset DISPLAY XAUTHORITY
 
 # Variables:
-export annot_dir=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/gwas_gene_overlap/ldscore_regression/tissue_specific_snp_annotation/merged/
+export annot_dir=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/gwas_gene_overlap/ldscore_regression/tissue_specific_snp_annotation/
 export plink_dir=/srv/persistent/bliu2/shared/ldscore/1000G_plinkfiles/
 export hapmap_dir=/srv/persistent/bliu2/shared/ldscore/hapmap3_snps/
-export out_dir=	
+export out_dir=../processed_data/gwas_gene_overlap/ldscore_regression/ldscore_merged/	
 export log_dir=../logs/gwas_gene_overlap/ldscore_regression/ldscore_merged/
 mkdir -p $out_dir $log_dir
 
 # Functions: 
 calc_ldscore(){
 tissue=$1
-chr=$2
+annot_dir=$2
+out_dir=$3
+chr=$4
 
 echo INFO - $tissue
 echo INFO - $chr
@@ -41,4 +43,5 @@ python ~/tools/ldsc/ldsc.py \
 export -f calc_ldscore
 
 # Calculate LD score: 
-parallel -j15 --joblog $log_dir/calc_ldscore.log calc_ldscore merged {} ::: {1..22}
+mkdir $out_dir/4sd/
+parallel -j15 --joblog $log_dir/calc_ldscore.log calc_ldscore merged $annot_dir/4sd/ $out_dir/4sd/ {} ::: {1..22}

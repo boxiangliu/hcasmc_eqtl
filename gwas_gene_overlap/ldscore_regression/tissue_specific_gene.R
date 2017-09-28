@@ -11,8 +11,7 @@ if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
 
 # Read GTEx RPKMs: 
 gtex=fread(gtex_rpkm_fn)
-gtex_sample_annotation=fread(gtex_sample_annotation_fn)[,
-	list(sample_id=SAMPID,tissue=SMTSD)]
+gtex_sample_annotation=fread(gtex_sample_annotation_fn)[,list(sample_id=SAMPID,tissue=SMTSD)]
 
 
 # Read HCASMC RPKM:
@@ -32,6 +31,7 @@ hcasmc_median_rpkm=hcasmc_long[,list(median_rpkm=median(rpkm)),by=c('Name','tiss
 
 # Combined GTEx and HCASMC RPKMs: 
 combined_rpkm_long=rbind(hcasmc_median_rpkm,gtex_median_rpkm)
+fwrite(combined_rpkm_long,sprintf('%s/combined_rpkm_long.txt',out_dir),sep='\t')
 
 
 # Read gene annotation: 
@@ -46,7 +46,10 @@ combined_rpkm_long=combined_rpkm_long[Name%in%protein_coding_genes]
 # Select independent tissue (spearman's R < 0.96):
 combined_rpkm=dcast(combined_rpkm_long,Name~tissue,value.var='median_rpkm')
 hcasmc_col=which(colnames(combined_rpkm)=='HCASMC')
-setcolorder(combined_rpkm,c(hcasmc_col,1:(hcasmc_col-1),(hcasmc_col+1):ncol(combined_rpkm)))
+coronary_artery_col=which(colnames(combined_rpkm)=='Artery - Coronary')
+neworder=c(hcasmc_col,coronary_artery_col,seq(ncol(combined_rpkm))[-c(hcasmc_col,coronary_artery_col)])
+setcolorder(combined_rpkm,neworder)
+
 
 setDF(combined_rpkm)
 rownames(combined_rpkm)=combined_rpkm$Name
@@ -76,7 +79,7 @@ fwrite(data.table(tissue_kept),sprintf('%s/kept_tissue.txt',out_dir),row.names=F
 saveRDS(neighboring_tissue,sprintf('%s/neighboring_tissue.rds',out_dir))
 
 
-# Select tissue-specific genes: 
+# Select tissue-specific genes (greater than 4 s.d.): 
 kept_tissue_rpkm=combined_rpkm[tissue_kept]
 kept_tissue_rpkm_sd=apply(kept_tissue_rpkm,1,sd)
 kept_tissue_rpkm_mean=apply(kept_tissue_rpkm,1,mean)
@@ -85,8 +88,31 @@ if(!dir.exists(sprintf('%s/tissue_specific_gene/',out_dir))) {dir.create(sprintf
 for (tissue in names(combined_rpkm)){
 	tissue_specific_gene=names(which(combined_rpkm[,tissue]>kept_tissue_rpkm_mean+4*kept_tissue_rpkm_sd))
 	tissue_specific_gene_rpkm=combined_rpkm[rownames(combined_rpkm)%in%tissue_specific_gene,] 
-	fwrite(tissue_specific_gene_rpkm,sprintf('%s/tissue_specific_gene/%s.rpkm',out_dir,tissue),sep='\t')
+	fwrite(tissue_specific_gene_rpkm,sprintf('%s/tissue_specific_gene/%s.4sd.rpkm',out_dir,tissue),sep='\t')
 
 	tissue_specific_gene_annotation=gene_annotation[Name%in%tissue_specific_gene,]
-	fwrite(tissue_specific_gene_annotation,sprintf('%s/tissue_specific_gene/%s.txt',out_dir,tissue),sep='\t')
+	fwrite(tissue_specific_gene_annotation,sprintf('%s/tissue_specific_gene/%s.4sd.txt',out_dir,tissue),sep='\t')
 }
+
+
+# Standardize gene expression:
+standard_rpkm=(combined_rpkm-kept_tissue_rpkm_mean)/kept_tissue_rpkm_sd
+fwrite(standard_rpkm,sprintf('%s/standardized_rpkm.txt',out_dir),sep='\t')
+
+
+# Select tissue-specific genes (top 200, 500, 1000):
+for (tissue in names(combined_rpkm)){
+	message(tissue)
+	tissue_standard_rpkm=data.table(Name=rownames(standard_rpkm),rpkm=standard_rpkm[,tissue])
+	setorder(tissue_standard_rpkm,-rpkm,na.last=TRUE)
+
+	for (n in c(200,500,1000)){
+		tissue_specific_gene=tissue_standard_rpkm[1:n,Name]
+		tissue_specific_gene_rpkm=combined_rpkm[rownames(combined_rpkm)%in%tissue_specific_gene,]
+		fwrite(tissue_specific_gene_rpkm,sprintf('%s/tissue_specific_gene/%s.top%s.rpkm',out_dir,tissue,n),sep='\t')
+
+		tissue_specific_gene_annotation=gene_annotation[Name%in%tissue_specific_gene,]
+		fwrite(tissue_specific_gene_annotation,sprintf('%s/tissue_specific_gene/%s.top%s.txt',out_dir,tissue,n),sep='\t')
+	}
+}
+
