@@ -8,6 +8,39 @@ gene_annotation_fn='../data/gtex/gencode.v19.genes.v6p.hg19.bed'
 out_dir='../processed_data/gwas_gene_overlap/ldscore_regression/tissue_specific_gene/'
 if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
 
+# Functions: 
+# Select tissue specific genes (> 4sd above the mean):
+select_tissue_specific_genes_4sd=function(kept_tissue_rpkm,out_dir){
+	kept_tissue_rpkm_sd=apply(kept_tissue_rpkm,1,sd)
+	kept_tissue_rpkm_mean=apply(kept_tissue_rpkm,1,mean)
+	for (tissue in names(kept_tissue_rpkm)){
+		message(tissue)
+		tissue_specific_gene=names(which(kept_tissue_rpkm[,tissue]>kept_tissue_rpkm_mean+4*kept_tissue_rpkm_sd))
+		tissue_specific_gene_annotation=gene_annotation[Name%in%tissue_specific_gene,]
+		fwrite(tissue_specific_gene_annotation,sprintf('%s/%s.4sd.txt',out_dir,tissue),sep='\t')
+	}
+}
+
+# Select top tissue specific genes:
+select_tissue_specific_genes_topN=function(kept_tissue_rpkm,out_dir,topN_list){
+	kept_tissue_rpkm_sd=apply(kept_tissue_rpkm,1,sd)
+	kept_tissue_rpkm_mean=apply(kept_tissue_rpkm,1,mean)
+	standard_rpkm=(kept_tissue_rpkm-kept_tissue_rpkm_mean)/kept_tissue_rpkm_sd
+
+
+	# Select top N tissue-specific genes:
+	for (tissue in names(kept_tissue_rpkm)){
+		message(tissue)
+		tissue_standard_rpkm=data.table(Name=rownames(standard_rpkm),rpkm=standard_rpkm[,tissue])
+		setorder(tissue_standard_rpkm,-rpkm,na.last=TRUE)
+
+		for (n in topN_list){
+			tissue_specific_gene=tissue_standard_rpkm[1:n,Name]
+			tissue_specific_gene_annotation=gene_annotation[Name%in%tissue_specific_gene,]
+			fwrite(tissue_specific_gene_annotation,sprintf('%s/%s.top%s.txt',out_dir,tissue,n),sep='\t')
+		}
+	}
+}
 
 # Read GTEx RPKMs: 
 gtex=fread(gtex_rpkm_fn)
@@ -32,7 +65,7 @@ hcasmc_median_rpkm=hcasmc_long[,list(median_rpkm=median(rpkm)),by=c('Name','tiss
 # Combined GTEx and HCASMC RPKMs: 
 combined_rpkm_long=rbind(hcasmc_median_rpkm,gtex_median_rpkm)
 fwrite(combined_rpkm_long,sprintf('%s/combined_rpkm_long.txt',out_dir),sep='\t')
-
+# combined_rpkm_long=fread(sprintf('%s/combined_rpkm_long.txt',out_dir))
 
 # Read gene annotation: 
 gene_annotation=fread(gene_annotation_fn,select=c(5:7),col.names=c('Name','Description','type'))
@@ -79,40 +112,45 @@ fwrite(data.table(tissue_kept),sprintf('%s/kept_tissue.txt',out_dir),row.names=F
 saveRDS(neighboring_tissue,sprintf('%s/neighboring_tissue.rds',out_dir))
 
 
+#----------- Use all independent tissues -----------#
 # Select tissue-specific genes (greater than 4 s.d.): 
 kept_tissue_rpkm=combined_rpkm[tissue_kept]
-kept_tissue_rpkm_sd=apply(kept_tissue_rpkm,1,sd)
-kept_tissue_rpkm_mean=apply(kept_tissue_rpkm,1,mean)
-if(!dir.exists(sprintf('%s/tissue_specific_gene/',out_dir))) {dir.create(sprintf('%s/tissue_specific_gene/',out_dir))}
-
-for (tissue in names(combined_rpkm)){
-	tissue_specific_gene=names(which(combined_rpkm[,tissue]>kept_tissue_rpkm_mean+4*kept_tissue_rpkm_sd))
-	tissue_specific_gene_rpkm=combined_rpkm[rownames(combined_rpkm)%in%tissue_specific_gene,] 
-	fwrite(tissue_specific_gene_rpkm,sprintf('%s/tissue_specific_gene/%s.4sd.rpkm',out_dir,tissue),sep='\t')
-
-	tissue_specific_gene_annotation=gene_annotation[Name%in%tissue_specific_gene,]
-	fwrite(tissue_specific_gene_annotation,sprintf('%s/tissue_specific_gene/%s.4sd.txt',out_dir,tissue),sep='\t')
-}
+out_dir_with_sm=sprintf('%s/tissue_specific_gene/',out_dir)
+if(!dir.exists(out_dir_with_sm)) {dir.create(out_dir_with_sm)}
+select_tissue_specific_genes_4sd(kept_tissue_rpkm,out_dir_with_sm)
 
 
-# Standardize gene expression:
-standard_rpkm=(combined_rpkm-kept_tissue_rpkm_mean)/kept_tissue_rpkm_sd
-fwrite(standard_rpkm,sprintf('%s/standardized_rpkm.txt',out_dir),sep='\t')
+# Select top tissue-specific genes:
+topN_list=c(200,500,1000,2000,4000,8000)
+select_tissue_specific_genes_topN(kept_tissue_rpkm,out_dir_with_sm,topN_list)
 
 
-# Select tissue-specific genes (top 200, 500, 1000):
-for (tissue in names(combined_rpkm)){
-	message(tissue)
-	tissue_standard_rpkm=data.table(Name=rownames(standard_rpkm),rpkm=standard_rpkm[,tissue])
-	setorder(tissue_standard_rpkm,-rpkm,na.last=TRUE)
+#----------- Use all independent tissues minus smooth muscle -----------#
+# Remove smooth muscle tissues: 
+smooth_muscle_tissue_list=c('Cervix - Endocervix','Colon - Sigmoid','Esophagus - Mucosa','Vagina','Stomach')
+kept_tissue_rpkm_no_sm=kept_tissue_rpkm[,!(names(kept_tissue_rpkm)%in%smooth_muscle_tissue_list)]
 
-	for (n in c(200,500,1000)){
-		tissue_specific_gene=tissue_standard_rpkm[1:n,Name]
-		tissue_specific_gene_rpkm=combined_rpkm[rownames(combined_rpkm)%in%tissue_specific_gene,]
-		fwrite(tissue_specific_gene_rpkm,sprintf('%s/tissue_specific_gene/%s.top%s.rpkm',out_dir,tissue,n),sep='\t')
 
-		tissue_specific_gene_annotation=gene_annotation[Name%in%tissue_specific_gene,]
-		fwrite(tissue_specific_gene_annotation,sprintf('%s/tissue_specific_gene/%s.top%s.txt',out_dir,tissue,n),sep='\t')
-	}
-}
+# Select tissue-specific genes (greater than 4 s.d.): 
+out_dir_no_sm=sprintf('%s/tissue_specific_gene_no_sm/',out_dir)
+if(!dir.exists(out_dir_no_sm)) {dir.create(out_dir_no_sm)}
+select_tissue_specific_genes_4sd(kept_tissue_rpkm_no_sm,out_dir_no_sm)
 
+
+# Select top tissue-specific genes:
+select_tissue_specific_genes_topN(kept_tissue_rpkm_no_sm,out_dir_no_sm,topN_list)
+
+
+#----------- Use all independent tissues minus smooth muscle and blood -----------#
+# Remove blood: 
+kept_tissue_rpkm_no_sm_no_blood=kept_tissue_rpkm_no_sm[,names(kept_tissue_rpkm_no_sm)!='Whole Blood']
+
+
+# Select tissue-specific genes (greater than 4 s.d.): 
+out_dir_no_sm_no_blood=sprintf('%s/tissue_specific_gene_no_sm_no_blood/',out_dir)
+if(!dir.exists(out_dir_no_sm_no_blood)) {dir.create(out_dir_no_sm_no_blood)}
+select_tissue_specific_genes_4sd(kept_tissue_rpkm_no_sm_no_blood,out_dir_no_sm_no_blood)
+
+
+# Select top tissue-specific genes:
+select_tissue_specific_genes_topN(kept_tissue_rpkm_no_sm_no_blood,out_dir_no_sm_no_blood,topN_list)

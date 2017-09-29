@@ -6,51 +6,37 @@ library(doMC)
 registerDoMC(15)
 
 # Variables:
-partition_heritability_fn='../processed_data/gwas_gene_overlap/ldscore_regression/partition_heritability_merged/cad.merged.results'
-partition_heritability_nobaseline_fn='../processed_data/gwas_gene_overlap/ldscore_regression/partition_heritability_merged/cad.merged.nobaseline.results'
+partition_heritability_dir='../processed_data/gwas_gene_overlap/ldscore_regression/partition_heritability_merged/'
 fig_dir='../figures/gwas_gene_overlap/ldscore_regression/plot_heritability_merged/'
 if (!dir.exists(fig_dir)){dir.create(fig_dir,recursive=TRUE)}
 
-#------------- Partition heritability ----------#
-# Read partitioned heritability: 
-partition_heritability=fread(partition_heritability_fn)[1:22]
-partition_heritability[,tissue:=str_replace_all(str_replace(Category,'L2_0',''),'_',' ')]
-partition_heritability[,Coefficient_p:=2*pnorm(-abs(`Coefficient_z-score`))]
+# Functions: 
 
+# Read partitioned heritability: 
+read_heritability=function(partition_heritability_dir,experiment){
+	partition_heritability_fn=sprintf('%s/%s/cad.merged.nobaseline.results',partition_heritability_dir,experiment)
+	partition_heritability=fread(partition_heritability_fn)
+	partition_heritability[,tissue:=str_replace_all(str_replace(Category,'L2_0',''),'_',' ')]
+	partition_heritability[,Coefficient_p:=2*pnorm(-abs(`Coefficient_z-score`))]
+	return(partition_heritability)
+}
 
 # Plot partitioned heritability for each tissue:
-setorder(partition_heritability,Coefficient_p)
-partition_heritability[,tissue:=factor(tissue,tissue)]
-p1=ggplot(partition_heritability,aes(x=tissue,y=-log10(Coefficient_p)))+
-	geom_point()+coord_flip()
+plot_enrichment=function(partition_heritability,title){
+	setorder(partition_heritability,Enrichment)
+	partition_heritability[,tissue:=factor(tissue,tissue)]
+	p1=ggplot(partition_heritability,aes(x=tissue,y=Enrichment,ymin=Enrichment-Enrichment_std_error,ymax=Enrichment+Enrichment_std_error))+
+		geom_pointrange()+coord_flip()+ggtitle(title)
+	return(p1)
+}
 
-setorder(partition_heritability,Enrichment)
-partition_heritability[,tissue:=factor(tissue,tissue)]
-p2=ggplot(partition_heritability,aes(x=tissue,y=Enrichment,ymin=Enrichment-Enrichment_std_error,ymax=Enrichment+Enrichment_std_error))+
-	geom_pointrange()+coord_flip()
+experiment_list=c('4sd','top200','top500','top1000','top2000','top4000','top8000')
+p=foreach(experiment=experiment_list,.final=function(x) setNames(x,experiment_list))%dopar%{
+	partition_heritability=read_heritability(partition_heritability_dir,experiment)
+	plot_enrichment(partition_heritability,experiment)
+}
 
-pdf(sprintf('%s/heritability.pdf',fig_dir))
-p1;p2
-dev.off()
-
-#-------------- Partition heritability with baseline ------------#
-# Read partitioned heritability: 
-partition_heritability=fread(partition_heritability_nobaseline_fn)[1:22]
-partition_heritability[,tissue:=str_replace_all(str_replace(Category,'L2_0',''),'_',' ')]
-partition_heritability[,Coefficient_p:=2*pnorm(-abs(`Coefficient_z-score`))]
-
-
-# Plot partitioned heritability for each tissue:
-setorder(partition_heritability,Coefficient_p)
-partition_heritability[,tissue:=factor(tissue,tissue)]
-p3=ggplot(partition_heritability,aes(x=tissue,y=-log10(Coefficient_p)))+
-	geom_point()+coord_flip()
-
-setorder(partition_heritability,Enrichment)
-partition_heritability[,tissue:=factor(tissue,tissue)]
-p4=ggplot(partition_heritability,aes(x=tissue,y=Enrichment,ymin=Enrichment-Enrichment_std_error,ymax=Enrichment+Enrichment_std_error))+
-	geom_pointrange()+coord_flip()
 
 pdf(sprintf('%s/heritability_nobaseline.pdf',fig_dir))
-p3;p4
+p
 dev.off()

@@ -4,7 +4,7 @@ unset DISPLAY XAUTHORITY
 export annot_dir=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/gwas_gene_overlap/ldscore_regression/tissue_specific_snp_annotation/
 export plink_dir=/srv/persistent/bliu2/shared/ldscore/1000G_plinkfiles/
 export hapmap_dir=/srv/persistent/bliu2/shared/ldscore/hapmap3_snps/
-export out_dir=../processed_data/gwas_gene_overlap/ldscore_regression/ldscore_merged/	
+export out_dir=../processed_data/gwas_gene_overlap/ldscore_regression/ldscore_merged/
 export log_dir=../logs/gwas_gene_overlap/ldscore_regression/ldscore_merged/
 mkdir -p $out_dir $log_dir
 
@@ -42,6 +42,12 @@ python ~/tools/ldsc/ldsc.py \
 
 export -f calc_ldscore
 
-# Calculate LD score: 
-mkdir $out_dir/4sd/
-parallel -j15 --joblog $log_dir/calc_ldscore.log calc_ldscore merged $annot_dir/4sd/ $out_dir/4sd/ {} ::: {1..22}
+# Calculate LD score:
+for dir1 in tissue_specific_gene tissue_specific_gene_no_sm tissue_specific_gene_no_sm_no_blood; do
+for dir2 in top200 top500 top1000 top2000 top4000 top8000; do
+mkdir -p $out_dir/$dir1/$dir2
+parallel -j15 --joblog $log_dir/calc_ldscore.log calc_ldscore merged $annot_dir/$dir1/$dir2 $out_dir/$dir1/$dir2 {} ::: {1..22}
+ln $annot_dir/$dir1/$dir2/* $out_dir/$dir1/$dir2
+done
+done
+
