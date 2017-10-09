@@ -30,13 +30,16 @@ plot_enrichment=function(partition_heritability,title){
 	return(p1)
 }
 
-experiment_list=c('4sd','top200','top500','top1000','top2000','top4000','top8000')
-p=foreach(experiment=experiment_list,.final=function(x) setNames(x,experiment_list))%dopar%{
-	partition_heritability=read_heritability(partition_heritability_dir,experiment)
-	plot_enrichment(partition_heritability,experiment)
-}
-
-
+tissue_set_list=c('tissue_specific_gene','tissue_specific_gene_no_sm','tissue_specific_gene_no_sm_no_blood')
+experiment_list=c('top200','top500','top1000','top2000','top4000','top8000')
 pdf(sprintf('%s/heritability_nobaseline.pdf',fig_dir))
-p
+for (tissue_set in tissue_set_list){
+	p=foreach(experiment=experiment_list,.final=function(x) setNames(x,experiment_list))%dopar%{
+		partition_heritability=read_heritability(partition_heritability_dir,sprintf('%s/%s',tissue_set,experiment))
+		plot_enrichment(partition_heritability,sprintf('%s\n%s',tissue_set,experiment))
+	}
+	print(p)
+}
 dev.off()
+
+

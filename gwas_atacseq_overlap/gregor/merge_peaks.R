@@ -9,6 +9,7 @@ in_dir_2007_2012='../data/encode/dnase_seq_2007_2012/'
 out_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks/'
 out_dir_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_filt/'
 out_dir_released='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released/'
+out_dir_released_all_cell_type='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_all_cell_type/'
 out_dir_adult='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult/' # subsetted to adult samples (no fetal, child, postnatal or newborn)
 out_dir_adult_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult_filt/'
 out_dir_2007_2012='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_2007_2012/'
@@ -17,6 +18,7 @@ out_dir_2007_2012_noCancer='../processed_data/gwas_atacseq_overlap/gregor/merge_
 for (d in c(out_dir,
 			out_dir_filt,
 			out_dir_released,
+			out_dir_released_all_cell_type,
 			out_dir_adult,
 			out_dir_adult_filt,
 			out_dir_2007_2012,
@@ -104,6 +106,7 @@ setorder(dhs,chr,start)
 for (d in c(out_dir,
 			out_dir_filt,
 			out_dir_released,
+			out_dir_released_all_cell_type,
 			out_dir_adult,
 			out_dir_adult_filt,
 			out_dir_2007_2012,
@@ -129,6 +132,13 @@ merge_encode(metadata)
 metadata=fread('../data/encode/dnase_seq/metadata.tsv')
 metadata=metadata[`Biosample type`%in%c('tissue','primary cell')&`File Status`=='released']
 merge_encode(metadata,in_dir,out_dir_released)
+
+
+# ENCODE (all released samples for all cell types):
+metadata=fread('../data/encode/dnase_seq/metadata.tsv')
+metadata=metadata[`File Status`=='released']
+metadata[,`Biosample term name`:=str_replace_all(`Biosample term name`,'\\/','_')]
+merge_encode(metadata,in_dir,out_dir_released_all_cell_type)
 
 
 # ENCODE (life stages=adult):
