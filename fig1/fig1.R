@@ -26,14 +26,17 @@ color_map=temp[[2]]
 
 show_n=5
 jaccard[,label:=ifelse( (rank<=show_n) | (rank>(length(jaccard)-show_n)),as.character(sample),'')]
-jaccard[rank<70,list(sample,gtex)]
+# jaccard[rank<70,list(sample,gtex)]
+top5_label=jaccard[rank<=show_n,as.character(sample)]
+bottom5_label=jaccard[rank>=(length(jaccard)-show_n),as.character(sample)]
 
 fig1b=ggplot(jaccard,aes(sample,jaccard,label=label,color=gtex))+
 	geom_point(size=1)+
 	theme(axis.text.x=element_blank(),axis.ticks.x=element_blank())+
 	xlab(sprintf('ENCODE Sample (n=%i)',nrow(jaccard)))+
 	ylab('Epigenomic Similarity\n(Jaccard Index)')+
-	geom_text_repel(force=5)+
+	annotate('text',x=20,y=0.10,label=paste(c('Top 5',top5_label),collapse='\n'))+
+	annotate('text',x=80,y=0.19,label=paste(c('Bottom 5',bottom5_label),collapse='\n'))+
 	scale_color_manual(values=color_map,guide='none')
 
 # Fig. 1C:
@@ -91,7 +94,7 @@ g=tableGrob(df1, rows = NULL)
 g=gtable_add_grob(g,grobs=rectGrob(gp=gpar(fill=NA,lwd=2)),t=2,b=nrow(g),l=1,r=ncol(g))
 g=gtable_add_grob(g,grobs=rectGrob(gp=gpar(fill=NA,lwd=2)),t=1,l=1,r=ncol(g))
 fig1d=gtable_add_grob(g,grobs=rectGrob(gp=gpar(fill=NA,lwd=2)),t=1,b=nrow(g),l=2)
-grid.draw(fig1d)
+
 
 
 # Fig. 1E:
@@ -107,10 +110,12 @@ fig1e=draw.pairwise.venn(
 	cross.area=n_hcasmc_peaks-n_hcasmc_spec_peaks,
 	category=c("HCASMC", "ENCODE"),
 	lty=rep("blank", 2), 
-	fill=c("light blue", "pink"), 
+	fill=c("blue", "red"), 
 	alpha = rep(0.5, 2), 
 	cat.pos = c(0, 0), 
-	cat.dist = rep(0.025, 2))
+	cat.dist = rep(0.025, 2),
+	cex=1.3,
+	cat.cex=1.5)
 
 # Fig 1F:
 get_bw=function(f,seq,start,end){

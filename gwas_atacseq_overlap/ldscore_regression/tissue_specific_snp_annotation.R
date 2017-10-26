@@ -5,9 +5,19 @@ registerDoMC(15)
 library(stringr)
 
 # Variables:
-bed_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_all_cell_type/'
+args=commandArgs(T)
+if (length(args)==0) {
+	bed_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_all_cell_type/'
+	out_dir='../processed_data/gwas_atacseq_overlap/ldscore_regression/tissue_specific_snp_annotation/'
+} else if (length(args)==2){
+	bed_dir=args[1]
+	out_dir=args[2]
+} else {
+	stop('Arg 1: bed_dir; Arg 2: out_dir')
+}
+
 plink_dir='/srv/persistent/bliu2/shared/ldscore/1000G_plinkfiles/'
-out_dir='../processed_data/gwas_atacseq_overlap/ldscore_regression/tissue_specific_snp_annotation/'
+
 if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
 
 # Functions:
@@ -149,16 +159,21 @@ annot=foreach(tissue=tissue_list,.combine='cbind')%dopar%{
 temp=cbind(bim[,list(CHR,BP,SNP,CM)],annot)
 temp[,CHR:=str_replace(CHR,'chr','')]
 annot=temp
+setnames(annot,str_replace_all(colnames(annot),' ','_'))
 
 
 # Output merged annotation by chromosome:
 message('INFO - Outputing merged annotation by chromosome')
 output_merged_annotations(annot,sprintf('%s/all_tissue/',out_dir))
 
+# annot=foreach(i=1:22,.combine='rbind')%dopar%{
+# 	message(i)
+# 	fread(sprintf('zcat ../processed_data/gwas_atacseq_overlap/ldscore_regression_2305/tissue_specific_snp_annotation/all_tissue/merged.%s.annot.gz',i))}
 
 # Calculate jaccard similarity:
 size=ncol(annot)-4
 jaccard_similarity=matrix(-1,nrow=size,ncol=size)
+colnames(jaccard_similarity)=rownames(jaccard_similarity)=colnames(annot)[5:ncol(annot)]
 registerDoMC(48)
 for (i in 5:ncol(annot)){
 	temp=foreach(j=i:ncol(annot),.combine='c')%dopar%{
@@ -172,6 +187,11 @@ out=data.table(jaccard_similarity,keep.rownames=TRUE)
 setnames(out,'rn','tissue')
 fwrite(out,sprintf('%s/jaccard_similarity.tsv',out_dir),sep='\t')
 
+# out_dir='../processed_data/gwas_atacseq_overlap/ldscore_regression_2305/tissue_specific_snp_annotation/'
+# out=fread(sprintf('%s/jaccard_similarity.tsv',out_dir))
+# jaccard_similarity=out[,2:ncol(out)]
+# setDF(jaccard_similarity)
+# rownames(jaccard_similarity)=out[,tissue]
 
 # Select indepedent tissues: 
 new_order=c('HCASMC',colnames(jaccard_similarity)[colnames(jaccard_similarity)!='HCASMC'])
@@ -181,10 +201,10 @@ for (threshold in c(0.3,0.4,0.5)){
 	temp=select_independent_tissue(jaccard_similarity_hcasmc_1st,threshold)
 
 	tissue_kept=temp[[1]]
-	saveRDS(neighboring_tissue,sprintf('%s/neighboring_tissue.jaccard_similarity_%s.rds',out_dir,threshold))
+	write.table(tissue_kept,sprintf('%s/tissue_kept.jaccard_similarity_%s.txt',out_dir,threshold))
 
 	neighboring_tissue=temp[[2]]
-	write.table(tissue_kept,sprintf('%s/tissue_kept.jaccard_similarity_%s.txt',out_dir,threshold))
+	saveRDS(neighboring_tissue,sprintf('%s/neighboring_tissue.jaccard_similarity_%s.rds',out_dir,threshold))
 
 	annot_threshold=annot[,c('CHR','BP','SNP','CM',tissue_kept),with=F]
 	message(sprintf('INFO - %s tissue kept',ncol(annot_threshold)-4))

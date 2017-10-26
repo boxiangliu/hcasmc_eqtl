@@ -1572,6 +1572,15 @@ python gwas_atacseq_overlap/gregor/parse_encode_vocabulary.py > ../data/encode/d
 Rscript gwas_atacseq_overlap/gregor/overlap_enrichment.R
 
 
+# Method 3: LD score regression
+Rscript gwas_atacseq_overlap/ldscore_regression/tissue_specific_snp_annotation.R
+bash gwas_atacseq_overlap/ldscore_regression/ldscore_merged.sh
+bash gwas_atacseq_overlap/ldscore_regression/partition_heritability_merged.sh
+Rscript gwas_atacseq_overlap/ldscore_regression/plot_heritability_merged.R
+
+# Repeat Method 3, but using only 2305: 
+bash gwas_atacseq_overlap/ldscore_regression_2305/driver.sh
+
 #------------ GWAS eQTL overlap ---------------#
 mkdir gwas_eqtl_overlap ../processed_data/gwas_eqtl_overlap ../figures/gwas_eqtl_overlap
 
@@ -1582,6 +1591,7 @@ Rscript gwas_eqtl_overlap/gwas_thresholding/overlap.metasoft.R
 
 # Method 2: Gregor:
 Rscript gregor/overlap_enrichment.R
+
 
 #### end GWAS eQTL overlap
 
