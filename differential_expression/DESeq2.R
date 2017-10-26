@@ -158,6 +158,23 @@ meta_result=list(Artery=meta_artery,Heart=meta_heart,Fibroblast=meta_fibroblast)
 saveRDS(meta_result,sprintf('%s/meta_result.rds',out_dir))
 
 
+# Convert result to GSEA RNK format:
+gene_annotation_fn='/srv/persistent/bliu2/HCASMC_eQTL/data/gtex/gencode.v19.genes.v6p.hg19.bed'
+gene_annotation=fread(gene_annotation_fn,select=5:6,col.names=c('gene_id','gene_name'))
+gene_annotation_vect=gene_annotation$gene_name
+names(gene_annotation_vect)=gene_annotation$gene_id
+
+
+for (i in list('meta_artery','meta_heart','meta_fibroblast')){
+	dt=get(i)
+	dt[,gene_name:=gene_annotation_vect[gene_id]]
+	dt[,logp:=-log10(pval)]
+	dt[,z:=beta/se]
+	fwrite(dt[,list(gene_name,z)],sprintf('%s/%s.rnk',out_dir,i),sep='\t',col.names=FALSE)
+}
+
+
+
 # Count the number of DE genes:
 fdr_threshold=c(0.001,0.01,0.05)
 n_sig=foreach(t=names(meta_result),.combine='rbind')%do%{

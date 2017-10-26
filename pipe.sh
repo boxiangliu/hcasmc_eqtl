@@ -1960,3 +1960,8 @@ bash gwas_gene_overlap/ldscore_regression/ldscore_merged.sh
 # bash gwas_gene_overlap/ldscore_regression/partition_heritability.sh
 bash gwas_gene_overlap/ldscore_regression/partition_heritability_merged.sh
 
+
+#-------------- Differential expression ---------# 
+Rscript differential_expression/sample_individuals.R
+Rscript differential_expression/DESeq2.R 
+bash differential_expression/GSEA.sh 
