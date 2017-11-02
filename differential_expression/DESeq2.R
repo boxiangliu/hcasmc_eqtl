@@ -9,7 +9,7 @@ library(doMC)
 registerDoMC(10)
 library(metafor)
 library(cowplot)
-
+library(sva)
 
 # Variables:
 subject_dir='../processed_data/differential_expression/sample_individuals/'
@@ -23,7 +23,77 @@ if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
 if (!dir.exists(fig_dir)) {dir.create(fig_dir,recursive=TRUE)}
 
 
+tissue_list=c("Artery - Aorta","Artery - Coronary","Artery - Tibial", 'Heart - Atrial Appendage', 'Heart - Left Ventricle','Cells - Transformed fibroblasts')
+tissue_to_id_map=fread('/srv/persistent/bliu2/HCASMC_eQTL/data//gtex/gtex_tissue_colors.txt',select=c(1,3))
+gencode=fread('/srv/persistent/bliu2/HCASMC_eQTL/data/gtex/gencode.v19.genes.v6p.hg19.bed',select=c(5,6,7),col.names=c('gene_id','gene_name','type'))
+coding_and_lncRNA=gencode[type%in%c('lincRNA','protein_coding'),gene_id]
+gtex_covariate=read_gtex_covariate(gtex_covariate_fn)
+
+
 # Function:
+read_hcasmc_covariate=function(hcasmc_covariate_fn){
+	hcasmc_covariate=readWorksheet(loadWorkbook(hcasmc_covariate_fn),sheet=5)
+	setDT(hcasmc_covariate)
+	hcasmc_covariate=unique(hcasmc_covariate[DNA%in%hcasmc_subject_list,list(SUBJID=DNA,sex=Sex,age=Age_Imputed,race=Genomic_Ethnicity)])
+	return(hcasmc_covariate)
+}
+
+
+read_gtex_covariate=function(gtex_covariate_fn){
+	gtex_covariate=fread(gtex_covariate_fn)[,list(SUBJID,age=AGE,sex=GENDER,race=RACE,ethnicity=ETHNCTY)]
+	race_numeric_to_letter=c('Asian','AA','Caucasian','Indian','Unknown')
+	gtex_covariate[,race:=race_numeric_to_letter[race]]
+	gtex_covariate[,race:=ifelse(ethnicity==1,'Hispanic',race)]
+	gtex_covariate[,ethnicity:=NULL]
+	sex_numeric_to_letter=c('M','F')
+	gtex_covariate[,sex:=sex_numeric_to_letter[sex]]
+	return(gtex_covariate)
+}
+
+
+read_gtex_read_count=function(gtex_read_count_dir,tissue_id,subset=coding_and_lncRNA){
+	gtex_read_count_fn=sprintf('%s/%s.reads.txt',gtex_read_count_dir,tissue_id)
+	gtex_read_count=fread(gtex_read_count_fn)
+	gtex_read_count=gtex_read_count[Gene%in%subset]
+	return(gtex_read_count)
+}
+
+
+get_subject_list=function(suject_dir,tissue){
+	subject_fn=sprintf('%s/%s.txt',subject_dir,tissue)
+	subject_list=fread(subject_fn,header=FALSE,col.names='subject')
+	return(subject_list)
+}
+
+
+merge_count_table=function(hcasmc_read_count_mat,gtex_read_count_downsample_mat){
+	row_idx=match(rownames(hcasmc_read_count_mat),rownames(gtex_read_count_downsample_mat))
+	gtex_read_count_downsample_mat_reordered=gtex_read_count_downsample_mat[row_idx,]
+	stopifnot(rownames(hcasmc_read_count_mat)==rownames(gtex_read_count_downsample_mat_reordered))
+	read_count_mat=cbind(hcasmc_read_count_mat,gtex_read_count_downsample_mat_reordered)
+	return(read_count_mat)
+}
+
+
+merge_covariates=function(hcasmc_covariate,tissue_covariate,tissue1='HCASMC',tissue2=tissue){
+	hcasmc_covariate$tissue=tissue1
+	tissue_covariate$tissue=tissue2
+	covariate=rbind(hcasmc_covariate,tissue_covariate)
+	return(covariate)
+}
+
+
+extract_sv=function(read_count_mat,covariate){
+	filter = apply(read_count_mat, 1, function(x) length(x[x>5])>=2)
+	filtered = read_count_mat[filter,]
+	mod1 = model.matrix(~sex+race+tissue,covariate)
+	mod0 = cbind(mod1[,1])
+	svseq=svaseq(filtered,mod1,mod0)$sv
+	colnames(svseq)=paste0('SV',1:ncol(svseq))
+	return(svseq)
+}
+
+
 meta_analyze=function(res,tissue_group){
 	meta_res=foreach(gid=unique(res[,gene_id]),.combine='rbind')%dopar%{
 		message('INFO - ', gid)
@@ -41,13 +111,72 @@ meta_analyze=function(res,tissue_group){
 }
 
 
+count_de_genes=function(result,fdr_threshold=c(0.001,0.01,0.05)){
+	# Note that result is a list.
+	n_sig=foreach(t=names(result),.combine='rbind')%do%{
+		foreach(ft=fdr_threshold,.combine='rbind')%do%{
+			data.table(tissue=t,FDR=ft,n=sum(result[[t]]$padj<ft,na.rm=TRUE))
+		}
+	}
+	return(n_sig)
+}
+
+
+reorder_covariate_by_read_count_matrix=function(covariate,read_count){
+	covariate[match(colnames(read_count),covariate$SUBJID)]
+}
+
+
+compare_two_tissues=function(tissue1,tissue2){
+
+	# Read read count and covariate:
+	temp=foreach(tissue=c(tissue1,tissue2))%do%{
+		tissue_id=tissue_to_id_map[tissue_site_detail==tissue,tissue_site_detail_id]
+		gtex_read_count=read_gtex_read_count(gtex_read_count_dir,tissue_id)
+
+
+		# Get list of subject in the subsample:
+		subject_list=get_subject_list(subject_dir,tissue)
+
+
+		# Get read count for subject in subsample:
+		gtex_read_count_downsample_mat=as.matrix(gtex_read_count[,unlist(subject_list),with=F])
+		rownames(gtex_read_count_downsample_mat)=gtex_read_count[,Gene]
+
+
+		# Get covariate:
+		tissue_covariate=gtex_covariate[SUBJID%in%unlist(subject_list)]
+		tissue_covariate=reorder_covariate_by_read_count_matrix(tissue_covariate,gtex_read_count_downsample_mat)
+		list(gtex_read_count_downsample_mat,tissue_covariate)
+	}
+
+
+	# Merge count table:
+	message('INFO - merging HCASMC and GTEx count table...')
+	read_count_mat=merge_count_table(temp[[1]][[1]],temp[[2]][[1]])
+
+
+	# Merge covariates: 
+	message('INFO - merging HCASCM and GTEx covariates...')
+	covariate=merge_covariates(temp[[1]][[2]],temp[[2]][[2]],tissue1,tissue2)
+
+
+	# Create DESeq dataset: 
+	dds=DESeqDataSetFromMatrix(countData=read_count_mat,colData=covariate,design = ~ tissue+sex+race)
+
+
+	# Perform DESeq2:
+	message('INFO - running DESeq2')
+	dds=DESeq(dds,parallel=TRUE)
+	return(dds)
+}
+
+
 # Read HCASMC read count:
 hcasmc_read_count=fread(hcasmc_read_count_fn,header=TRUE)
 
 
 # Subset to protein coding genes and lncRNAs:
-gencode=fread('/srv/persistent/bliu2/HCASMC_eQTL/data/gtex/gencode.v19.genes.v6p.hg19.bed',select=c(5,6,7),col.names=c('gene_id','gene_name','type'))
-coding_and_lncRNA=gencode[type%in%c('lincRNA','protein_coding'),gene_id]
 hcasmc_read_count=hcasmc_read_count[Name%in%coding_and_lncRNA]
 hcasmc_read_count_mat=as.matrix(hcasmc_read_count[,3:ncol(hcasmc_read_count)])
 rownames(hcasmc_read_count_mat)=hcasmc_read_count[,Name]
@@ -57,25 +186,12 @@ rownames(hcasmc_read_count_mat)=hcasmc_read_count[,Name]
 hcasmc_subject_list=colnames(hcasmc_read_count)[3:ncol(hcasmc_read_count)]
 
 
-# Read HCASMC covariates: 
-hcasmc_covariate=readWorksheet(loadWorkbook(hcasmc_covariate_fn),sheet=1)
-setDT(hcasmc_covariate)
-hcasmc_covariate=unique(hcasmc_covariate[DNA.New.Name%in%hcasmc_subject_list,list(SUBJID=DNA.New.Name,sex=Sex,age=Age,race=Genomic_Ethnicity)])
+# Read HCASMC covariates:
+hcasmc_covariate=read_hcasmc_covariate(hcasmc_covariate_fn)
 
 
 # Read GTEx covariates:
-gtex_covariate=fread(gtex_covariate_fn)[,list(SUBJID,age=AGE,sex=GENDER,race=RACE,ethnicity=ETHNCTY)]
-race_numeric_to_letter=c('Asian','AA','Caucasian','Indian','Unknown')
-gtex_covariate[,race:=race_numeric_to_letter[race]]
-gtex_covariate[,race:=ifelse(ethnicity==1,'Hispanic',race)]
-gtex_covariate[,ethnicity:=NULL]
-sex_numeric_to_letter=c('M','F')
-gtex_covariate[,sex:=sex_numeric_to_letter[sex]]
-
-
-# Tissue list: 
-tissue_list=c("Artery - Aorta","Artery - Coronary","Artery - Tibial", 'Heart - Atrial Appendage', 'Heart - Left Ventricle','Cells - Transformed fibroblasts')
-tissue_to_id_map=fread('/srv/persistent/bliu2/HCASMC_eQTL/data//gtex/gtex_tissue_colors.txt',select=c(1,3))
+gtex_covariate=read_gtex_covariate(gtex_covariate_fn)
 
 
 # Iterate across tissues:
@@ -91,14 +207,11 @@ for (i in 1:length(tissue_list)){
 
 	# Read GTEx read count: 
 	message('INFO - reading GTEx read counts...')
-	gtex_read_count_fn=sprintf('%s/%s.reads.txt',gtex_read_count_dir,tissue_id)
-	gtex_read_count=fread(gtex_read_count_fn)
-	gtex_read_count=gtex_read_count[Gene%in%coding_and_lncRNA]
+	gtex_read_count=read_gtex_read_count(gtex_read_count_dir,tissue_id)
 
 
 	# Get list of subject in the subsample:
-	subject_fn=sprintf('%s/%s.txt',subject_dir,tissue)
-	subject_list=fread(subject_fn,header=FALSE,col.names='subject')
+	subject_list=get_subject_list(subject_dir,tissue)
 
 
 	# Get read count for subject in subsample:
@@ -113,21 +226,23 @@ for (i in 1:length(tissue_list)){
 
 	# Merge count table:
 	message('INFO - merging HCASMC and GTEx count table...')
-	row_idx=match(rownames(hcasmc_read_count_mat),rownames(gtex_read_count_downsample_mat))
-	gtex_read_count_downsample_mat_reordered=gtex_read_count_downsample_mat[row_idx,]
-	stopifnot(rownames(hcasmc_read_count_mat)==rownames(gtex_read_count_downsample_mat_reordered))
-	read_count_mat=cbind(hcasmc_read_count_mat,gtex_read_count_downsample_mat_reordered)
-
+	read_count_mat=merge_count_table(hcasmc_read_count_mat,gtex_read_count_downsample_mat)
 
 	# Merge covariates: 
 	message('INFO - merging HCASCM and GTEx covariates...')
-	hcasmc_covariate$tissue='HCASMC'
-	tissue_covariate$tissue=tissue
-	covariate=rbind(hcasmc_covariate,tissue_covariate)
+	covariate=merge_covariates(hcasmc_covariate,tissue_covariate)
+	covariate=reorder_covariate_by_read_count_matrix(covariate,read_count_mat)
+	stopifnot(covariate$SUBJID==colnames(read_count_mat))
 
 
-	# Create DESeq dataset: 
-	dds=DESeqDataSetFromMatrix(countData=read_count_mat,colData=covariate,design = ~ tissue+sex+race)
+	# Extract hidden confounders:
+	svseq=extract_sv(read_count_mat,covariate)
+	covariate=cbind(covariate,svseq)
+
+
+	# Create DESeq dataset:
+	form=as.formula(paste0('~sex+race+tissue',paste0('+SV',1:ncol(svseq),collapse='')))
+	dds=DESeqDataSetFromMatrix(countData=read_count_mat,colData=covariate,design = form)
 
 
 	# Perform DESeq2:
@@ -135,7 +250,7 @@ for (i in 1:length(tissue_list)){
 	dds=DESeq(dds,parallel=TRUE)
 	container[[tissue]]=dds
 }
-
+saveRDS(container,sprintf('%s/dds.rds',out_dir))
 
 # Get results for each tissue:
 res=foreach(i=1:length(tissue_list),.combine='rbind')%dopar%{
@@ -155,6 +270,9 @@ meta_heart=meta_analyze(res,c('Heart - Atrial Appendage', 'Heart - Left Ventricl
 meta_fibroblast=res[tissue=='Cells - Transformed fibroblasts',list(gene_id,beta=log2FoldChange,se=lfcSE,pval=pvalue)]
 meta_fibroblast[,padj:=p.adjust(pval,method='BH')]
 meta_result=list(Artery=meta_artery,Heart=meta_heart,Fibroblast=meta_fibroblast)
+
+
+# Save result to output:
 saveRDS(meta_result,sprintf('%s/meta_result.rds',out_dir))
 
 
@@ -171,18 +289,12 @@ for (i in list('meta_artery','meta_heart','meta_fibroblast')){
 	dt[,logp:=-log10(pval)]
 	dt[,z:=beta/se]
 	fwrite(dt[,list(gene_name,z)],sprintf('%s/%s.rnk',out_dir,i),sep='\t',col.names=FALSE)
+	fwrite(dt,sprintf('%s/%s.txt',out_dir,i),sep='\t')
 }
-
 
 
 # Count the number of DE genes:
-fdr_threshold=c(0.001,0.01,0.05)
-n_sig=foreach(t=names(meta_result),.combine='rbind')%do%{
-	foreach(ft=fdr_threshold,.combine='rbind')%do%{
-		data.table(tissue=t,FDR=ft,n=sum(meta_result[[t]]$padj<ft,na.rm=TRUE))
-	}
-
-}
+n_sig=count_de_genes(meta_result)
 fwrite(n_sig,sprintf('%s/n_sig.txt',out_dir),sep='\t')
 
 
@@ -194,4 +306,16 @@ p2=ggplot(n_sig,aes(tissue,n,fill=FDR,label=n))+geom_bar(stat='identity',positio
 pdf(sprintf('%s/n_sig.pdf',fig_dir))
 p1;p2
 dev.off()
+
+
+# # Differential expression between fibroblast and heart,
+# # for quality control:
+# res_fibroblast_vs_atrial_appendage=results(compare_two_tissues('Cells - Transformed fibroblasts','Heart - Atrial Appendage'))
+# res_fibroblast_vs_coronary_artery=results(compare_two_tissues('Cells - Transformed fibroblasts','Artery - Coronary'))
+
+# # Count the number of DE genes:
+# n_sig=count_de_genes(list(fibroblast_vs_atrial_appendage=res_fibroblast_vs_coronary_artery,fibroblast_vs_coronary_artery=res_fibroblast_vs_coronary_artery))
+
+
+
 

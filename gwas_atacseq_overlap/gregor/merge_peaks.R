@@ -131,6 +131,8 @@ merge_encode(metadata)
 # ENCODE (all released samples):
 metadata=fread('../data/encode/dnase_seq/metadata.tsv')
 metadata=metadata[`Biosample type`%in%c('tissue','primary cell')&`File Status`=='released']
+# length(unique(metadata$`Biosample term name`)) # 128
+# length(metadata$`Biosample term name`) # 593
 merge_encode(metadata,in_dir,out_dir_released)
 
 
