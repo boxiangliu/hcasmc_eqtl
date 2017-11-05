@@ -1,0 +1,5 @@
+Rscript differential_expression/sample_individuals.R
+Rscript differential_expression/DESeq2.R 
+Rscript differential_expression/NOISeq.R
+Rscript differential_expression/intersect_NOISeq_DESeq2.R
+bash differential_expression/GSEA.sh
