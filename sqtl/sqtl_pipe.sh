@@ -76,8 +76,11 @@ parallel -j10 /users/zappala/software/fastqtl/bin/fastQTL \
 --region chr{} \
 --window 1e5 \
 --permute 1000 100000 \
---out ../processed_data/sqtl/fastQTL/permutation/chr{}.permutation.txt.gz ::: {1..22}
+--out ../processed_data/sqtl/fastQTL/permutation/chr{}.permutation.txt.gz ::: 1
+{1..22}
 
+zcat ../processed_data/sqtl/fastQTL/permutation/chr{1..22}.permutation.txt.gz | \
+gzip > ../processed_data/sqtl/fastQTL/permutation/all.permutation.txt.gz
 
 # Plot p-values: 
 Rscript sqtl/fastQTL/plot_pvalue.R \
@@ -89,3 +92,15 @@ Rscript sqtl/fastQTL/plot_pvalue.R \
 Rscript sqtl/fastQTL/plot_sqtl_vs_distance.R \
 ../processed_data/sqtl/fastQTL/nominal/all.nominal.txt.gz \
 ../figures/sqtl/fastQTL/plot_sqtl_vs_distance/
+
+
+# Count sQTLs: 
+Rscript sqtl/fastQTL/count_sqtl.R \
+../processed_data/sqtl/fastQTL/nominal/all.nominal.txt.gz \
+../processed_data/sqtl/fastQTL/count_sqtl/ \
+fastqtl.nominal
+
+Rscript sqtl/fastQTL/count_sqtl.R \
+../processed_data/sqtl/fastQTL/permutation/all.permutation.txt.gz \
+../processed_data/sqtl/fastQTL/count_sqtl/ \
+fastqtl.permutation
