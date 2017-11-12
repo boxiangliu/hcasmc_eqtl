@@ -68,6 +68,19 @@ parallel -j10 /users/zappala/software/fastqtl/bin/fastQTL \
 zcat ../processed_data/sqtl/fastQTL/nominal/chr{1..22}.nominal.txt.gz | \
 gzip > ../processed_data/sqtl/fastQTL/nominal/all.nominal.txt.gz
 
+# sQTL mapping with fastQTL in nominal mode (using chr_pos_ref_alt_b37 as ID):
+parallel -j10 /users/zappala/software/fastqtl/bin/fastQTL \
+--vcf ../data/joint3/asvcf_sid/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz \
+--bed ../data/rnaseq2/leafcutter_wasp/cluster/sqtl_perind.counts.gz.qqnorm_chr{}.gz \
+--cov ../processed_data/sqtl/covariate/covariates-3_geno_pc-6_splice_pc.tsv \
+--region chr{} \
+--window 1e5 \
+--out ../processed_data/sqtl/fastQTL/nominal_sid/chr{}.nominal.txt.gz ::: {1..22}
+
+zcat ../processed_data/sqtl/fastQTL/nominal_sid/chr{1..22}.nominal.txt.gz | \
+gzip > ../processed_data/sqtl/fastQTL/nominal_sid/all.nominal.txt.gz
+
+
 # sQTL mapping with fastQTL in permutation mode:
 parallel -j10 /users/zappala/software/fastqtl/bin/fastQTL \
 --vcf ../data/joint3/asvcf/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz \
@@ -104,3 +117,16 @@ Rscript sqtl/fastQTL/count_sqtl.R \
 ../processed_data/sqtl/fastQTL/permutation/all.permutation.txt.gz \
 ../processed_data/sqtl/fastQTL/count_sqtl/ \
 fastqtl.permutation
+
+
+# sQTL enrichment:
+bash sqtl/utils/dist_to_intron.sh \
+/srv/persistent/bliu2/shared/SNPsnap/kb1000_collection.tab \
+../processed_data/sqtl/fastQTL/nominal/ \
+../processed_data/sqtl/dist_to_intron/
+
+# Annotate with SnpEff:
+bash sqtl/fastQTL/snpEff.sh
+
+# Estimate enrichment:
+bash sqtl/fastQTL/enrichment.sh 
