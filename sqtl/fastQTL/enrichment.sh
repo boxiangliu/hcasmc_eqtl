@@ -19,8 +19,20 @@ prepare_sumstat(){
 
 export -f prepare_sumstat
 
-parallel -j10 prepare_sumstat \
-../processed_data/sqtl/fastQTL/nominal_sid/chr{}.nominal.txt.gz \
-$out_dir/chr{}.statistics.txt.gz ::: {1..22}
+# echo INFO - preparing summary statistics
+# parallel -j10 prepare_sumstat \
+# ../processed_data/sqtl/fastQTL/nominal_sid/chr{}.nominal.txt.gz \
+# $out_dir/chr{}.statistics.txt.gz ::: {1..22}
 
-# Estimate enrichment: 
+echo INFO - estimating enrichment
+python /srv/persistent/bliu2/tools/qtlBHM/infer_causal_variants.py \
+--output_prefix $out_dir/chr22_qtlBHM \
+../processed_data/sqtl/fastQTL/enrichment/chr22.statistics.txt.gz \
+../processed_data/sqtl/fastQTL/snpEff//all.3.bed.gz
+
+
+# echo INFO - estimating enrichment
+# python /srv/persistent/bliu2/tools/qtlBHM/infer_causal_variants.py \
+# --output_prefix ../processed_data/sqtl/fastQTL/test_qtlBHM/test_qtlBHM \
+# ../processed_data/sqtl/fastQTL/test_qtlBHM/statistics.txt.gz \
+# ../processed_data/sqtl/fastQTL/test_qtlBHM/annotation.bed.gz
