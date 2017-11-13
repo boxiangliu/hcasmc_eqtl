@@ -1,0 +1,458 @@
+commit fef8f9ec63b3ff58aa6cad2143c1e43cd0c51058
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Sun Nov 12 21:24:50 2017 -0800
+
+    Added config files to version control
+
+commit ea488561e4178df58d1c6a328eee824c1ed1bef8
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Sun Nov 12 18:22:30 2017 -0800
+
+    Trying out some splicing QTLs for HCASMC
+
+commit 75250d702fd52b7e21e99e622438ceb2eff059d9
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Sun Nov 12 00:11:55 2017 -0800
+
+    The pipeline looks to be up and running again. Fixed some issues
+    involving inconsistent directions of effect in VCF and in GWAS/eQTLs
+
+commit bf8148b075241b399b9147c11dda2962d7e568ca
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Thu Nov 9 15:47:48 2017 -0800
+
+    Going to try to fix direction of effect stuff
+
+commit 93480bba282e06cd7045f8a1cafa8c7aa852cdac
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Mon Oct 30 10:31:16 2017 -0700
+
+    Works for UKBB now, but is slow because it wastes a lot of
+    time preprocessing sites that ultimately have insufficient data to test.
+
+commit 8760e806fe10cbf33311fcdf312bc6623706626b
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Sun Oct 29 19:01:39 2017 -0700
+
+    Fixed some issues with rare variants. Will need a speedup sometime soon
+
+commit 4b8716269f9c564881979e4923a05fade9763446
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Fri Oct 27 16:09:16 2017 -0700
+
+    No more NaNs?!?!?!
+
+commit dc982af07aa92bcf8f38b6ed980abae19ed0a83c
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Fri Oct 27 10:16:04 2017 -0700
+
+    About to fix nanning issues
+
+commit 82200fae43c40a97cbe7234d9434006672dab7e8
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Thu Sep 28 16:05:15 2017 -0700
+
+    UK Biobank meta-analysis up and running.
+
+commit 84e1638eac40475c536a5e59156fadc2a0c5ea44
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Thu Sep 28 15:37:33 2017 -0700
+
+    It seems to be working now.
+
+commit ce97ae2e1c99cc7b1edc971f4388ceff4bb07ad6
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Thu Sep 28 11:49:25 2017 -0700
+
+    Tried making some changes to allow rapid analysis of UK Biobank
+    GWAS. Will now test to see if they work
+
+commit 6ec32037f6a579f7a43c8fbf705f2a8fa759df4d
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Wed Sep 27 12:12:39 2017 -0700
+
+    minor change
+
+commit a870c566413a94c803671d92f59879bb70679ba4
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Wed Sep 27 11:50:51 2017 -0700
+
+    LD is now estimated from the desired reference population VCF.
+    Fixed bugs from last commit.
+
+commit f137ac6e47a21e5ff97cd6623e4731cb35d3dcfa
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Tue Sep 26 11:37:52 2017 -0700
+
+    Modified LD estimation. Full of bugs at the moment
+
+commit 3dfe19980daafcc819a4da6b6c86fcef7019e2a5
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Mon Sep 25 14:01:40 2017 -0700
+
+    Added code to check for nans in plink output
+
+commit 20e08512eca90697913100955b09b908274a8d80
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Mon Sep 25 13:24:57 2017 -0700
+
+    Converted phased DGN to VCF
+
+commit d84a93fda8155e0e5fe12d4f644e8f330b88f31b
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Fri Sep 22 19:12:16 2017 -0700
+
+    Phased haplotypes to VCF
+
+commit bcb685cfe811d63b50803e827842409120489acd
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Fri Sep 22 15:57:27 2017 -0700
+
+    Running Beagle to implement DGN samples. Currently very slow
+
+commit e5f28e1b7c52116ef39ce5f90bc4165fc8d17efb
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Thu Sep 21 15:15:52 2017 -0700
+
+    About to merge with master
+
+commit 9fef499f38845d6ed0a9ef7c6c87744e33b07da2
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Wed Sep 20 18:31:10 2017 -0700
+
+    Removed unnecessary print statements
+
+commit 68bba6129f005eb3161d3ad5f3aa6be84c32b5cb
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Wed Sep 20 18:29:27 2017 -0700
+
+    Fixed multiallelic bug that was crashing FINEMAP
+
+commit b18e21897608ae7fad491acdc3ef4408a26410b9
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Sat Sep 9 09:46:33 2017 -0700
+
+    Working on getting this working again
+    Need to get allele frequencies for coloc
+
+commit fe1e83fdb6495618502bf7f96392595585b013ad
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Fri Aug 11 14:07:57 2017 -0700
+
+    Small changes only
+
+commit 93eb647a13619091165285c67ab0db6973f443f7
+Merge: 3fe8655 bf4a1f1
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Wed Aug 9 16:05:19 2017 -0700
+
+    Merge branch 'add_coloc'
+
+commit bf4a1f14df113d51f3e39e8df6cffe2dbd51eee7
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Wed Aug 9 15:55:21 2017 -0700
+
+    Implemented COLOC, which is working now aside from getting MAFs
+
+commit 3fe8655a615a916564ff5c48e6c1f7181d54d31b
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Wed Aug 9 10:53:17 2017 -0700
+
+    Working on fixing some issues with preprocessing when GWAS table
+    has no pvalues (maybe it's empty)
+
+commit ea308ae0f59b5ddfc9309532961f3e26333ee21a
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Tue Aug 8 17:11:14 2017 -0700
+
+    Added coloc functionality, not yet completed.
+
+commit b9ecb4132be54880fb24688e54337b34b43fd39c
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Tue Aug 8 15:17:36 2017 -0700
+
+    Fixed small bug with FINEMAP output
+
+commit 661c367ae6bf731ec75c77c814c66830747983a4
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Tue Aug 8 15:08:19 2017 -0700
+
+    Removed old file backups
+
+commit 0451d4889ab3aa12ca54535b13b8b4b3e90b3a74
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Tue Aug 8 15:05:28 2017 -0700
+
+    Running RPE. From now on, I'll keep this master branch working fine,
+    and then develop other changes using branch.
+
+commit a21f70cb934eb55534dec00cd7ce80d16d2d504c
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Tue Aug 8 11:11:52 2017 -0700
+
+    FINEMAP running smoothly for RPE data. Going to test eCAVIAR next.
+
+commit 0e6b32b7545fbd8e2d074747fef6f8b4cc293ead
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Fri Aug 4 15:52:55 2017 -0700
+
+    Re-organized and hopefully ready for the bigtime
+
+commit 4a0a3f5d58286d22fa66314136afb45ea2b263fd
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Thu Aug 3 17:30:04 2017 -0700
+
+    Produced the skeleton of new coloc pipeline.
+
+commit 94ad067c86804576fb91a8e6722bce6959fa222b
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Thu Aug 3 15:14:19 2017 -0700
+
+    Pre-makeover
+
+commit afbe98583d9992ac04d0a46419744ab55d0eebee
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Fri Jul 28 15:45:40 2017 -0700
+
+    Trimmed down to the essence of the code. May not work yet.
+    Preparing to rebuild from the bottom up.
+
+commit 082ca218a6115e06435eb4bfa3b5613a2b343807
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Fri Jul 28 13:57:09 2017 -0700
+
+    Copied a version of the main script called "verbose" so I can
+    trim it down without completely eliminating all the old CAVIAR code,
+    since we might want it back eventually.
+
+commit 3b2eb338ef31abda07ab073ad0396cf4f4c2ad79
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Fri Jul 28 13:47:32 2017 -0700
+
+    7/28 about to overhaul this project after a while away
+
+commit 5f56b3be8fae28df30f6ea519f9293d2eeedd5a9
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Wed Apr 5 12:08:16 2017 -0700
+
+    Modified find_colocalization
+
+commit e77399b4c2f609e9404c6057f2dbb88c63d9c32e
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Wed Apr 5 11:55:30 2017 -0700
+
+    Modified code to analyze eCAVIAR/FINEMAP output
+
+commit e01b126c44d73da8162450ecaaf8dc1ad1a8e025
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Wed Apr 5 11:08:29 2017 -0700
+
+    Updated thresholding analysis for new pipeline
+
+commit 13a2cf8db2a3f361b5e602076e0aab88fee11209
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Tue Apr 4 15:28:56 2017 -0700
+
+    Minor changes, deleted README that is for distributable version
+
+commit 7dba217f9229b5294fe86878cf52bcd922940642
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Mon Apr 3 22:52:55 2017 -0700
+
+    Integrated FINEMAP; results not yet thoroughly examined
+
+commit c41b0b21649765d67b14542720682c2763b86bc2
+Author: abhiramrao <rao.abhiram@gmail.com>
+Date:   Thu Mar 30 19:00:43 2017 -0700
+
+    Update README.md
+
+commit ead7bf7d0af616a878e015b25f6c8ed2dbb1e4aa
+Author: abhiramrao <rao.abhiram@gmail.com>
+Date:   Thu Mar 30 18:58:42 2017 -0700
+
+    Update README.md
+
+commit 6b84f60b892c6d19884e8ef0a696950e2f371e7f
+Author: abhiramrao <rao.abhiram@gmail.com>
+Date:   Thu Mar 30 18:43:13 2017 -0700
+
+    Update README.md
+
+commit 784213d3aeb71a10ab4d5487c633eec5396de433
+Author: abhiramrao <rao.abhiram@gmail.com>
+Date:   Thu Mar 30 17:01:53 2017 -0700
+
+    Update README.md
+
+commit 83514ed57e8373e37505f66075659f7f1a46dab0
+Author: abhiramrao <rao.abhiram@gmail.com>
+Date:   Thu Mar 30 16:53:33 2017 -0700
+
+    Update README.md
+
+commit e86a17fb0d83a348b77a92b4a79433d520d05b88
+Author: abhiramrao <rao.abhiram@gmail.com>
+Date:   Thu Mar 30 16:51:53 2017 -0700
+
+    Update README.md
+
+commit a769a436da331b36296a4b3e6233e2eefeb3aba8
+Author: abhiramrao <rao.abhiram@gmail.com>
+Date:   Thu Mar 30 16:37:39 2017 -0700
+
+    Update README.md
+
+commit d0640b4fee661c582837907f3b082bb98510a1d6
+Author: abhiramrao <rao.abhiram@gmail.com>
+Date:   Thu Mar 30 13:16:20 2017 -0700
+
+    Update README.md
+
+commit 6a9376a8a901d2127232765c1d15afaecf6d1b4e
+Author: abhiramrao <rao.abhiram@gmail.com>
+Date:   Wed Mar 29 18:30:37 2017 -0700
+
+    Update README.md
+
+commit 19567512fe48c11d5bc06efe4fdeeeb75b4df5d4
+Author: abhiramrao <rao.abhiram@gmail.com>
+Date:   Wed Mar 29 18:20:17 2017 -0700
+
+    Update README.md
+
+commit eea223dbb0853dd5a0ade9adf313412ad2cd0b55
+Author: abhiramrao <rao.abhiram@gmail.com>
+Date:   Wed Mar 29 18:19:07 2017 -0700
+
+    First README draft
+    
+    Still incomplete
+
+commit cdc4793ddc30da1c6889627078feea04105bd29b
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Wed Mar 29 15:39:57 2017 -0700
+
+    Integrated tabix
+
+commit a70ae45d2a5e6216fc29b90d30db50f9a8a320d4
+Author: mikegloudemans <mgloud@durga.stanford.edu>
+Date:   Fri Mar 24 13:37:50 2017 -0700
+
+    Initial commit. Needs some revision for readability.
+diff --git a/config/hcasmc_full.config b/config/hcasmc_full.config
+index 9b653e9..d8e39c6 100644
+--- a/config/hcasmc_full.config
++++ b/config/hcasmc_full.config
+@@ -3,12 +3,10 @@
+ 				"/users/mgloud/projects/brain_gwas/data/gwas/hcasmc/UKBB.GWAS1KG.EXOME.CAD.SOFT.META.PublicRelease.300517.txt.gz": {"ref": "uk10k"},
+ 				"/mnt/lab_data/montgomery/shared/datasets/ukbb/gwas/6150_1.assoc.sorted.tsv.gz": {"ref": "uk10k", "ref_allele_header": "a1", "alt_allele_header": "a2"},
+ 				"/mnt/lab_data/montgomery/shared/datasets/ukbb/gwas/40001_I251.assoc.sorted.tsv.gz": {"ref": "uk10k", "ref_allele_header": "a1", "alt_allele_header": "a2"}},
+-	"eqtl_experiments": {"/users/mgloud/projects/brain_gwas/data/eqtls/hcasmc/hcasmc_eqtls.txt.gz": {"ref": "1kgenomes"}
+-			     "/users/mgloud/projects/brain_gwas/data/eqtls/hcasmc/sqtls/hcasmc_sqtls.txt.gz": {"ref": "1kgenomes"}
+-
+-},
++	"eqtl_experiments": {"/users/mgloud/projects/brain_gwas/data/eqtls/hcasmc/hcasmc_eqtls.txt.gz": {"ref": "1kgenomes"},
++			     "/users/mgloud/projects/brain_gwas/data/eqtls/hcasmc/sqtls/hcasmc_sqtls.txt.gz": {"ref": "1kgenomes"}},
+ 	"gwas_threshold": 1e-6,
+-	"eqtl_threshold": 1,
++	"eqtl_threshold": 1e-5,
+ 	"methods": {
+ 		"finemap":{}
+ 	},
+diff --git a/scripts/TestLocus.py b/scripts/TestLocus.py
+index ba7dda5..13fffb5 100644
+--- a/scripts/TestLocus.py
++++ b/scripts/TestLocus.py
+@@ -77,7 +77,7 @@ class TestLocus:
+         '''
+     
+         # For debugging:
+-        #plotworthy = True
++        plotworthy = True
+ 
+         # Plot the result if it's significant.
+         if plotworthy:
+diff --git a/scripts/dispatch.py b/scripts/dispatch.py
+index 08389e8..30b949f 100644
+--- a/scripts/dispatch.py
++++ b/scripts/dispatch.py
+@@ -82,7 +82,8 @@ def main():
+                
+                 # Loop through all genes now
+                 for gene in genes:
+-                    
++                    if gene != "TCF21":
++                        continue
+                     # NOTE: It might be easier to just do this step once outside of this loop,
+                     # and then filter down to the gene of interest. Consider modifying.
+                     combined = preprocess.combine_summary_statistics(gwas_data, eqtl_data, gene, snp, settings, unsafe=True)
+diff --git a/scripts/finemap.py b/scripts/finemap.py
+index 3584247..65e75f1 100644
+--- a/scripts/finemap.py
++++ b/scripts/finemap.py
+@@ -274,7 +274,6 @@ def compute_ld(input_vcf, locus, data_type):
+     # Repeatedly compute LD until we've eliminated all NaNs.
+     removal_list = []
+     while True:
+-
+         if vcf.shape[0] == 0:
+             return "Fail"
+ 
+* master
+On branch master
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+	modified:   ../config/hcasmc_full.config
+	modified:   TestLocus.py
+	modified:   dispatch.py
+	modified:   finemap.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+	../data
+	../output/
+	SNP.pyc
+	TestLocus.pyc
+	coloc.pyc
+	config.pyc
+	data_prep/UKBB.GWAS1KG.EXOME.CAD.SOFT.META.PublicRelease.300517.txt.gz
+	data_prep/UKBB.GWAS1KG.EXOME.CAD.SOFT.META.PublicRelease.300517.txt.gz.tbi
+	data_prep/chr22.vcf.gz
+	data_prep/nohup.out
+	data_prep/shapeit_22092017_19h13m28s_e380a0eb-304d-43c5-9a0e-0e208eb73022.log
+	data_prep/shapeit_22092017_19h15m28s_0366a43a-f285-4309-834a-99ca95817eb3.log
+	data_prep/shapeit_22092017_19h17m22s_158ea0ff-62af-4580-ae4f-3597266b145d.log
+	data_prep/shapeit_22092017_19h19m04s_ef25aa62-0e88-4556-808d-566268a88b27.log
+	data_prep/shapeit_22092017_19h20m27s_d50ba0ba-20b7-497e-84ff-5ff950e08e46.log
+	data_prep/shapeit_22092017_19h21m50s_06f5ebfb-c141-49ba-b629-12a48a33155a.log
+	data_prep/shapeit_22092017_19h23m38s_c8bb345d-7d9b-4f8a-a051-137db1f5624f.log
+	data_prep/shapeit_22092017_19h24m51s_8fb6cf1f-395a-439d-8041-c9e2af6b092a.log
+	data_prep/shapeit_22092017_19h26m05s_1a712d90-1f1c-4c6f-b8fd-239f057d15de.log
+	data_prep/shapeit_22092017_19h27m04s_84992b74-415c-4e91-8b59-b45a57e823a0.log
+	data_prep/shapeit_22092017_19h28m11s_410ffb9c-1af9-41ca-9be4-e67f94f3253c.log
+	data_prep/shapeit_22092017_19h29m30s_3f1340bd-7cd0-463b-814b-8d1807ad6a69.log
+	data_prep/shapeit_22092017_19h30m50s_87018528-27a8-471a-9a9d-4eb94952b144.log
+	data_prep/shapeit_22092017_19h31m48s_956b69dd-f745-4168-ba40-33d541a534eb.log
+	data_prep/shapeit_22092017_19h32m35s_083b405a-cbb3-4cc4-b714-06541b1c36e3.log
+	data_prep/shapeit_22092017_19h33m25s_3d467b82-2fc4-4a97-93be-cfcaa52a5e06.log
+	data_prep/shapeit_22092017_19h34m11s_c1173e5f-e4b7-46fd-a577-ad57a31e4632.log
+	data_prep/shapeit_22092017_19h34m50s_253c1742-65ac-4607-b6ed-983d9e363919.log
+	data_prep/shapeit_22092017_19h35m32s_bed46c08-716c-428c-83fa-8834f686af59.log
+	data_prep/shapeit_22092017_19h36m05s_b6b81e9b-f783-4232-895a-5eced8f224ee.log
+	data_prep/shapeit_22092017_19h36m48s_e5bfa7b6-4b8f-4e6c-ab56-f48298d78dd5.log
+	data_prep/shapeit_22092017_19h37m13s_c44c81c5-b586-4ff6-b544-37fc3b279872.log
+	data_prep/vcfs/
+	ecaviar.pyc
+	finemap.pyc
+	nohup.out
+	plot_loci.pyc
+	preprocess.pyc
+	tabix_snps.pyc
+	ukbb/nohup.out
+	../tmp
+
+no changes added to commit (use "git add" and/or "git commit -a")
