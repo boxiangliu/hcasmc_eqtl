@@ -89,11 +89,25 @@ parallel -j10 /users/zappala/software/fastqtl/bin/fastQTL \
 --region chr{} \
 --window 1e5 \
 --permute 1000 100000 \
---out ../processed_data/sqtl/fastQTL/permutation/chr{}.permutation.txt.gz ::: 1
-{1..22}
+--out ../processed_data/sqtl/fastQTL/permutation/chr{}.permutation.txt.gz ::: {1..22}
 
 zcat ../processed_data/sqtl/fastQTL/permutation/chr{1..22}.permutation.txt.gz | \
 gzip > ../processed_data/sqtl/fastQTL/permutation/all.permutation.txt.gz
+
+
+# sQTL mapping with fastQTL in permutation mode (using chr_pos_ref_alt as ID):
+parallel -j10 /users/zappala/software/fastqtl/bin/fastQTL \
+--vcf ../data/joint3/asvcf_sid/phased_and_imputed.chr{}.rename.dr2.hwe.indellt51.rnasample.hg19.vcf.new.gz \
+--bed ../data/rnaseq2/leafcutter_wasp/cluster/sqtl_perind.counts.gz.qqnorm_chr{}.gz \
+--cov ../processed_data/sqtl/covariate/covariates-3_geno_pc-6_splice_pc.tsv \
+--region chr{} \
+--window 1e5 \
+--permute 1000 100000 \
+--out ../processed_data/sqtl/fastQTL/permutation_sid/chr{}.permutation.txt.gz ::: {1..22}
+
+zcat ../processed_data/sqtl/fastQTL/permutation_sid/chr{1..22}.permutation.txt.gz | \
+gzip > ../processed_data/sqtl/fastQTL/permutation_sid/all.permutation.txt.gz
+
 
 # Plot p-values: 
 Rscript sqtl/fastQTL/plot_pvalue.R \
@@ -125,8 +139,12 @@ bash sqtl/utils/dist_to_intron.sh \
 ../processed_data/sqtl/fastQTL/nominal/ \
 ../processed_data/sqtl/dist_to_intron/
 
+
 # Annotate with SnpEff:
 bash sqtl/fastQTL/snpEff.sh
+bash sqtl/enrichment/snpEff.sh \
+../processed_data/gwas_atacseq_overlap/prepare_vcf \
+../processed_data/sqtl/enrichment/snpEff/
 
 # Estimate enrichment:
-bash sqtl/fastQTL/enrichment.sh 
+bash sqtl/enrichment/vsea.R

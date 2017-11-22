@@ -6,7 +6,7 @@
 SNPsnap_fn=$1
 fastQTL_dir=$2
 out_dir=$3
-SNPsnap_bed=${1/.tab/.dist_to_intron.bed}
+SNPsnap_out=${1/.tab/.dist_to_intron.tab}
 
 mkdir -p $out_dir
 
@@ -89,24 +89,26 @@ for i in {1..22}; do
 	echo INFO - calculating distance to closest intron
 	Rscript sqtl/utils/dist_to_intron.R \
 	$out_dir/chr$i.closest.bed \
-	$out_dir/chr$i.dist_to_intron.txt \
+	$out_dir/chr$i.dist_to_intron.txt
 
 done 
 
 echo INFO - concatenating distance files 
 cat \
-$out_dir/chr*.dist_to_intron.txt > \
+$out_dir/chr*.dist_to_intron.txt | 
+grep -v snpID > \
 $out_dir/all.dist_to_intron.txt
 
-sort -k1,1 $SNPsnap_fn > ${SNPsnap_fn/tab/sort.tab}
-sort -k1,1 $out_dir/all.dist_to_intron.txt > $out_dir/all.dist_to_intron.sort.txt
 
-echo INFO - joining distance to intron to SNPsnap 
+(echo -e 'snpID\tdist_nearest_intron' && sort -k1,1 $out_dir/all.dist_to_intron.txt) > $out_dir/all.dist_to_intron.sort.txt
+(head -n 1 $SNPsnap_fn && tail -n +2 $SNPsnap_fn | sort -k1,1) > ${SNPsnap_fn/tab/sort.tab}
+
+echo INFO - joining distance to intron to SNPsnap
 join -1 1 -2 1 \
 ${SNPsnap_fn/tab/sort.tab} \
 $out_dir/all.dist_to_intron.sort.txt \
 -t $'\t' > \
-$SNPsnap_bed
+$SNPsnap_out
 
 
 echo INFO - removing temp directory
