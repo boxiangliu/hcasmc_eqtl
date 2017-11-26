@@ -25,7 +25,6 @@ select_background_variants=function(x,snpsnap,bg_size=500){
 			return(NA)
 		}
 		tmp=snpsnap[snpID==snpid,list(freq_bin,dist_nearest_gene_snpsnap_protein_coding,friends_ld07,gene_count)]
-		print(sprintf('INFO - %s',tmp))
 		freq=tmp$freq_bin
 		dist=tmp$dist_nearest_gene_snpsnap_protein_coding
 		ld07=tmp$friends_ld07
@@ -44,10 +43,11 @@ select_background_variants=function(x,snpsnap,bg_size=500){
 		print(sprintf('INFO - tolerance: %s',step))
 		set.seed(42)
 		tmp=tmp[!snpID%in%x,]
+		# message('BUG - ', nrow(tmp))
 		if (nrow(tmp)==bg_size){
 			background=tmp
 		} else {
-			background=tmp[sample(1:nrow(tmp),bg_size),]
+			background=tryCatch(tmp[sample(1:nrow(tmp),bg_size),],error=function(e){tmp})
 		}
 		return(background)
 	}

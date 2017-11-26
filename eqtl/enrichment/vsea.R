@@ -2,10 +2,6 @@
 # Boxiang Liu (bliu2@stanford.edu)
 # 2017-11-15
 
-# for (f in list.files('/srv/persistent/bliu2/HCASMC_eQTL/scripts/VSEA/R/',full.names=TRUE)){
-# 	source(f)
-# }
-
 library(stringr)
 library(data.table)
 library(dplyr)
@@ -17,34 +13,60 @@ source('/srv/persistent/bliu2/HCASMC_eQTL/scripts/VSEA/R/select_LD_variants.R')
 source('/srv/persistent/bliu2/HCASMC_eQTL/scripts/VSEA/R/variant_set_enrichment.R')
 
 # Variables:
-in_fn='../processed_data/sqtl/fastQTL/permutation_sid/all.permutation.txt.gz'
+treeQTL_fn='../processed_data/rasqual/output_merged/treeQTL/eGenes.tsv'
+in_dir='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output/'
 vcf_dir='../processed_data/gwas_atacseq_overlap/prepare_vcf/'
-anno_fn='../processed_data/sqtl/enrichment/snpEff//annotation/all.bed.gz'
-out_dir='../processed_data/sqtl/enrichment/'
-fig_dir='../figures/sqtl/enrichment/'
+anno_fn='../processed_data/sqtl/enrichment/snpEff/annotation/all.bed.gz'
+out_dir='../processed_data/eqtl/enrichment/'
+fig_dir='../figures/eqtl/enrichment/'
 if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
 if (!dir.exists(fig_dir)) {dir.create(fig_dir,recursive=TRUE)}
 
-read_sqtl=function(in_fn){
+read_treeQTL=function(in_fn){
 	if (str_detect(in_fn,'.gz')){
-		x=fread(sprintf('zcat %s',in_fn),select=c(1,6,7,16),col.names=c('cluster','snp','dist','pval'))
+		x=fread(sprintf('zcat %s',in_fn))
 	} else {
-		x=fread(in_fn,select=c(1,6,7,16),col.names=c('cluster','snp','dist','pval'))
+		x=fread(in_fn)
 	}
 	return(x)
 }
 
-select_top_sqtl=function(sqtl,n){
-	return(sqtl[rank(sqtl$pval)<=n,])
+read_rasqual=function(fn){
+	if (str_detect(fn,'.gz')){
+		x=fread(sprintf('zcat %s',fn),select=c(1:7,11:12,25),col.names=c('fid','sid','chr','pos','ref','alt','af','chisq','pi','r2_rSNP'))
+	} else {
+		x=fread(fn,select=c(1:7,11:12,25),col.names=c('fid','sid','chr','pos','ref','alt','af','chisq','pi','r2_rSNP'))
+	}
+	return(x)
+}
+
+select_top_eqtl=function(treeQTL,n,in_dir){
+	if (n>nrow(treeQTL)){
+		warning('n is larger than nrow(treeQTL); using all eQTLs.')
+		n=nrow(treeQTL)
+	}
+	x=treeQTL[rank(fam_p)<=n,]
+	top_eqtl=foreach(i=x$family,.combine='rbind')%dopar%{
+		message('INFO - ',i)
+		fn=list.files('../processed_data/rasqual/output/',pattern=i,full.names=TRUE,recursive=TRUE)
+		stopifnot(length(fn)==1)
+		eqtl=read_rasqual(fn)
+		eqtl=eqtl[r2_rSNP>0.8]
+		eqtl[,max_chisq:=max(chisq)]
+		y=eqtl[chisq==max_chisq,]
+		if (nrow(y)>1){
+			set.seed(42)
+			y=y[sample(nrow(y),1)]
+		}
+		return(y)
+	}
+	return(top_eqtl)
 }
 
 extract_snpid=function(x){
-	x=top_sqtl$snp
-	str_split_fixed(x,'_',5)[,c(1,2)]
-	temp=str_split_fixed(x,'_',5)[,c(1,2)]
-	chr=temp[,1]
-	pos=temp[,2]
-	return(paste(chr,pos,sep=':'))
+	y=x[,list(chr,pos)]
+	y[,chr:=str_replace(chr,'chr','')]
+	return(y[,paste(chr,pos,sep=':')])
 }
 
 read_annotation=function(anno_fn){
@@ -79,11 +101,11 @@ calc_odds_ratio=function(overlap_){
 
 main=function(){
 	# Select top variant:
-	sqtl=read_sqtl(in_fn)
-	top_sqtl=select_top_sqtl(sqtl,1000)
+	treeQTL=read_treeQTL(treeQTL_fn)
+	top_eqtl=select_top_eqtl(treeQTL,1000,in_dir)
 
-	snpid=unique(extract_snpid(top_sqtl$snp))
-	length(snpid) # 791
+	snpid=unique(extract_snpid(top_eqtl))
+	length(snpid) # 994
 
 	# Select background variant:
 	snpsnap=read_snpsnap()

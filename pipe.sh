@@ -104,24 +104,8 @@ bash rna_wgs_match/verifyBamID.sh
 
 
 #----------------- eQTL ------------------------
-# Setup:
-mkdir eqtl ../processed_data/eqtl ../figures/eqtl
+bash eqtl/eqtl_pipe.sh 
 
-# extract PEER factors:
-bash eqtl/peer/peer_factor.sh
-Rscript eqtl/peer/peer_factor_correlation.R
-
-
-# Matrix eQTL:
-bash eqtl/matrix_eqtl/combine_covariates.sh
-Rscript eqtl/matrix_eqtl/covariates_correlation.R
-bash eqtl/matrix_eqtl/matrix_eqtl.sh
-
-
-# FastQTL:
-bash eqtl/fastqtl/change_sid.sh
-bash eqtl/fastqtl/fastqtl.nominal.sh
-bash eqtl/fastqtl/adjust_pvalue.nominal.sh
 
 #------------------ RASQUAL ---------------------
 # Setup:  
