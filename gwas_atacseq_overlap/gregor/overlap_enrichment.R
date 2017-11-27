@@ -5,6 +5,7 @@ library(gridExtra)
 library(foreach)
 library(doMC)
 registerDoMC(10)
+source('/srv/persistent/bliu2/HCASMC_eQTL/scripts/VSEA/R/variant_set_enrichment.R')
 
 # Variables: 
 in_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks/'
@@ -19,6 +20,7 @@ fig_dir='../figures/gwas_atacseq_overlap/gregor/overlap_enrichment/'
 out_dir='../processed_data/gwas_atacseq_overlap/gregor/overlap_enrichment/'
 if (!dir.exists(fig_dir)) {dir.create(fig_dir,recursive=TRUE)}
 if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
+
 
 # Functions:
 p_non_identical_binom=function(n,p,s){
@@ -137,11 +139,8 @@ calc_enrichment_stat=function(peak_dir,ld_set){
 		p=overlap[,list(p=unique(p)),by='gwas_index']
 		n=rep(1,length(p$p))
 		s=sum(overlap[snpID==gwas_index,loci_overlap])
-		print(nrow(overlap))
 		p_non_identical_binom(n,p$p,s)
-		print('1')
 		pval=c(pval,p_non_identical_binom(n,p$p,s)$p4)
-		print('2')
 	}
 	pval=data.table(tissue,pval)
 	setorder(pval,pval)
@@ -178,6 +177,37 @@ count_overlap=function(in_dir,ld_set){
 	setorder(n_overlap,-n_overlap)
 }
 
+
+read_annotation=function(in_dir){
+	fn=list.files(in_dir,pattern='bed')
+	x=foreach(f=fn,.combine='rbind')%dopar%{
+		sample=str_replace(f,'.merged.bed','')
+		print(sprintf('INFO - %s',sample))
+		dhs=fread(sprintf('%s/%s',in_dir,f))
+		dhs$sample=sample
+		return(dhs)
+	}
+	return(x)
+}
+
+
+calc_odds_ratio=function(overlap_){
+	message('INFO - calculating odds ratio')
+	foreground_odds=overlap_[background_variant==foreground_variant,sum(loci_overlap)/.N]
+	background_overlap=overlap_[background_variant!=foreground_variant]
+
+	odds_ratio=foreach(i=1:500,.combine=c)%dopar%{
+		bootstrap=background_overlap[sample(1:nrow(background_overlap),nrow(background_overlap),replace=TRUE)]
+		background_odds=bootstrap[,sum(loci_overlap)/.N]
+		foreground_odds/background_odds
+	}
+
+	mean=mean(odds_ratio)
+	sd=sd(odds_ratio)
+	return(data.table(mean=mean,sd=sd))
+}
+
+
 # Read GWAS and matched background SNPs (and LD SNPs):
 ld_set=fread('../processed_data/gwas_atacseq_overlap/tmp/ld_set.tsv')
 ld_set[,c('start','end'):=list(pos,pos)]
@@ -211,7 +241,20 @@ p=ggplot(pval,aes(tissue,-log10(pval)))+geom_point()+theme(axis.text.x=element_t
 save_plot(sprintf('%s/gregor_pval_all_life_stages_filt.scatter.pdf',fig_dir),p,base_height=6)
 
 
-# Calculate enrichment statistics for all released data:
+# Calculate enrichment statistics for all released data: 
+pval=calc_enrichment_stat(in_dir_released,ld_set)
+pdf(sprintf('%s/gregor_pval_released.pdf',fig_dir));grid.table(head(pval,20));dev.off()
+fwrite(pval,sprintf('%s/gregor_pval_released.tsv',out_dir),sep='\t')
+pval[,tissue:=factor(tissue,levels=tissue)]
+p=ggplot(pval,aes(tissue,-log10(pval)))+geom_point()+theme(axis.text.x=element_text(angle=90,vjust=0.5,hjust=1))
+save_plot(sprintf('%s/gregor_pval_released.scatter.pdf',fig_dir),p,base_height=8,base_width=30)
+
+n_overlap=count_overlap(in_dir_released,ld_set)
+pdf(sprintf('%s/gregor_num_overlap_released.pdf',fig_dir));grid.table(head(n_overlap,20));dev.off()
+fwrite(n_overlap,sprintf('%s/gregor_num_overlap_released.tsv',out_dir),sep='\t')
+
+
+# Calculate enrichment statistics for all released data (all cell types):
 pval=calc_enrichment_stat(in_dir_released_all_cell_type,ld_set)
 pdf(sprintf('%s/gregor_pval_released_all_cell_type.pdf',fig_dir));grid.table(head(pval,20));dev.off()
 fwrite(pval,sprintf('%s/gregor_pval_released_all_cell_type.tsv',out_dir),sep='\t')
