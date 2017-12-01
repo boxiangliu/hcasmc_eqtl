@@ -36,3 +36,18 @@ calc_enrichment=function(overlap){
 	psinib(s,n,p$p,lower.tail=FALSE)
 }
 
+calc_odds_ratio=function(overlap_){
+	message('INFO - calculating odds ratio')
+	foreground_odds=overlap_[background_variant==foreground_variant,sum(loci_overlap)/.N]
+	background_overlap=overlap_[background_variant!=foreground_variant]
+
+	odds_ratio=foreach(i=1:500,.combine=c)%dopar%{
+		bootstrap=background_overlap[sample(1:nrow(background_overlap),nrow(background_overlap),replace=TRUE)]
+		background_odds=bootstrap[,sum(loci_overlap)/.N]
+		foreground_odds/background_odds
+	}
+
+	mean=mean(odds_ratio)
+	sd=sd(odds_ratio)
+	return(data.table(mean=mean,sd=sd))
+}

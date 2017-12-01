@@ -13,49 +13,32 @@ source('/srv/persistent/bliu2/HCASMC_eQTL/scripts/VSEA/R/select_LD_variants.R')
 source('/srv/persistent/bliu2/HCASMC_eQTL/scripts/VSEA/R/variant_set_enrichment.R')
 
 # Variables:
-in_fn='../processed_data/sqtl/fastQTL/permutation_sid/all.permutation.txt.gz'
-vcf_dir='../processed_data/gwas_atacseq_overlap/prepare_vcf/'
-anno_fn='../processed_data/sqtl/enrichment/snpEff//annotation/all.bed.gz'
-out_dir='../processed_data/sqtl/enrichment/'
-fig_dir='../figures/sqtl/enrichment/'
+in_fn='../processed_data/gwas_atacseq_overlap/tmp/ld_set.tsv'
+anno_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult/'
+out_dir='../processed_data/gwas_atacseq_overlap/vsea/'
+fig_dir='../figures/gwas_atacseq_overlap/vsea/'
 if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
 if (!dir.exists(fig_dir)) {dir.create(fig_dir,recursive=TRUE)}
 
-read_sqtl=function(in_fn){
-	if (str_detect(in_fn,'.gz')){
-		x=fread(sprintf('zcat %s',in_fn),select=c(1,6,7,16),col.names=c('cluster','snp','dist','pval'))
-	} else {
-		x=fread(in_fn,select=c(1,6,7,16),col.names=c('cluster','snp','dist','pval'))
+read_ld_set=function(in_fn){
+	ld_set=fread(in_fn)
+	ld_set[,c('background_variant','foreground_variant'):=list(loci_index,gwas_index)]
+	ld_set[,c('start','end'):=list(pos,pos)]
+	return(ld_set)
+}
+
+read_annotation=function(in_dir){
+	fn=list.files(in_dir,pattern='bed')
+	x=foreach(f=fn,.combine='rbind')%dopar%{
+		sample=str_replace(f,'.merged.bed','')
+		print(sprintf('INFO - %s',sample))
+		dhs=fread(sprintf('%s/%s',in_dir,f))
+		dhs$anno=sample
+		return(dhs)
 	}
 	return(x)
 }
 
-select_top_sqtl=function(sqtl,n){
-	return(sqtl[rank(sqtl$pval)<=n,])
-}
-
-extract_snpid=function(x){
-	x=top_sqtl$snp
-	str_split_fixed(x,'_',5)[,c(1,2)]
-	temp=str_split_fixed(x,'_',5)[,c(1,2)]
-	chr=temp[,1]
-	pos=temp[,2]
-	return(paste(chr,pos,sep=':'))
-}
-
-read_annotation=function(anno_fn){
-	if (str_detect(anno_fn,'gz')){
-		x=fread(sprintf('zcat %s',anno_fn))
-	} else {
-		x=fread(anno_fn)
-	}
-	setnames(x,c('chr','start','end','anno'))
-	if (!str_detect(x$chr[1],'chr')){
-		x[,chr:=paste0('chr',chr)]
-	}
-	x[,snpID:=paste(chr,start,sep=':')]
-	return(x)
-}
 
 calc_odds_ratio=function(overlap_){
 	message('INFO - calculating odds ratio')
@@ -73,26 +56,46 @@ calc_odds_ratio=function(overlap_){
 	return(data.table(mean=mean,sd=sd))
 }
 
-main=function(){
-	# Select top variant:
-	sqtl=read_sqtl(in_fn)
-	top_sqtl=select_top_sqtl(sqtl,1000)
+count_overlap=function(in_dir,ld_set){
+	fn=list.files(in_dir,pattern='bed')
+	gwas_set=ld_set[snpID==gwas_index]
+	setkey(gwas_set,chr,start,end)
+	n_overlap=foreach(f=fn,.combine='rbind')%dopar%{
+		sample=str_replace(f,'.merged.bed','')
+		print(sprintf('INFO - %s',sample))
+		dhs=fread(sprintf('%s/%s',in_dir,f))
+		setkey(dhs,chr,start,end)
 
-	snpid=unique(extract_snpid(top_sqtl$snp))
-	length(snpid) # 791
 
-	# Select background variant:
-	snpsnap=read_snpsnap()
-	background_variants=select_background_variants(snpid,snpsnap,200)
-	index_set=create_index_set(background_variants,snpsnap)
-	fwrite(index_set,sprintf('%s/index_set.tsv',out_dir),sep='\t')
+		# Overlap: 
+		overlap=unique(foverlaps(gwas_set,dhs[,list(chr,start,end)]))
+		overlap[,c('i.start','i.end'):=NULL]
 
-	# Select LD variant: 
-	ld_set=select_LD_variants(index_set,out_dir,vcf_dir)
-	fwrite(ld_set,sprintf('%s/ld_set.tsv',out_dir),sep='\t')
+
+		overlap[,snp_overlap:=!is.na(start)]
+		overlap[,loci_overlap:=any(snp_overlap),by='loci_index']
+		overlap[,c('start','end'):=NULL]
+		overlap=unique(overlap)
+		stopifnot(nrow(overlap)==nrow(gwas_set))
+
+
+		overlap=overlap[ld_proxy==FALSE,]
+		n_overlap=unlist(overlap[,list(n=sum(loci_overlap))])
+		data.table(sample,n_overlap)
+	}
+	setorder(n_overlap,-n_overlap)
+}
+
+
+main=function(in_fn,anno_dir,fig_dir,fig_prefix){
+	message('LD set: ', in_fn)
+	message('annotation: ', anno_dir)
+
+	# Read LD variant: 
+	ld_set=read_ld_set(in_fn)
 
 	# Calculate enrichment p-value:
-	anno=read_annotation(anno_fn)
+	anno=read_annotation(anno_dir)
 	enrichment=foreach(i=unique(anno$anno),.combine='rbind')%dopar%{
 		message(i)
 		overlap_=overlap(ld_set,anno[anno==i])
@@ -101,39 +104,26 @@ main=function(){
 		data.table(anno=i,pval=pval,odds_ratio)
 	}
 
+	# n_overlap=count_overlap(anno_dir,ld_set)
+	# enrichment[anno%in%n_overlap[n_overlap>=1,sample]]
+
 	# Make plot:
 	setorder(enrichment,-pval)
+
 	enrichment[,anno:=factor(as.character(anno),level=as.character(anno))]
 	p=ggplot(enrichment,aes(anno,-log10(pval)))+geom_point()+xlab('')+ylab('-log10(P-value)')+coord_flip()
-	pdf(sprintf('%s/vsea.logp.pdf',fig_dir),height=4,width=4*1.3)
-	p
+	pdf(sprintf('%s/%s.logp.pdf',fig_dir,fig_prefix),height=8,width=8*1.3)
+	print(p)
 	dev.off()
+
 
 	setorder(enrichment,mean)
 	enrichment[,anno:=factor(as.character(anno),level=as.character(anno))]
 	p1=ggplot(enrichment,aes(anno,mean))+geom_pointrange(aes(ymin=mean-sd,ymax=mean+sd))+xlab('')+ylab('Odds ratio')+coord_flip()
-	p2=ggplot(enrichment[!anno%in%c('splice_acceptor_variant','splice_donor_variant')],aes(anno,mean))+geom_pointrange(aes(ymin=mean-sd,ymax=mean+sd))+xlab('')+ylab('Odds ratio')+coord_flip()
-	pdf(sprintf('%s/vsea.odds_ratio.pdf',fig_dir),height=4,width=4*1.3)
-	p1;p2
+	pdf(sprintf('%s/%s.odds_ratio.pdf',fig_dir,fig_prefix),height=8,width=8*1.3)
+	print(p1)
 	dev.off()
 }
 
-
-anno=read_annotation(in_dir_released)
-setnames(ld_set,c('loci_index','gwas_index'),c('background_variant','foreground_variant'))
-enrichment=foreach(i=unique(anno$sample),.combine='rbind')%dopar%{
-	message(i)
-	overlap_=overlap(ld_set,anno[sample==i])
-	pval=calc_enrichment(overlap_)
-	odds_ratio=calc_odds_ratio(overlap_)
-	data.table(anno=i,pval=pval,odds_ratio)
-}
-good_tissue=n_overlap[n_overlap>=3,sample]
-setorder(enrichment,-mean)
-enrichment[anno%in%good_tissue]
-setorder(enrichment,pval)
-enrichment[anno%in%good_tissue]
-
-
-
-main()
+main(in_fn,'../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult/',fig_dir,'vsea.merge_peaks_released_adult')
+main(in_fn,'../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult_tissue_group/',fig_dir,'vsea.merge_peaks_released_adult_tissue_group')

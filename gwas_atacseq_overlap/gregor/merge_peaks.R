@@ -10,6 +10,8 @@ out_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks/'
 out_dir_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_filt/'
 out_dir_released='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released/'
 out_dir_released_all_cell_type='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_all_cell_type/'
+out_dir_released_adult='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult/'
+out_dir_released_adult_tissue_group='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult_tissue_group/'
 out_dir_adult='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult/' # subsetted to adult samples (no fetal, child, postnatal or newborn)
 out_dir_adult_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult_filt/'
 out_dir_2007_2012='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_2007_2012/'
@@ -19,6 +21,8 @@ for (d in c(out_dir,
 			out_dir_filt,
 			out_dir_released,
 			out_dir_released_all_cell_type,
+			out_dir_released_adult,
+			out_dir_released_adult_tissue_group,
 			out_dir_adult,
 			out_dir_adult_filt,
 			out_dir_2007_2012,
@@ -56,6 +60,26 @@ merge_encode=function(metadata,in_dir,out_dir){
 		}
 		y=unique(Reduce(rbind,container))
 		fwrite(y,sprintf('%s/%s.merged.bed',out_dir,b),sep='\t')
+	}
+}
+
+merge_encode_by_tissue_group=function(metadata,in_dir,out_dir){
+	tissue_group=unique(metadata$`Tissue group`)
+	for (tg in tissue_group){
+		print(sprintf('INFO - %s',tg))
+		tmp=metadata[`Tissue group`==tg,list(`File accession`,`Tissue group`,peak_type)]
+
+		container=list()
+		for (i in 1:nrow(tmp)){
+			x=fread(sprintf('zcat %s/%s.bed.gz',in_dir,tmp$`File accession`[i]),col.names=c('chr','start','end','name','score','strand','signalValue','pValue','qValue','peak'))
+
+			if (tmp$peak_type[i]=='raw'){
+				x[,c('start','end'):=list(start+peak-75,start+peak+75)]
+			}
+			container[[i]]=x[,list(chr,start,end)]
+		}
+		y=unique(Reduce(rbind,container))
+		fwrite(y,sprintf('%s/%s.merged.bed',out_dir,tg),sep='\t')
 	}
 }
 
@@ -107,6 +131,8 @@ for (d in c(out_dir,
 			out_dir_filt,
 			out_dir_released,
 			out_dir_released_all_cell_type,
+			out_dir_released_adult,
+			out_dir_released_adult_tissue_group,
 			out_dir_adult,
 			out_dir_adult_filt,
 			out_dir_2007_2012,
@@ -141,6 +167,15 @@ metadata=fread('../data/encode/dnase_seq/metadata.tsv')
 metadata=metadata[`File Status`=='released']
 metadata[,`Biosample term name`:=str_replace_all(`Biosample term name`,'\\/','_')]
 merge_encode(metadata,in_dir,out_dir_released_all_cell_type)
+
+
+# ENCODE (all released samples and only adult):
+metadata=fread('../data/encode/dnase_seq/metadata.tsv')
+
+metadata=metadata[`Biosample type`%in%c('tissue','primary cell')&`File Status`=='released'&`Biosample life stage`=='adult']
+metadata[,`Biosample term name`:=str_replace_all(`Biosample term name`,'\\/','_')]
+merge_encode(metadata,in_dir,out_dir_released_adult)
+merge_encode_by_tissue_group(metadata,in_dir,out_dir_released_adult_tissue_group)
 
 
 # ENCODE (life stages=adult):

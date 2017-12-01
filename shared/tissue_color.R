@@ -3,6 +3,7 @@ gtex_tissue_color=read.table('../data/gtex/gtex_tissue_colors.txt',header=T,sep=
 tissue_color=rbind(gtex_tissue_color,data.frame(tissue_site_detail=c('HCASMC','SF'),tissue_site_detail_abbr=c('HCASMC','SF'),tissue_site_detail_id=c('hcasmc.rpkm','dase.sf.rpkm'),tissue_site=c('HCASMC','HCASMC'),tissue_color_hex=c('FF0066','FF0066'),tissue_color_rgb=c('255,0,102','255,0,102')))
 tissue_color$tissue_color_hex=paste0('#',tissue_color$tissue_color_hex)
 tissue_color=tissue_color%>%arrange(as.character(tissue_site_detail))
+tissue_color
 tissue_color$tissue=c("Adipose Tissue",
 					"Adipose Tissue",
 					"Adrenal Gland",
@@ -58,4 +59,5 @@ tissue_color$tissue=c("Adipose Tissue",
 					"Uterus",
 					"Vagina",
 					"Blood")
+tissue_color$abbreviation=c('Adipose - Subcutaneous','Adipose - Visceral','Adrenal Gland','Artery - Aorta','Artery - Coronary','Artery - Tibial','Bladder','Brain - Amygdala','Brain - Anterior cingulate cortex','Brain - Caudate','Brain - Cerebellar Hemisphere','Brain - Cerebellum','Brain - Cortex','Brain - Frontal Cortex','Brain - Hippocampus','Brain - Hypothalamus','Brain - Nucleus accumbens','Brain - Putamen','Brain - Spinal cord','Brain - Substantia nigra','Breast','LCL','Fibroblast','Cervix - Ectocervix','Cervix - Endocervix','Colon - Sigmoid','Colon - Transverse','Esophagus - Gastroesophageal Junction','Esophagus - Mucosa','Esophagus - Muscularis','Fallopian Tube','HCASMC','Heart - Atrial Appendage','Heart - Left Ventricle','Kidney','Liver','Lung','Minor Salivary Gland','Muscle - Skeletal','Nerve - Tibial','Ovary','Pancreas','Pituitary','Prostate','HCASMC','Skin - Suprapubic','Skin - Lower leg','Small Intestine','Spleen','Stomach','Testis','Thyroid','Uterus','Vagina','Whole Blood')
 write.table(tissue_color,'shared/tissue_color.txt',quote=F,col.names=T,row.names=F,sep='\t')

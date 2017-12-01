@@ -178,19 +178,6 @@ count_overlap=function(in_dir,ld_set){
 }
 
 
-read_annotation=function(in_dir){
-	fn=list.files(in_dir,pattern='bed')
-	x=foreach(f=fn,.combine='rbind')%dopar%{
-		sample=str_replace(f,'.merged.bed','')
-		print(sprintf('INFO - %s',sample))
-		dhs=fread(sprintf('%s/%s',in_dir,f))
-		dhs$sample=sample
-		return(dhs)
-	}
-	return(x)
-}
-
-
 calc_odds_ratio=function(overlap_){
 	message('INFO - calculating odds ratio')
 	foreground_odds=overlap_[background_variant==foreground_variant,sum(loci_overlap)/.N]
