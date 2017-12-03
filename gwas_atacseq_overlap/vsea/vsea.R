@@ -7,14 +7,15 @@ library(data.table)
 library(dplyr)
 library(dtplyr)
 library(cowplot)
-
-source('/srv/persistent/bliu2/HCASMC_eQTL/scripts/VSEA/R/select_background_variants.R')
-source('/srv/persistent/bliu2/HCASMC_eQTL/scripts/VSEA/R/select_LD_variants.R')
-source('/srv/persistent/bliu2/HCASMC_eQTL/scripts/VSEA/R/variant_set_enrichment.R')
+library(vsea)
+library(ggrepel)
+library(foreach)
+library(doMC)
+registerDoMC(10)
 
 # Variables:
 in_fn='../processed_data/gwas_atacseq_overlap/tmp/ld_set.tsv'
-anno_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult/'
+anno_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult_tissue_group/'
 out_dir='../processed_data/gwas_atacseq_overlap/vsea/'
 fig_dir='../figures/gwas_atacseq_overlap/vsea/'
 if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
@@ -39,55 +40,27 @@ read_annotation=function(in_dir){
 	return(x)
 }
 
+make_enrichment_plot=function(enrichment){
+	# Make plot:
+	gtex_anno_fn='../data/gtex/gtex_tissue_colors.with_hcasmc.txt'
+	gtex_anno=fread(gtex_anno_fn)
+	metadata_fn='../data/encode/dnase_seq/metadata.tsv'
+	metadata=fread(metadata_fn)
 
-calc_odds_ratio=function(overlap_){
-	message('INFO - calculating odds ratio')
-	foreground_odds=overlap_[background_variant==foreground_variant,sum(loci_overlap)/.N]
-	background_overlap=overlap_[background_variant!=foreground_variant]
+	x=metadata[`Biosample type`%in%c('tissue','primary cell')&`Biosample life stage`%in%c('adult'),list(`GTEx tissue`,`Tissue group`)]
+	y=unique(merge(x,gtex_anno,by.x='GTEx tissue',by.y='tissue_site_detail',all.x=TRUE,all.y=FALSE)[,list(`Tissue group`,`tissue_color_hex`)])
+	z=rbind(y,data.table(`Tissue group`='HCASMC',tissue_color_hex='#FF0066'))
+	color=z$tissue_color_hex
+	names(color)=z$`Tissue group`
+	enrichment[,label:=ifelse(rank(pval)<=5|rank(-mean)<=5,anno,'')]
 
-	odds_ratio=foreach(i=1:500,.combine=c)%dopar%{
-		bootstrap=background_overlap[sample(1:nrow(background_overlap),nrow(background_overlap),replace=TRUE)]
-		background_odds=bootstrap[,sum(loci_overlap)/.N]
-		foreground_odds/background_odds
-	}
-
-	mean=mean(odds_ratio)
-	sd=sd(odds_ratio)
-	return(data.table(mean=mean,sd=sd))
+	ggplot(enrichment,aes(-log10(pval),mean,label=label,color=anno))+
+		geom_point(size=2)+geom_text_repel(color='black',segment.alpha=0,nudge_x=ifelse(enrichment$label=='Artery Endothelial Cell',-0.7,0))+
+		xlab('-log10(P-value)')+ylab('Odds ratio')+
+		scale_color_manual(values=color,guide='none')
 }
 
-count_overlap=function(in_dir,ld_set){
-	fn=list.files(in_dir,pattern='bed')
-	gwas_set=ld_set[snpID==gwas_index]
-	setkey(gwas_set,chr,start,end)
-	n_overlap=foreach(f=fn,.combine='rbind')%dopar%{
-		sample=str_replace(f,'.merged.bed','')
-		print(sprintf('INFO - %s',sample))
-		dhs=fread(sprintf('%s/%s',in_dir,f))
-		setkey(dhs,chr,start,end)
-
-
-		# Overlap: 
-		overlap=unique(foverlaps(gwas_set,dhs[,list(chr,start,end)]))
-		overlap[,c('i.start','i.end'):=NULL]
-
-
-		overlap[,snp_overlap:=!is.na(start)]
-		overlap[,loci_overlap:=any(snp_overlap),by='loci_index']
-		overlap[,c('start','end'):=NULL]
-		overlap=unique(overlap)
-		stopifnot(nrow(overlap)==nrow(gwas_set))
-
-
-		overlap=overlap[ld_proxy==FALSE,]
-		n_overlap=unlist(overlap[,list(n=sum(loci_overlap))])
-		data.table(sample,n_overlap)
-	}
-	setorder(n_overlap,-n_overlap)
-}
-
-
-main=function(in_fn,anno_dir,fig_dir,fig_prefix){
+main=function(in_fn,anno_dir,fig_dir,fig_prefix,out_path){
 	message('LD set: ', in_fn)
 	message('annotation: ', anno_dir)
 
@@ -101,15 +74,16 @@ main=function(in_fn,anno_dir,fig_dir,fig_prefix){
 		overlap_=overlap(ld_set,anno[anno==i])
 		pval=calc_enrichment(overlap_)
 		odds_ratio=calc_odds_ratio(overlap_)
-		data.table(anno=i,pval=pval,odds_ratio)
+		n_overlap=count_overlap(overlap_)
+		data.table(anno=i,pval=pval,odds_ratio,n_overlap)
 	}
+	if (!is.null(out_path)) fwrite(enrichment,out_path,sep='\t')
 
-	# n_overlap=count_overlap(anno_dir,ld_set)
-	# enrichment[anno%in%n_overlap[n_overlap>=1,sample]]
+	p0=make_enrichment_plot(enrichment)
+	save_plot(sprintf('%s/%s.enrichment.pdf',fig_dir,fig_prefix),p0)
 
 	# Make plot:
 	setorder(enrichment,-pval)
-
 	enrichment[,anno:=factor(as.character(anno),level=as.character(anno))]
 	p=ggplot(enrichment,aes(anno,-log10(pval)))+geom_point()+xlab('')+ylab('-log10(P-value)')+coord_flip()
 	pdf(sprintf('%s/%s.logp.pdf',fig_dir,fig_prefix),height=8,width=8*1.3)
@@ -123,7 +97,9 @@ main=function(in_fn,anno_dir,fig_dir,fig_prefix){
 	pdf(sprintf('%s/%s.odds_ratio.pdf',fig_dir,fig_prefix),height=8,width=8*1.3)
 	print(p1)
 	dev.off()
+
+	return(enrichment)
 }
 
-main(in_fn,'../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult/',fig_dir,'vsea.merge_peaks_released_adult')
-main(in_fn,'../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult_tissue_group/',fig_dir,'vsea.merge_peaks_released_adult_tissue_group')
+main(in_fn,'../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult/',fig_dir,'vsea.merge_peaks_released_adult',NULL)
+main(in_fn,'../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult_tissue_group/',fig_dir,'vsea.merge_peaks_released_adult_tissue_group',sprintf('%s/merge_peaks_released_adult_tissue_group.enrichment.txt',out_dir))
