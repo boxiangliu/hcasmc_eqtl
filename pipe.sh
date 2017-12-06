@@ -1397,31 +1397,13 @@ Rscript eqtl_and_atacseq/gregor/overlap_enrichment.R
 
 
 #----------------- Brian's genes ---------------# 
-# Setup: 
-mkdir -p ../figures/brian/locuszoom brian ../processed_data/brian
-
-# make locuszoom for AHR: 
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000106546.8_AHR.pval.txt --pvalcol pval --markercol rsid --refsnp rs10265174 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (AHR)" --prefix ../figures/brian/locuszoom/AHR_eQTL
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000106546.8_AHR.pval.txt --pvalcol pval --markercol rsid --refsnp rs10265174 --flank 500KB ymax=5 --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (AHR)" --prefix ../figures/brian/locuszoom/AHR_eQTL
-
-# MMP1:
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000196611.4_MMP1.pval.txt --pvalcol pval --markercol rsid --refsnp rs1799750 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000196611.4_MMP1)" --prefix ../figures/brian/locuszoom/ENSG00000196611.4_MMP1_eqtl
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000196611.4_MMP1.pval.txt --pvalcol pval --markercol rsid --refsnp rs1799750 --flank 5kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000196611.4_MMP1)" --prefix ../figures/brian/locuszoom/ENSG00000196611.4_MMP1_eqtl
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000196611.4_MMP1.pval.txt --pvalcol pval --markercol rsid --refsnp rs1711437 --flank 5kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000196611.4_MMP1)" --prefix ../figures/brian/locuszoom/ENSG00000196611.4_MMP1_eqtl
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000196611.4_MMP1.pval.txt --pvalcol pval --markercol rsid --refsnp rs751547 --flank 5kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000196611.4_MMP1)" --prefix ../figures/brian/locuszoom/ENSG00000196611.4_MMP1_eqtl
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000196611.4_MMP1.pval.txt --pvalcol pval --markercol rsid --refsnp rs1784405 --flank 5kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000196611.4_MMP1)" --prefix ../figures/brian/locuszoom/ENSG00000196611.4_MMP1_eqtl
-
-# CYP1B1:
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000138061.7_CYP1B1.pval.txt --pvalcol pval --markercol rsid --refsnp rs4670837 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000138061.7_CYP1B1)" --prefix ../figures/brian/locuszoom/ENSG00000138061.7_CYP1B1_eqtl
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000138061.7_CYP1B1.pval.txt --pvalcol pval --markercol rsid --refsnp rs162558 --flank 5kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000138061.7_CYP1B1)" --prefix ../figures/brian/locuszoom/ENSG00000138061.7_CYP1B1_eqtl
-
-#### end Brian's genes:
+bash brian/brian_pipe.sh
 
 
-#### metaXcan: 
+#------------------ metaXcan ----------------#
 mkdir metaXcan ../processed_data/metaXcan ../figures/metaXcan
 
-#### end metaXcan
+
 
 
 #### PIQ
@@ -1461,27 +1443,6 @@ parallel "grep '{}' ../processed_data/rasqual/output/*pval.txt | cut -d: -f2 > .
 cat ../processed_data/metabochip/*.txt | awk 'BEGIN{OFS="\t"}{if (exp(log(10)*$10)<0.05) print $1,$2,$3,$4,$26,exp(log(10)*$10)}'
 
 
-#### fine-mapping:
-# REST:
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000084093.11_REST.pval.txt --pvalcol pval --markercol rsid --refsnp rs17087335 --chr chr4 --start 57700000 --end 57900000 --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000084093.11_REST)" --no-date --prefix ../figures/locuszoom/ENSG00000084093.11_REST_eqtl_chr4:57700000-57900000
-locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs17087335 --chr chr4 --start 57700000 --end 57900000 --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000084093.11_REST)" --no-date --prefix ../figures/locuszoom/ENSG00000084093.11_REST_gwas_chr4:57700000-57900000
-
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000084093.11_REST.pval.txt --pvalcol pval --markercol rsid --refsnp rs66790703 --chr chr4 --start 57700000 --end 57900000 --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000084093.11_REST)" --no-date --plotonly --prefix ../figures/locuszoom/ENSG00000084093.11_REST_eqtl_chr4:57700000-57900000
-locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs66790703 --chr chr4 --start 57700000 --end 57900000 --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000084093.11_REST)" --no-date --plotonly --prefix ../figures/locuszoom/ENSG00000084093.11_REST_gwas_chr4:57700000-57900000
-
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000084093.11_REST.pval.txt --pvalcol pval --markercol rsid --refsnp rs56155140 --chr chr4 --start 57700000 --end 57900000 --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000084093.11_REST)" --no-date --plotonly --prefix ../figures/locuszoom/ENSG00000084093.11_REST_eqtl_chr4:57700000-57900000
-locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs56155140 --chr chr4 --start 57700000 --end 57900000 --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000084093.11_REST)" --no-date --plotonly --prefix ../figures/locuszoom/ENSG00000084093.11_REST_gwas_chr4:57700000-57900000
-
-# MAP3K7CL: 
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000156265.11_MAP3K7CL.pval.txt --pvalcol pval --markercol rsid --refsnp rs11911017 --chr chr21 --start 30500000 --end 30700000 --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000156265.11_MAP3K7CL)" --no-date --prefix ../figures/locuszoom/ENSG00000156265.11_MAP3K7CL_eqtl_chr21:30500000-30700000
-locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs11911017 --chr chr21 --start 30500000 --end 30700000 --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000156265.11_MAP3K7CL)" --no-date --prefix ../figures/locuszoom/ENSG00000156265.11_MAP3K7CL_gwas_chr21:30500000-30700000
-
-# COL4A2: 
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000134871.13_COL4A2.pval.txt --pvalcol pval --markercol rsid --refsnp rs11838776 --flank 500kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000134871.13_COL4A2)" --no-date --prefix ../figures/locuszoom/ENSG00000134871.13_COL4A2_eqtl
-locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs11838776 --flank 500kB --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000134871.13_COL4A2)" --no-date --prefix ../figures/locuszoom/ENSG00000134871.13_COL4A2_gwas
-
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000134871.13_COL4A2.pval.txt --pvalcol pval --markercol rsid --refsnp rs11838776 --flank 50kB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (ENSG00000134871.13_COL4A2)" --no-date --prefix ../figures/locuszoom/ENSG00000134871.13_COL4A2_eqtl
-locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs11838776 --flank 50kB --source 1000G_March2012 --build hg19 --pop EUR  title="GWAS (ENSG00000134871.13_COL4A2)" --no-date --prefix ../figures/locuszoom/ENSG00000134871.13_COL4A2_gwas
 
 
 #----------------- MPRA array ----------------# 
