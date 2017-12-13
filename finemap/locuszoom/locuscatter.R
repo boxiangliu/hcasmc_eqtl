@@ -7,47 +7,28 @@ library(cowplot)
 library(ggrepel)
 library(stringr)
 
-args=commandArgs(T,T,
-	defaults=list(marker_col1='rsid',
-				  pval_col1='pval',
-				  marker_col2='rsid',
-				  pval_col2='pval',
-				  title1='Study 1',
-				  title2='Study 2',
-				  snp=NULL))
-
-in_fn1=args$f1
-marker_col1=args$marker_col1
-pval_col1=args$pval_col1
-title1=args$title1
-
-in_fn2=args$f2
-marker_col2=args$marker_col2
-pval_col2=args$pval_col2
-title2=args$title2
-
-tmp_dir=args$tmp_dir
-snp=args$snp
-
-in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr15/ENSG00000182511.7_FES.pval.txt'
-marker_col1='rsid'
-pval_col1='pval'
-
-in_fn2='/srv/persistent/bliu2/HCASMC_eQTL/data//gwas/ukbb/UKBB.GWAS1KG.EXOME.CAD.SOFT.META.PublicRelease.300517.txt.gz'
-marker_col2='snptestid'
-pval_col2='p-value_gc'
 
 out_dir='../processed_data/finemap/locuszoom/locuscatter/'
+fig_dir='../figures/finemap/locuszoom/locuscatter/'
 if (!dir.exists(out_dir)){dir.create(out_dir,recursive=TRUE)}
+if (!dir.exists(fig_dir)){dir.create(fig_dir,recursive=TRUE)}
 
 read_metal=function(in_fn,marker_col,pval_col){
-	if (grepl('.gz',in_fn)){
-		d=fread(sprintf('gunzip -c %s',in_fn))
+	if (is.character(in_fn)){
+		if (grepl('.gz',in_fn)){
+			d=fread(sprintf('gunzip -c %s',in_fn))
+		} else {
+			d=fread(in_fn)
+		}
+
+		setnames(d,c(marker_col,pval_col),c('rsid','pval'))
+		d=d[,list(rsid,pval,logp=-log10(pval))]
+	} else if (is.data.frame(in_fn)){
+		d=in_fn
 	} else {
-		d=fread(in_fn)
+		stop('in_fn must be a string or a data.frame')
 	}
-	setnames(d,c(marker_col,pval_col),c('rsid','pval'))
-	d[,list(rsid,pval,logp=-log10(pval))]
+	return(d)
 }
 
 get_chr=function(eqtl_fn){
@@ -64,7 +45,7 @@ extract_population=function(population,
 
 
 subset_vcf=function(vcf_in,rsid,population,vcf_out){
-	pop_fn=sprintf('%s/%s.txt',out_dir,pop)
+	pop_fn=sprintf('%s/%s.txt',out_dir,population)
 	rsid_fn=sprintf('%s/rsid.txt',out_dir)
 
 	extract_population('EUR',pop_fn)
@@ -74,7 +55,6 @@ subset_vcf=function(vcf_in,rsid,population,vcf_out){
 	print(command)
 	system(command)
 }
-
 
 calc_LD=function(rsid,chr,pop,out_dir,
 	vcf_dir='/srv/persistent/bliu2/shared/1000genomes/phase3v5a/'){
@@ -87,21 +67,24 @@ calc_LD=function(rsid,chr,pop,out_dir,
 	subset_vcf_prefix=sprintf('%s/%s',out_dir,pop)
 	subset_vcf_fn=sprintf('%s/%s.vcf',out_dir,pop)
 	subset_vcf(sprintf('%s/ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz',vcf_dir,chr),
-		rsid,population,subset_vcf_prefix)
+		rsid,pop,subset_vcf_prefix)
 
-	command=sprintf('plink --vcf %s --keep-allele-order --r2 --out %s/%s',subset_vcf_fn,out_dir,pop)
+	command=sprintf('plink --vcf %s --keep-allele-order --r2 --ld-window 9999999 --ld-window-kb 9999999 --out %s/%s',subset_vcf_fn,out_dir,pop)
 	print(command)
 	system(command)
 
 	ld=fread(sprintf('%s/%s.ld',out_dir,pop))
+	ld2=ld[,list(CHR_A=CHR_B,BP_A=BP_B,SNP_A=SNP_B,CHR_B=CHR_A,BP_B=BP_A,SNP_B=SNP_A,R2)]
+	ld=rbind(ld,ld2)
 	return(ld)
 }
+
 
 assign_color=function(rsid,snp,ld){
 	all_snps=unique(ld$SNP_A)
 
 	color_dt=ld[SNP_A==snp,list(rsid=SNP_B,color=cut(R2,breaks=c(0,0.2,0.4,0.6,0.8,1),
-			labels=c('navyblue','skyblue','darkgreen','orange','red'),
+			labels=c('blue4','skyblue','darkgreen','orange','red'),
 			include.lowest=TRUE))]
 	color_dt=rbind(color_dt,data.table(rsid=all_snps[!all_snps%in%color_dt$rsid],color='blue4'))
 	color_dt=rbind(color_dt,data.table(rsid=rsid[!rsid%in%all_snps],color='grey'))
@@ -110,6 +93,7 @@ assign_color=function(rsid,snp,ld){
 	names(color)=color_dt$rsid
 	return(color)
 }
+
 
 make_combined_plot=function(merged,title1,title2,ld,snp=NULL){
 	if (is.null(snp)){
@@ -137,17 +121,28 @@ make_combined_plot=function(merged,title1,title2,ld,snp=NULL){
 	return(p5)
 }
 
+
 make_locuscatter=function(merged,title1,title2,ld,color,shape,size){
 	p=ggplot(merged,aes(logp1,logp2))+
 		geom_point(aes(fill=rsid,size=rsid,shape=rsid),alpha=0.8)+
 		geom_point(data=merged[label!=''],aes(logp1,logp2,fill=rsid,size=rsid,shape=rsid))+
-		xlab(title1)+ylab(title2)+
+		xlab(paste(title1,' -log10(P)'))+ylab(paste(title2,' -log10(P)'))+
 		scale_fill_manual(values=color,guide='none')+
 		scale_shape_manual(values=shape,guide='none')+
 		scale_size_manual(values=size,guide='none')+
 		geom_text_repel(aes(label=label))
-	return(p)
+
+	legend_box=data.frame(x=0.8,y=seq(0.4,0.2,-0.05))
+	p1=ggdraw(p)+geom_rect(data=legend_box,aes(xmin=x,xmax=x+0.05,ymin=y,ymax=y+0.05),color='black',fill=rev(c('blue4','skyblue','darkgreen','orange','red')))+
+		draw_label('0.8',x=legend_box$x[1]+0.05,y=legend_box$y[1],hjust=-0.3,size=10)+
+		draw_label('0.6',x=legend_box$x[2]+0.05,y=legend_box$y[2],hjust=-0.3,size=10)+
+		draw_label('0.4',x=legend_box$x[3]+0.05,y=legend_box$y[3],hjust=-0.3,size=10)+
+		draw_label('0.2',x=legend_box$x[4]+0.05,y=legend_box$y[4],hjust=-0.3,size=10)+
+		draw_label(parse(text='r^2'),x=legend_box$x[1]+0.05,y=legend_box$y[1],vjust=-2.0,size=10)
+
+	return(p1)
 }
+
 make_locuszoom=function(metal,title,ld,color,shape,size){
 	data=merge(metal,unique(ld[,list(chr=CHR_A,pos=BP_A,rsid=SNP_A)]),by='rsid')
 	chr=unique(data$chr)
@@ -157,18 +152,68 @@ make_locuszoom=function(metal,title,ld,color,shape,size){
 		scale_fill_manual(values=color,guide='none')+
 		scale_shape_manual(values=shape,guide='none')+
 		scale_size_manual(values=size,guide='none')+
+		scale_x_continuous(labels=function(x){sprintf('%.1f',x/1e6)})+
 		geom_text_repel(aes(label=label))+
-		xlab(paste0('chr',chr))+
-		ylab(paste(title,'\n-log10(P)'))
+		xlab(paste0('chr',chr,' (Mb)'))+
+		ylab(paste(title,'\n-log10(P)'))+
+		theme(plot.margin=unit(c(0.5, 1, 0.5, 0.5), "lines"))
 }
 
+main=function(in_fn1,marker_col1='rsid',pval_col1='pval',title1='eQTL',
+	in_fn2,marker_col2='rsid',pval_col2='pval',title2='GWAS',
+	snp=NULL,fig_fn='1.pdf'){
 
-d1=read_metal(in_fn1,marker_col1,pval_col1)
-d2=read_metal(in_fn2,marker_col2,pval_col2)
-chr=get_chr(in_fn1)
-merged=merge(d1,d2,by='rsid',suffixes=c('1','2'),all=FALSE)
-ld=calc_LD(merged$rsid,chr,'EUR',out_dir)
-p=make_combined_plot(merged,'eQTL','UKBB',ld,'rs2521501')
-pdf('1.pdf',height=4,width=8)
-print(p)
-dev.off()
+	d1=read_metal(in_fn1,marker_col1,pval_col1)
+	d2=read_metal(in_fn2,marker_col2,pval_col2)
+
+	chr=get_chr(in_fn1)
+	merged=merge(d1,d2,by='rsid',suffixes=c('1','2'),all=FALSE)
+	ld=calc_LD(merged$rsid,chr,'EUR',out_dir)
+
+	p=make_combined_plot(merged,title1,title2,ld,snp)
+	save_plot(fig_fn,p,base_height=4,base_width=8)
+}
+
+# Read UKBB:
+ukbb_fn='/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/ukbb/UKBB.GWAS1KG.EXOME.CAD.SOFT.META.PublicRelease.300517.txt.gz'
+ukbb_marker_col='snptestid'
+ukbb_pval_col='p-value_gc'
+ukbb=read_metal(ukbb_fn,ukbb_marker_col,ukbb_pval_col)
+
+# FES:
+main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr15/ENSG00000182511.7_FES.pval.txt',
+	in_fn2=ukbb,
+	snp='rs2521501',
+	fig_fn=sprintf('%s/ENSG00000182511.7_FES_UKBB.pdf',fig_dir))
+
+
+# SIPA1:
+main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr11/ENSG00000213445.4_SIPA1.pval.txt',
+	in_fn2=ukbb,
+	snp='rs12801636',
+	fig_fn=sprintf('%s/ENSG00000213445.4_SIPA1_UKBB.pdf',fig_dir))
+
+main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr11/ENSG00000213445.4_SIPA1.pval.txt',
+	in_fn2='/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/howson_2017/Howson-JMM_CHD_Mixed_2017.norm.in1kgp3.txt',pval_col2='p',
+	snp='rs12801636',
+	fig_fn=sprintf('%s/ENSG00000213445.4_SIPA1_Howson.pdf',fig_dir))
+
+
+# SMAD3:
+main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr15/ENSG00000166949.11_SMAD3.pval.txt',
+	in_fn2=ukbb,
+	snp='rs72743461',
+	fig_fn=sprintf('%s/ENSG00000166949.11_SMAD3_UKBB.pdf',fig_dir))
+
+# TCF21:
+main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr6/ENSG00000118526.6_TCF21.pval.txt',
+	in_fn2=ukbb,
+	snp='rs2327429',
+	fig_fn=sprintf('%s/ENSG00000118526.6_TCF21_UKBB.pdf',fig_dir))
+
+main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr6/ENSG00000118526.6_TCF21.pval.txt',
+	in_fn2='/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/howson_2017/Howson-JMM_CHD_Mixed_2017.norm.in1kgp3.txt',
+	snp='rs2327429',
+	fig_fn=sprintf('%s/ENSG00000118526.6_TCF21_Howson.pdf',fig_dir))
+
+
