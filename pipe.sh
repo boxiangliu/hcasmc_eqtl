@@ -1558,26 +1558,9 @@ Rscript shared/tissue_color.R   # shared/tissue_color.txt
 #------------------ HCASMC-specific open chromatin ---------
 bash hcascm_specific_open_chromatin/_hcasmc_specific_open_chromatin_pipe.sh
 
+
 #--------------- Finemapping ------------
-# Setup:
-mkdir -p finemap/{enloc,finemap} 
-
-# Finemap: 
-bash finemap/finemap/howson_preprocess.sh
-Rscript finemap/finemap/howson_data.R
-bash finemap/finemap/finemap.sh
-
-Rscript finemap/finemap/rasqual_data.R
-Rscript finemap/finemap/howson_rasqual_coloc.R
-
-Rscript finemap/finemap/nikpay_rasqual_coloc.R
-
-Rscript finemap/finemap/atacseq_overlap.R
-Rscript finemap/finemap/atacseq_overlap.gviz.R
-
-Rscript finemap/finemap/motif_match.R
-
-Rscript finemap/finemap/tarid_tcf21_coloc.R
+bash finemap/finemap_pipe.sh
 
 
 #--------------- GWAS gene overlap ------------# 
