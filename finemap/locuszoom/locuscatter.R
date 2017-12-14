@@ -212,7 +212,7 @@ main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pva
 	fig_fn=sprintf('%s/ENSG00000118526.6_TCF21_UKBB.pdf',fig_dir))
 
 main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr6/ENSG00000118526.6_TCF21.pval.txt',
-	in_fn2='/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/howson_2017/Howson-JMM_CHD_Mixed_2017.norm.in1kgp3.txt',
+	in_fn2='/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/howson_2017/Howson-JMM_CHD_Mixed_2017.norm.in1kgp3.txt',pval_col2='p',
 	snp='rs2327429',
 	fig_fn=sprintf('%s/ENSG00000118526.6_TCF21_Howson.pdf',fig_dir))
 
