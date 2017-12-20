@@ -12,6 +12,7 @@ out_dir_released='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_rele
 out_dir_released_all_cell_type='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_all_cell_type/'
 out_dir_released_adult='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult/'
 out_dir_released_adult_tissue_group='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult_tissue_group/'
+out_dir_released_fetal_tissue_group='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_fetal_tissue_group/'
 out_dir_adult='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult/' # subsetted to adult samples (no fetal, child, postnatal or newborn)
 out_dir_adult_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_adult_filt/'
 out_dir_2007_2012='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_2007_2012/'
@@ -23,6 +24,7 @@ for (d in c(out_dir,
 			out_dir_released_all_cell_type,
 			out_dir_released_adult,
 			out_dir_released_adult_tissue_group,
+			out_dir_released_fetal_tissue_group,
 			out_dir_adult,
 			out_dir_adult_filt,
 			out_dir_2007_2012,
@@ -41,7 +43,6 @@ parse_annotation=function(annotation){
 		 treatment,
 		 type)
 }
-
 
 merge_encode=function(metadata,in_dir,out_dir){
 	biosample=unique(metadata$`Biosample term name`)
@@ -82,7 +83,6 @@ merge_encode_by_tissue_group=function(metadata,in_dir,out_dir){
 		fwrite(y,sprintf('%s/%s.merged.bed',out_dir,tg),sep='\t')
 	}
 }
-
 
 merge_encode_2007_2012_cell_lines=function(metadata,in_dir,out_dir){
 	for (t in unique(metadata[,broad_tissue_category])){
@@ -133,6 +133,7 @@ for (d in c(out_dir,
 			out_dir_released_all_cell_type,
 			out_dir_released_adult,
 			out_dir_released_adult_tissue_group,
+			out_dir_released_fetal_tissue_group,
 			out_dir_adult,
 			out_dir_adult_filt,
 			out_dir_2007_2012,
@@ -178,6 +179,14 @@ merge_encode(metadata,in_dir,out_dir_released_adult)
 merge_encode_by_tissue_group(metadata,in_dir,out_dir_released_adult_tissue_group)
 
 
+# ENCODE (all released samples and only fetal):
+metadata=fread('../data/encode/dnase_seq/metadata.tsv')
+
+metadata=metadata[`Biosample type`%in%c('tissue','primary cell')&`File Status`=='released'&`Biosample life stage`=='fetal']
+metadata[,`Biosample term name`:=str_replace_all(`Biosample term name`,'\\/','_')]
+merge_encode_by_tissue_group(metadata,in_dir,out_dir_released_fetal_tissue_group)
+
+
 # ENCODE (life stages=adult):
 metadata=fread('../data/encode/dnase_seq/metadata.tsv')
 metadata=metadata[`Biosample type`%in%c('tissue','primary cell')&`Biosample life stage`=='adult']
@@ -188,9 +197,6 @@ merge_encode(metadata)
 metadata=fread('../data/encode/dnase_seq/metadata.tsv')
 metadata=metadata[`Biosample type`%in%c('tissue','primary cell')&`Biosample life stage`=='adult'&`Audit ERROR`=='']
 merge_encode(metadata)
-
-
-
 
 
 # ENCODE 125 Uniformly processed cell lines, categorized into tissue groups:

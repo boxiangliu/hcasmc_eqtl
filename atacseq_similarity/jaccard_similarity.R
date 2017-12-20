@@ -6,90 +6,110 @@ library(foreach)
 library(doMC)
 registerDoMC(20)
 
-in_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks/'
-in_dir_filt='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_filt/sorted/'
-in_dir_released='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released/'
+adult_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_adult_tissue_group/'
+fetal_dir='../processed_data/gwas_atacseq_overlap/gregor/merge_peaks_released_fetal_tissue_group/'
 out_dir='../processed_data/atacseq_similarity/jaccard_similarity/'
-fig_dir='../figures/atacseq_similarity/jaccard_similarity'
+fig_dir='../figures/atacseq_similarity/jaccard_similarity/'
 if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
 if (!dir.exists(fig_dir)) {dir.create(fig_dir,recursive=TRUE)}
 
-calc_jaccard=function(in_dir){
+sort_bed=function(in_dir,out_dir,pattern='bed'){
+	if (!dir.exists(out_dir)){dir.create(out_dir,recursive=TRUE)}
+	fn=list.files(in_dir,pattern=pattern,full.names=TRUE)
+	foreach(i=fn)%dopar%{
+		command=sprintf('sort -k1,1 -k2,2g "%s" > "%s/%s"',i,out_dir,basename(i))
+		print(command)
+		system(command)
+	}
+}
 
+calc_jaccard=function(in_dir){
 	fn=list.files(in_dir,pattern='bed',full.names=TRUE)
 	hcasmc_fn=fn[str_detect(fn,'HCASMC')]
 
-	container=foreach(i = seq(length(fn)))%dopar%{
-
+	jaccard=foreach(i = seq(length(fn)),.combine='rbind')%dopar%{
 		sample=str_extract(fn[i],'(?<=sorted//)(.+?)(?=.merged)')
-
 		print(sprintf('INFO - %s', sample))
 
 		cmd=sprintf('bedtools jaccard -a "%s" -b "%s"',hcasmc_fn,fn[i])
-		print(cmd)
 		res=system(cmd,intern=TRUE)
-
 		dt=data.table(t(as.numeric(str_split_fixed(res[2],'\t',4))))
 		dt$sample=sample
 
 		cmd=sprintf('bedtools jaccard -a "%s" -b "%s"',fn[i],fn[i])
-		print(cmd)
 		res=system(cmd,intern=TRUE)
-
 		n_bases=str_split_fixed(res[2],'\t',4)[1]
 		dt$n_bases=as.integer(n_bases)
 
-		dt
+		return(dt)
 	}
-
-	jaccard=Reduce(rbind,container)
 
 	setnames(jaccard,c('intersection','union','jaccard','n_intersections','sample','n_bases'))
 	setorder(jaccard,-jaccard)
 	jaccard[,sample:=factor(sample,level=sample)]
 	jaccard=jaccard[sample!='HCASMC',]
-
 	jaccard$rank=seq(nrow(jaccard))
 
-	jaccard
+	return(jaccard)
 }
 
-jaccard=calc_jaccard(in_dir_filt)
+add_gtex_name=function(jaccard){
+	metadata_fn='../data/encode/dnase_seq/metadata.tsv'
+	metadata=fread(metadata_fn)
+	metadata=unique(metadata[`Biosample type`%in%c('tissue','primary cell')&`File Status`=='released'&`Biosample life stage`%in%c('fetal','adult'),list(gtex=`GTEx tissue`,sample=`Tissue group`)])
+	jaccard=merge(jaccard,metadata,by='sample')
+	return(jaccard)
+}
 
 
-metadata_fn='../data/encode/dnase_seq/metadata.tsv'
-metadata=fread(metadata_fn)
-metadata=metadata[`Biosample type`%in%c('primary cell','tissue')&`Audit ERROR`=="",]
+get_color_map=function(){
+	color=fread('shared/tissue_color.txt')
+	color[,tissue_color_hex:=max(tissue_color_hex),by=tissue]
+	color_map=color$tissue_color_hex
+	names(color_map)=color$tissue_site_detail
+	return(color_map)
+}
 
-jaccard=merge(jaccard,unique(metadata[,list(`Biosample term name`,gtex=`GTEx tissue`)]),by.x='sample',by.y="Biosample term name")
-stopifnot(nrow(jaccard)==102)
+# Adult samples:
+sort_bed(adult_dir,out_dir=sprintf('%s/sorted/',adult_dir))
+jaccard_adult=calc_jaccard(sprintf('%s/sorted/',adult_dir))
+jaccard_adult=add_gtex_name(jaccard_adult)
+jaccard_adult$life_stage='Adult'
 
-color=fread('shared/tissue_color.txt')
-color[,tissue_color_hex:=max(tissue_color_hex),by=tissue]
+# Fetal samples:
+sort_bed(fetal_dir,out_dir=sprintf('%s/sorted/',fetal_dir))
+jaccard_fetal=calc_jaccard(sprintf('%s/sorted/',fetal_dir))
+jaccard_fetal=add_gtex_name(jaccard_fetal)
+jaccard_fetal$life_stage='Fetal'
+jaccard_fetal[,sample:=paste(sample,'(fetal)')]
 
-jaccard[,gtex:=ifelse(gtex%in%color$tissue,gtex,'Missing')]
-
-temp=unique(color[,list(tissue,tissue_color_hex)])
-color_map=c(temp$tissue_color_hex,'#000000')
-names(color_map)=c(temp$tissue,'Missing')
+# Merge adult and fetal:
+jaccard=rbind(jaccard_adult,jaccard_fetal)
 setorder(jaccard,-jaccard)
 jaccard[,sample:=factor(sample,levels=sample)]
+jaccard[,rank:=rank(-jaccard)]
 
-show_n=15
+color_map=get_color_map()
+
+
+show_n=5
 jaccard[,label:=ifelse( (rank<=show_n) | (rank>(length(jaccard)-show_n)),as.character(sample),'')]
-saveRDS(list(jaccard=jaccard,color_map=color_map),sprintf('%s/jaccard.rds',out_dir))
-# jaccard=readRDS(sprintf('%s/jaccard.rds',out_dir))[[1]]
 
-p1=ggplot(jaccard,aes(sample,jaccard,label=label,color=gtex))+
-	geom_point()+
+top5_label=jaccard[rank<=show_n,as.character(sample)]
+bottom5_label=jaccard[rank>=(length(jaccard)-show_n),as.character(sample)]
+
+p1=ggplot(jaccard,aes(sample,jaccard,label=label,color=gtex,shape=life_stage))+
+	geom_point(size=2)+scale_y_log10(breaks=c(0,0.1,0.2,0.3),labels=c(0,0.1,0.2,0.3))+
 	theme(axis.text.x=element_blank(),axis.ticks.x=element_blank())+
-	xlab(sprintf('ENCODE Sample (n=%i)',nrow(jaccard)))+
+	xlab(sprintf('ENCODE Tissue/Cell Type (n=%i)',nrow(jaccard)))+
 	ylab('Epigenomic Similarity\n(Jaccard Index)')+
-	geom_text_repel(force=3,box.padding=unit(0.2, "lines"),nudge_x=1)+
-	scale_color_manual(values=color_map,guide='none')
+	annotate('text',x=46,y=0.15,label=paste(c('Top 5',top5_label),collapse='\n'))+
+	annotate('text',x=13,y=0.05,label=paste(c('Bottom 5',bottom5_label),collapse='\n'))+
+	scale_color_manual(values=color_map,guide='none')+
+	scale_shape_discrete(name='')+
+	theme(legend.position=c(0.8, 0.2))
 
-
-save_plot(sprintf('%s/jaccard_similarity.pdf',fig_dir),p1,base_aspect_ratio=3,base_height=3)
-
+save_plot(sprintf('%s/jaccard_similarity.pdf',fig_dir),p1,base_aspect_ratio=2,base_height=3)
+saveRDS(list(jaccard=jaccard,color_map=color_map,p1=p1),sprintf('%s/jaccard.rds',out_dir))
 
 

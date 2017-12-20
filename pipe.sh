@@ -80,22 +80,7 @@ bash genotype/biallelic_phasing_no_ref/biallelic_phasing_no_ref_pipe.sh
 bash genotype/merge52and15/merge.ar2-0.4.sh 
 
 #--------------- RNAseq ----------------# 
-# Setup: 
-mkdir ../data/rnaseq2
-
-
-# Preprocessing:
-bash rnaseq/preprocess/get_rnaseq_data.sh
-bash rnaseq/preprocess/sort_and_index.sh
-bash rnaseq/preprocess/quickcheck.sh
-bash rnaseq/preprocess/RNAseQC.sh
-bash rnaseq/preprocess/copy_rpkm.sh
-bash rnaseq/preprocess/combine_rpkm.sh
-Rscript rnaseq/preprocess/filter_rpkm.R 0.1 10 ../processed_data/rnaseq/preprocess/combine_rpkm/combined.rpkm ../processed_data/rnaseq/preprocess/combine_rpkm/combined.filter.rpkm
-
-
-# Quality control:
-Rscript rnaseq/quality_control/sample_correlation.R
+bash rnaseq/rnaseq_pipe.sh
 
 
 #----------------- RNA-WGS match -------------#
@@ -197,52 +182,6 @@ scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160603
 processed_data=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603
 figures=/srv/persistent/bliu2/HCASMC_eQTL/figures/160603
 mkdir $scripts $processed_data $figures
-
-
-# copy dASE RNAseq alignements from valk: 
-bash $scripts/copy_rnaseq_from_valk.sh \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments/sample_list.txt
-
-# rename dASE RNAseq samples: 
-bash $scripts/rename_rnaseq_samples.sh \
-	$scripts/rename_rnaseq_samples.map.txt \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments/
-
-# run RNAseQC: 
-cp 160517_run_RNAseQC.sh 160603/run_RNAseQC.sh
-bash $scripts/run_RNAseQC.sh \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments
-
-
-# combine rpkms from each sample to two files,
-# one for fbs and one for sf samples 
-cp 160527/combine_rpkm.sh $scripts
-bash $scripts/combine_rpkm.sh \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/rpkm \
-	$processed_data/rpkm
-
-
-# copy rpkm to the rpkm folder:
-bash $scripts/copy_rpkm.sh \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments \
-	/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/rpkm
-
-
-# prepare GTEx and hcasmc rpkm files (all genes): 
-mkdir $processed_data/rpkm
-bash $scripts/prepare_gtex_rpkm.sh $processed_data/rpkm
-ln ../processed_data/160527/combined.rpkm $processed_data/rpkm/hcasmc.rpkm
-
-
-# combine GTEx and HCASMC rpkm files: 
-# subset to > 0.1 rpkm > 10 individuals: 
-# log2(x+2) transform
-Rscript $scripts/combine_and_filter_rpkm.R \
-	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/sample_list.txt \
-	/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined \
-	0.1 \
-	10 
 
 # hierarchical clustering:
 Rscript $scripts/hclust.R \

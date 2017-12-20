@@ -1,5 +1,6 @@
-dst_dir=$1
-sample_list=$2
+dst_dir=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments
+sample_list=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments/sample_list.txt
+
 while read dir; do
 	echo $dir
 	[[ ! -d $dst_dir/$dir ]] && mkdir -p $dst_dir/$dir

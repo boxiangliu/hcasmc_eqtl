@@ -1,8 +1,6 @@
 #!/bin/bash 
-src=$1
-dst=$2
 src=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/rpkm
-dst=../processed_data/160603/rpkm
+dst=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/rpkm
 
 # fbs samples:
 tail -n +3 $src/1051601_fbs/genes.rpkm | cut -f1 > $dst/dase.fbs.rpkm

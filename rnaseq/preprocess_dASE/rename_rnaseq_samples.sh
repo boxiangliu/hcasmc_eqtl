@@ -1,6 +1,6 @@
 #!/bin/bash
-input=$1
-dir=$2
+input=rnaseq/preprocess_dASE/rename_rnaseq_samples.map.txt
+dir=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments/
 while read line; do 
 	line=($line)
 	old=${line[0]}

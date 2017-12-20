@@ -13,7 +13,7 @@ fig_dir='../figures/finemap/locuszoom/locuscatter/'
 if (!dir.exists(out_dir)){dir.create(out_dir,recursive=TRUE)}
 if (!dir.exists(fig_dir)){dir.create(fig_dir,recursive=TRUE)}
 
-read_metal=function(in_fn,marker_col,pval_col){
+read_metal=function(in_fn,marker_col='rsid',pval_col='pval'){
 	if (is.character(in_fn)){
 		if (grepl('.gz',in_fn)){
 			d=fread(sprintf('gunzip -c %s',in_fn))
@@ -161,12 +161,12 @@ make_locuszoom=function(metal,title,ld,color,shape,size){
 
 main=function(in_fn1,marker_col1='rsid',pval_col1='pval',title1='eQTL',
 	in_fn2,marker_col2='rsid',pval_col2='pval',title2='GWAS',
-	snp=NULL,fig_fn='1.pdf'){
+	snp=NULL,fig_fn='1.pdf',chr=get_chr(in_fn1)){
 
 	d1=read_metal(in_fn1,marker_col1,pval_col1)
 	d2=read_metal(in_fn2,marker_col2,pval_col2)
 
-	chr=get_chr(in_fn1)
+	# chr=get_chr(in_fn1)
 	merged=merge(d1,d2,by='rsid',suffixes=c('1','2'),all=FALSE)
 	ld=calc_LD(merged$rsid,chr,'EUR',out_dir)
 
@@ -216,4 +216,19 @@ main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pva
 	snp='rs2327429',
 	fig_fn=sprintf('%s/ENSG00000118526.6_TCF21_Howson.pdf',fig_dir))
 
+# PDGFRA:
+eqtl=read_metal('/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr4/ENSG00000134853.7_PDGFRA.pval.txt')
+eqtl=eqtl[round(nrow(eqtl)/2):nrow(eqtl)]
 
+main(in_fn1=eqtl,
+	in_fn2=ukbb,
+	snp='rs13134452',
+	fig_fn=sprintf('%s/ENSG00000134853.7_PDGFRA_UKBB.pdf',fig_dir),
+	chr=4)
+
+
+main(in_fn1=eqtl,
+	in_fn2='/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/howson_2017/Howson-JMM_CHD_Mixed_2017.norm.in1kgp3.txt',pval_col2='p',
+	snp=NULL,
+	fig_fn=sprintf('%s/ENSG00000134853.7_PDGFRA_Howson.pdf',fig_dir),
+	chr=4)

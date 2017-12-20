@@ -1,8 +1,6 @@
 #!/bin/bash 
-src=$1
-dst=$2
-# src=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/alignments/
-# dst=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq2/rpkm
+src=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/alignments/
+dst=/srv/persistent/bliu2/HCASMC_eQTL/data/rnaseq_dase/rpkm/
 
 
 samples=($(ls -d $src/*/))

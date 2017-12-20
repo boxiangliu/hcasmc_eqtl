@@ -48,21 +48,15 @@ get_hcasmc_eqtl=function(in_dir,gene_id,snp_id){
 }
 
 
-
-gtex_eqtl=get_gtex_eqtl(in_dir,gene_id,snp_id)
-hcasmc_eqtl=get_hcasmc_eqtl(in_dir,gene_id,snp_id)
-eqtl=rbind(gtex_eqtl,hcasmc_eqtl)
-eqtl[,ci:=1.96*se]
-
 make_forest_plot=function(eqtl,fig_dir,gene_id,snp_id){
 	setorder(eqtl,beta)
 	eqtl[,tissue:=factor(tissue,levels=tissue)]
 	pdf(sprintf('%s/%s_%s_forest.pdf',fig_dir,gene_id,snp_id))
 	p=ggplot(eqtl,aes(y=beta,ymin=beta-ci,ymax=beta+ci,x=tissue))+geom_pointrange()+coord_flip()+geom_hline(yintercept=0,color='Red',linetype=2)
 	print(p)
-	dev.off()	
+	dev.off()
 }
-make_forest_plot(eqtl,fig_dir,gene_id,snp_id)
+
 
 make_pval_plot=function(eqtl,fig_dir,gene_id,snp_id){
 	setorder(eqtl,pval)
@@ -72,5 +66,12 @@ make_pval_plot=function(eqtl,fig_dir,gene_id,snp_id){
 	print(p)
 	dev.off()
 }
+
+gtex_eqtl=get_gtex_eqtl(in_dir,gene_id,snp_id)
+hcasmc_eqtl=get_hcasmc_eqtl(in_dir,gene_id,snp_id)
+eqtl=rbind(gtex_eqtl,hcasmc_eqtl)
+eqtl[,ci:=1.96*se]
+
+
 
 make_pval_plot(eqtl,fig_dir,gene_id,snp_id)

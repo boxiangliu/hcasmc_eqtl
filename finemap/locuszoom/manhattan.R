@@ -1,50 +1,41 @@
 library(data.table)
 library(cowplot)
 library(ggrepel)
+# devtools::install_github('boxiangliu/manhattan')
+library(manhattan)
 
 smr_fn='../processed_data/finemap/smr/UKBB_HCASMC_smr_results.out.smr'
-fm_fn='/users/mgloud/projects/brain_gwas/output/2017-11-13_08-51-41_hcasmc_full/manhattan/UKBB_GWAS1KG_EXOME_CAD_SOFT_META_PublicRelease_300517_txt_gz_hcasmc_eqtls_txt_gz.txt'
+fm_fn='../processed_data/finemap/finemap_mike/UKBB_GWAS1KG_EXOME_CAD_SOFT_META_PublicRelease_300517_txt_gz_hcasmc_eqtls_txt_gz.txt'
 fig_dir='../figures/finemap/locuszoom/manhattan/'
 if(!dir.exists(fig_dir)){dir.create(fig_dir,recursive=TRUE)}
 
-smr=fread(smr_fn)[,list(chr=ProbeChr,gene_name=Gene,pos=Probe_bp,p=-log10(p_SMR),method='SMR')]
-fm=fread(fm_fn)[,list(chr=chrom,pos,gene_name=gene,p=-clpp_score,method='eCAVIAR')]
+read_finemap=function(fm_fn){
+	fm=fread(fm_fn)[,list(chrom=chrom,pos,gene_name=gene,y=clpp_score,method='eCAVIAR')]
+	fm[,rank:=rank(-y,ties.method='random'),by='gene_name']
+	fm=fm[rank==1]
+	fm$rank=NULL
+	return(fm)
+}
 
+
+smr=fread(smr_fn)[,list(chrom=ProbeChr,gene_name=Gene,pos=Probe_bp,y=log10(p_SMR),method='SMR')]
+fm=read_finemap(fm_fn)
 
 
 data=rbind(smr,fm)
-data[,color:=ifelse((chr%%2)&method=='SMR','color1',NA)]
-data[,color:=ifelse((!chr%%2)&method=='SMR','color2',color)]
-data[,color:=ifelse((chr%%2)&method=='eCAVIAR','color3',color)]
-data[,color:=ifelse((!chr%%2)&method=='eCAVIAR','color4',color)]
+
 data[,method:=factor(method,level=c('SMR','eCAVIAR'))]
-data[,label:=ifelse(gene_name%in%c('FES','SMAD3','SIPA1','TCF21'),gene_name,'')]
+data[,label:=ifelse( (method=='SMR'&y<log10(5e-5)) | (method=='eCAVIAR'&y>0.05),gene_name,'')]
+data[,chrom:=paste0('chr',chrom)]
 
-dummy=data[,list(range=range(pos)),by='chr']
-window=2e7
-dummy[,pos:=ifelse(range==min(range),range-window,range+window),by=chr]
-dummy[,c('p','color','label'):=list(0,NA,'')]
+dummy=data.table(method=c('SMR','eCAVIAR'),y=c(log10(5e-5),0.05))
 
-
-
-pdf(sprintf('%s/manhattan.pdf',fig_dir),height=4,width=8)
-ggplot(data,aes(pos,p,color=color))+
-	geom_point()+
-	facet_grid(method~chr,scales='free',
-		space='free_x',
-		labeller=labeller(chr=function(x) {ifelse(x%in%c(1:19,21),x,'')}))+
-	theme(axis.text.x=element_blank(),
-		axis.title.x=element_blank(),
-		axis.line.x=element_blank(),
-		axis.ticks.x=element_blank(),
-		panel.spacing=unit(0,'lines'),
-		panel.border=element_blank(),
-		strip.background=element_blank())+
-	geom_blank(data=dummy)+
+p=manhattan(data,build='hg19')+
+	facet_grid(method~.,scale='free_y')+
 	scale_y_continuous(labels=function(x){abs(x)})+
-	ylab(paste('CLPP                 -log10(P)'))+
-	scale_color_manual(values=c(color1='grey',
-		color2='black',color3='grey',color4='black'),guide=FALSE)
-dev.off()
+	geom_text(aes(label=label),hjust=-0.2)+
+	geom_hline(data=dummy,aes(yintercept=y),color='red',linetype=2)+
+	ylab(paste('-log10(P)                 CLPP'))
+save_plot(sprintf('%s/manhattan.pdf',fig_dir),p,base_width=8,base_height=4)
 
 
