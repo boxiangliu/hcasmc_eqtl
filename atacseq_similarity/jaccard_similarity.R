@@ -89,9 +89,10 @@ setorder(jaccard,-jaccard)
 jaccard[,sample:=factor(sample,levels=sample)]
 jaccard[,rank:=rank(-jaccard)]
 
+# Get color map:
 color_map=get_color_map()
 
-
+# Make plot:
 show_n=5
 jaccard[,label:=ifelse( (rank<=show_n) | (rank>(length(jaccard)-show_n)),as.character(sample),'')]
 
@@ -109,6 +110,7 @@ p1=ggplot(jaccard,aes(sample,jaccard,label=label,color=gtex,shape=life_stage))+
 	scale_shape_discrete(name='')+
 	theme(legend.position=c(0.8, 0.2))
 
+# Save plot and data:
 save_plot(sprintf('%s/jaccard_similarity.pdf',fig_dir),p1,base_aspect_ratio=2,base_height=3)
 saveRDS(list(jaccard=jaccard,color_map=color_map,p1=p1),sprintf('%s/jaccard.rds',out_dir))
 

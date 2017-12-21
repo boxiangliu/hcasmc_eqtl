@@ -113,47 +113,12 @@ bash rasqual/calc_pval.wrapper.sh
 bash rasqual/merge_output.sh
 bash rasqual/adjust_pvalue.sh
 
-
-
-# concatenate all priortized genes: 
-bash rasqual/rasqual_output2eCAVIAR_input.sh \
-../processed_data/rasqual/prioritized_genes.output_file.txt \
-../processed_data/rasqual/merged_output/prioritized_genes.allpairs.txt
-
-
-
-# make locuszoom for TCF21 at rs2327429:
-mkdir ../figures/rasqual/locuszoom/
-cut -f2,26 ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.pval.txt > ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.metal
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.metal --pvalcol pval --markercol rsid --refsnp rs2327429 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (TCF21)" --prefix ../figures/rasqual/locuszoom/TCF21_eQTL
-
-
-# make locuszoom for TCF21 at rs12190287:
-locuszoom --metal ../processed_data/rasqual/output/ENSG00000118526.6_TCF21_w2000000.metal --pvalcol pval --markercol rsid --refsnp rs12190287 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="eQTL (TCF21)" --prefix ../figures/rasqual/locuszoom/TCF21_eQTL
-
-
-# make locuszoom for GWAS at rs12190287:
-locuszoom --metal $data/gwas/cad.add.160614.website.metal.txt --pvalcol p_dgc --markercol markername --refsnp rs12190287 --flank 1MB --source 1000G_March2012 --build hg19 --pop EUR title="GWAS (rs12190287)" --prefix ../figures/rasqual/locuszoom/TCF21_gwas
-
+# RASQUAL eQTL enrichment in ATACseq regions:
+bash rasqual/atacseq_enrichment.R
 
 
 #---------------- Compare RASQUAL and fastQTL ------------# 
-# Setup: 
-mkdir compare_rasqual_and_fastqtl ../processed_data/compare_rasqual_and_fastqtl
-
-# Subset the gene, SNP, p-value, q-value, and effect size column of fastQTL and RASQUAL result: 
-bash compare_rasqual_and_fastqtl/subset.sh
-
-# Calculate the percentage of RASQUAL eQTL also discovered fastQTL: 
-bash compare_rasqual_and_fastqtl/compare.R
-
-# Replication in GTEx:
-bash compare_rasqual_and_fastqtl/define_gtex_eqtl.sh
-bash compare_rasqual_and_fastqtl/gtex_replication.R
-
-# Overlap with ATACseq:
-bash compare_rasqual_and_fastqtl/top_snp_per_gene.R
-bash compare_rasqual_and_fastqtl/atacseq_overlap.R
+bash compare_rasqual_and_fastqtl/compare_rasqual_and_fastqtl_pipe.sh
 
 
 #----- trans eQTL -------
@@ -1207,6 +1172,9 @@ bash atacseq/count/define_peak.sh
 bash atacseq/rasqual/make_input.sh
 bash atacseq/rasqual/rasqual.wrapper.sh
 
+
+#------------ ATACseq similarity -------------#
+bash atacseq_similarity_pipe.sh
 
 
 #------------ GWAS ATACseq overlap -------------#

@@ -12,14 +12,15 @@ deseq2_fn='../processed_data/differential_expression/DESeq2/dds.rds'
 noiseq_fn='../processed_data/differential_expression/noiseq/noiseq.rds'
 tissue_list=c("Artery - Aorta","Artery - Coronary","Artery - Tibial", 'Heart - Atrial Appendage', 'Heart - Left Ventricle','Cells - Transformed fibroblasts')
 fig_dir='../figures/intersect_NOISeq_DESeq2/'
+out_dir='../processed_data/intersect_NOISeq_DESeq2/'
 if (!dir.exists(fig_dir)) {dir.create(fig_dir)}
+if (!dir.exists(out_dir)) {dir.create(out_dir)}
 
 # Functions:
 read_deseq2_result=function(fn){
 	deseq2=readRDS(fn)
 	return(deseq2)
 }
-
 
 
 read_noiseq_result=function(fn){
@@ -55,6 +56,7 @@ merge_noiseq_and_deseq2=function(noiseq,deseq2,tissue){
 
 	return(merged)
 }
+
 
 count_de_genes=function(merged,M=c('up','down'),FDR=0.05){
 	M=match.arg(M)
@@ -114,3 +116,5 @@ p2=plot_sig_genes(n_sig,add_label=FALSE,tissue_set=tissue_list)
 pdf(sprintf('%s/n_sig.pdf',fig_dir))
 p1;p2
 dev.off()
+
+saveRDS(list(p1=p1,p2=p2),sprintf('%s/fig.rda',out_dir))
