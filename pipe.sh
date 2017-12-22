@@ -121,6 +121,10 @@ bash rasqual/atacseq_enrichment.R
 bash compare_rasqual_and_fastqtl/compare_rasqual_and_fastqtl_pipe.sh
 
 
+#----------- Subsample -------------#
+bash 160816/subsample_pipe.sh 
+
+
 #----- trans eQTL -------
 # run matrix eQTL to map trans eQTL:
 covariates=$processed_data/find_optimum_num_PEER_factors_matrixeqtl/covariates.matrixeqtl.pc3.peer8.tsv
@@ -140,36 +144,6 @@ mkdir $processed_data/sherlock
 awk 'BEGIN {OFS="\t"} {print $2,$1,$5}' $processed_data/trans.txt > $processed_data/sherlock/trans.sherlock.txt
 awk 'BEGIN {OFS="\t"} {print $2,$1,$5}' $processed_data/trans.txt > $processed_data/sherlock/trans.sherlock.txt
 zcat $processed_data/find_optimum_num_PEER_factors_matrixeqtl/pc3.peer8.2.cis.txt.gz | awk 'BEGIN {OFS="\t"} {print $2,$1,$5}' > $processed_data/sherlock/cis.sherlock.txt
-
-# 16/06/03:
-# setup: 
-scripts=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160603
-processed_data=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603
-figures=/srv/persistent/bliu2/HCASMC_eQTL/figures/160603
-mkdir $scripts $processed_data $figures
-
-# hierarchical clustering:
-Rscript $scripts/hclust.R \
-	-rpkm=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.rpkm \
-	-coldata=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.col \
-	-figure=/srv/persistent/bliu2/HCASMC_eQTL/figures/160603/hclust.pdf
-
-# multidimensional scaling (2D):
-Rscript $scripts/mds.R \
-	-rpkm=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.rpkm \
-	-coldata=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.col \
-	-tissue_names=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160603/collapsed_tissue_names.txt \
-	-figure=/srv/persistent/bliu2/HCASMC_eQTL/figures/160603/
-
-# multidimensional scaling (3D).
-# Since rgl is not installed on durga, the script needs to be run locally. 
-# Rscript $scripts/mds.3D.R \
-# 	-rpkm=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.rpkm \
-# 	-coldata=/srv/persistent/bliu2/HCASMC_eQTL/processed_data/160603/combined.col \
-# 	-tissue_names=/srv/persistent/bliu2/HCASMC_eQTL/scripts/160603/collapsed_tissue_names.txt \
-# 	-figure=/srv/persistent/bliu2/HCASMC_eQTL/figures/160603/
-
-
 
 
 
@@ -509,55 +483,9 @@ Rscript $scripts/160801/DESeq2_HCASMC_residuals.R
 mkdir $scripts/160805 $processed_data/160805 $figures/160805
 
 
-# find the best combination of genotype PCs and PEER factors:
-cp $scripts/160629/run_fastqtl.nominal.wrap.sh $scripts/160805/run_fastqtl.wrap.sh
-cp $scripts/160530/find_optimal_num_PEER_factors.sh $scripts/160805
-bash $scripts/160805/find_optimal_num_PEER_factors.sh 
-cp $scripts/160530/plot_num_egene_vs_cov.R $scripts/160805/
-Rscript $scripts/160805/plot_num_egene_vs_cov.R
-
-
-# create covariate file: 
-Rscript $scripts/160530/combine_covariates.R \
-	--genotype_pc=$processed_data/160519_genotype_PCA/genotype_pcs.52samples.tsv \
-	--peer=$processed_data/160527/factors.tsv \
-	--sample_info=$data/sample_info/sample_info.xlsx \
-	--output=$processed_data/160805/covariates.pc4.peer8.gender_letter.tsv \
-	--gender_coding=letter \
-	--num_geno_pc=4 \
-	--num_peer_factor=8
-bgzip $processed_data/160805/covariates.pc4.peer8.gender_letter.tsv
-
-
-# nominal pass to map eQTLs: 
-bash $scripts/160805/run_fastqtl.wrap.sh \
-	$data/joint3/recalibrated_biallelic_variants.beagle.rename.dr2.hwe.maf.vcf.id.gz \
-	$processed_data/160530/combined.filter.norm.bed.gz \
-	$processed_data/160805/covariates.pc4.peer8.gender_letter.tsv.gz \
-	$processed_data/160805/hcasmc.eqtl.pc4.peer8.txt \
-	"--window 1e6"
 
 # select variants with p-value less than 1e-3: 
 zcat $processed_data/160805/hcasmc.eqtl.pc4.peer8.txt.gz | awk 'BEGIN{OFS="\t";print "snp","pval"}{if ($4<1e-3) {print $2,$4}}' >  $processed_data/160805/hcasmc.eqtl.pc4.peer8.pval1e-3.txt
-
-
-# run p-value correction:
-Rscript $scripts/160629/fastqtl_nominal_pvalue_corrections.R $processed_data/160805/hcasmc.eqtl.pc4.peer8.txt $processed_data/160805/hcasmc.eqtl.pc4.peer8.padj.txt
-
-
-# plot the p-values: 
-Rscript $scripts/160629/qqplot_pvalue.R \
-	$processed_data/160805/hcasmc.eqtl.pc4.peer8.txt \
-	$figures/160805/hcasmc.eqtl.qqplot.pdf \
-	$figures/160805/hcasmc.eqtl.histogram.pdf
-
-
-# plot the number of eQTLs vs distance to TSS: 
-cp $scripts/160629/plot_sqtl_vs_distance.R $scripts/160805/plot_eqtl_vs_distance.R
-Rscript $scripts/160805/plot_eqtl_vs_distance.R \
-	-eqtl_file=$processed_data/160805/hcasmc.eqtl.pc4.peer8.padj.txt \
-	-num_eqtl_vs_dist=$figures/160805/num_sig_eqtl_vs_dist.pdf \
-	-pval_vs_dist=$figures/160805/eqtl_pval_vs_dist.pdf
 
 
 # permutation pass to map eQTLs: 
@@ -748,84 +676,6 @@ parallel -a $data/joint3/sample_list.txt -j20 \
 	{} \
 	$data/joint3/bed_fa/{}
 
-
-#### 160816
-#### eQTL mapping on subsampled GTEx tissues:
-# setup: 
-mkdir $scripts/160816 $processed_data/160816 $figures/160816
-
-
-# copy fastqtl subsampling code: 
-cp /srv/persistent/bliu2/gtexciseqtls/subsampling/nominal.pass.subsamples.v6p.{core.sh,sh} $scripts/160816
-cp /srv/persistent/bliu2/gtexciseqtls/subsampling/run_FastQTL_threaded_subsample.py  $scripts/160816
-cp /srv/persistent/bliu2/gtexciseqtls/subsampling/subsample.lists.by.tissue.R $scripts/160816
-
-
-# subset to covariates to first 10: 
-bash $scripts/160816/subset_covariates.sh 
-
-
-# subsample tissues: 
-Rscript $scripts/160816/subsample.lists.by.tissue.R
-
-
-# run fastqtl nominal pass on subsampled GTEx tissues: 
-bash $scripts/160816/nominal.pass.subsamples.v6p.sh
-
-
-# run fastqtl permutation pass on subsampled GTEx tissues: 
-bash $scripts/160816/permutation.pass.subsamples.v6p.sh
-
-
-#### replication of HCASMC eQTLs in GTEx tissues: 
-# select HCASMC eQTLs with FDR < 0.05: 
-cat ../processed_data/160805/hcasmc.eqtl.pc4.peer8.perm.padj.txt | \
-awk 'BEGIN{OFS="\t"} {if ($19<=0.05) {print $1,$6"_b37"}}' | \
-sed "s/chr//" > ../processed_data/160816/hcasmc.eqtl.pc4.peer8.perm.padj.fdr05.txt
-
-
-# subset GTEx tissue to association significant in HCASMC:
-mkdir $processed_data/160816/replication/
-parallel -a $data/gtex/gtex.v6p.eqtl.tissues.txt -j44 \
-python $scripts/160816/subset_eQTLs.py \
-../processed_data/160816/hcasmc.eqtl.pc4.peer8.perm.padj.fdr05.txt \
-$data/gtex/v6p/v6p_fastQTL_allpairs_FOR_QC_ONLY/{}_Analysis.v6p.FOR_QC_ONLY.allpairs.txt.gz \
-../processed_data/160816/replication/{}_Analysis.v6p.FOR_QC_ONLY.allpairs.sig_in_HCASMC.txt
-
-
-# calculate pi1 statistics for GTEx tissues
-parallel -a $data/gtex/gtex.v6p.eqtl.tissues.txt -j44 \
-Rscript $scripts/160816/pi1_calc.R \
-../processed_data/160816/replication/{}_Analysis.v6p.FOR_QC_ONLY.allpairs.sig_in_HCASMC.txt \
-{} > ../processed_data/160816/replication/pi1.txt
-
-
-# plot pi1 statistic:
-Rscript $scripts/160816/pi1_plot.R \
-../processed_data/160816/replication/pi1.txt \
-../figures/160816/pi1.pdf
-
-
-# subset subsampled GTEx tissue to association significant in HCASMC:
-mkdir $processed_data/160816/replication_subsample/
-parallel -a $data/gtex/gtex.v6p.eqtl.tissues.txt -j44 \
-python $scripts/160816/subset_eQTLs.py \
-../processed_data/160816/hcasmc.eqtl.pc4.peer8.perm.padj.fdr05.txt \
-$processed_data/160816/subsampling/{}/{}_52.allpairs.txt.gz \
-../processed_data/160816/replication_subsample/{}_52.allpairs.sig_in_HCASMC.txt
-
-
-# calculate pi1 statistics for GTEx tissues
-parallel -a $data/gtex/gtex.v6p.eqtl.tissues.txt -j44 \
-Rscript $scripts/160816/pi1_calc.R \
-../processed_data/160816/replication_subsample/{}_52.allpairs.sig_in_HCASMC.txt \
-{} > ../processed_data/160816/replication_subsample/pi1.txt
-
-
-# plot pi1 statistic:
-Rscript $scripts/160816/pi1_plot.R \
-../processed_data/160816/replication_subsample/pi1.txt \
-../figures/160816/pi1_subsample.pdf
 
 
 #### 160824
