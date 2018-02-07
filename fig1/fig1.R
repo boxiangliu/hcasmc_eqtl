@@ -34,7 +34,16 @@ fig1d=temp[['p']]
 
 
 # Fig. 1:
-pdf(sprintf('%s/fig1.pdf',out_dir),height=8,width=14)
+pdf(sprintf('%s/fig1.pdf',out_dir),height=7.5,width=15)
+grid.arrange(arrangeGrob(fig1a,
+	arrangeGrob(fig1b,
+		arrangeGrob(fig1c,fig1d,ncol=2),
+		arrangeGrob(rectGrob()),
+		ncol=1),ncol=2))
+dev.off()
+
+setEPS()
+postscript(sprintf('%s/fig1.eps',out_dir),height=7.5,width=15)
 grid.arrange(arrangeGrob(fig1a,
 	arrangeGrob(fig1b,
 		arrangeGrob(fig1c,fig1d,ncol=2),
