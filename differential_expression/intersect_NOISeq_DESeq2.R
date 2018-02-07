@@ -111,10 +111,12 @@ n_sig=foreach(tissue=tissue_list,.combine='rbind')%dopar%{
 
 p1=plot_sig_genes(n_sig,add_label=FALSE)+
 	scale_x_discrete(labels=c('Coronary artery','Fibroblast','Heart - left ventricle'))
+p1b=plot_sig_genes(n_sig,add_label=FALSE,tissue_set=c("Artery - Coronary","Cells - Transformed fibroblasts"))+
+	scale_x_discrete(labels=c('Coronary artery','Fibroblast'))
 p2=plot_sig_genes(n_sig,add_label=FALSE,tissue_set=tissue_list)
 
 pdf(sprintf('%s/n_sig.pdf',fig_dir))
-p1;p2
+p1;p1b;p2
 dev.off()
 
-saveRDS(list(p1=p1,p2=p2),sprintf('%s/fig.rda',out_dir))
+saveRDS(list(p1=p1,p1b=p1b,p2=p2),sprintf('%s/fig.rda',out_dir))

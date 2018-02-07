@@ -125,6 +125,14 @@ bash compare_rasqual_and_fastqtl/compare_rasqual_and_fastqtl_pipe.sh
 bash 160816/subsample_pipe.sh 
 
 
+#----------------- Metasoft -----------------
+bash eqtl/metasoft/metasoft_pipe.sh
+
+
+#---------- HCASMC specific eQTLs -------------#
+bash hcasmc_specific_eqtl/hcasmc_specific_eqtl_pipe.sh
+
+
 #----- trans eQTL -------
 # run matrix eQTL to map trans eQTL:
 covariates=$processed_data/find_optimum_num_PEER_factors_matrixeqtl/covariates.matrixeqtl.pc3.peer8.tsv
@@ -515,73 +523,6 @@ gzip $processed_data/160805/hcasmc.eqtl.pc4.peer8.txt
 Rscript $scripts/160805/format_hcascm_eqtl.R # output $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt
 
 
-#----------------- Metasoft -----------------
-## Run Metasoft (full sample, select eQTL with p<1e-3): 
-# Copy HCASMC eQTL data to appropriate location: 
-gzip $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt
-ln -s $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt.gz $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY/HCASMC_Analysis.v6p.FOR_QC_ONLY.allpairs.txt.gz
-
-# Concatenate eQTL result for all tissue, append tissue name, and sort according to gene ID and SNP: 
-bash $scripts/160805/concatenate_eqtl_tissues.sh 
-
-# Make input file for Metasoft:
-mkdir $processed_data/160805/metasoft_input/
-cat $processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python $scripts/160805/gen_metasoft_input.py > $processed_data/160805/metasoft_input/metasoft_input.txt
-
-# Split metasoft input by chromosome (to reduce memory footprint for next step): 
-bash $scripts/160805/split_metasoft_input_by_chr.sh
-
-# Run METASOFT:
-mkdir $processed_data/160805/metasoft_output/
-parallel -j12 bash $scripts/160805/metasoft.core.sh $processed_data/160805/metasoft_input/metasoft_input.{}.txt $processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.txt $processed_data/160805/metasoft_output/metasoft_output.{}.mcmc.log ::: {1..22} X
-
-# merge metasoft output: 
-head -n1 $processed_data/160805/metasoft_output/metasoft_output.1.mcmc.txt > $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
-cat $processed_data/160805/metasoft_output/metasoft_output.{1..22}.mcmc.txt | grep -v RSID >> $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
-
-
-## Run Metasoft (subsampled to 52, select eQTL with p<1e-3): 
-# copy HCASMC eQTL data to appropriate location:
-mkdir $processed_data/160816/subsampling/HCASMC
-ln -s $processed_data/160805/hcasmc.eqtl.pc4.peer8.b37.txt.gz $processed_data/160816/subsampling/HCASMC/HCASMC_52.allpairs.txt.gz
-
-# Concatenate eQTL result for all tissue, append tissue name, and sort according to gene ID and SNP: 
-bash $scripts/160805/concatenate_eqtl_tissues.subsample.sh 
-
-# Generate Metasoft input file:
-mkdir $processed_data/160805/metasoft_input_subsample_52/ 
-cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160816/subsampling/All_Tissues.allpairs.sorted.txt | python $scripts/160805/gen_metasoft_input.py > $processed_data/160805/metasoft_input_subsample_52/metasoft_input.txt
-
-# Split metasoft input by chromosome: 
-parallel 'grep "_{}_" ../processed_data/160805/metasoft_input_subsample_52/metasoft_input.txt > ../processed_data/160805/metasoft_input_subsample_52/metasoft_input.{}.txt' ::: {1..22} X
-
-# Run METASOFT:
-mkdir $processed_data/160805/metasoft_output_subsample_52
-parallel bash $scripts/160805/metasoft.core.sh $processed_data/160805/metasoft_input_subsample_52/metasoft_input.{}.txt $processed_data/160805/metasoft_output_subsample_52/metasoft_output.{}.mcmc.txt $processed_data/160805/metasoft_output_subsample_52/metasoft_output.{}.mcmc.log ::: {1..22} X
-
-# Merge Metasoft output: 
-head -n1 $processed_data/160805/metasoft_output/metasoft_output.1.mcmc.txt > $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
-cat $processed_data/160805/metasoft_output/metasoft_output.{1..22}.mcmc.txt | grep -v RSID >> $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
-
-## Run Metasoft (subsample to 52, select eQTL with p<1e-2)
-# generate metasoft input file:
-mkdir $processed_data/160805/metasoft_input_subsample_52_p1e-2/
-cat /srv/persistent/bliu2/HCASMC_eQTL/processed_data/160816/subsampling/All_Tissues.allpairs.sorted.txt | python $scripts/160805/gen_metasoft_input.py 1e-2 > $processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.txt
-
-# split Metasoft input by chromosome: 
-parallel 'grep "_{}_" ../processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.txt > ../processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.{}.txt' ::: {1..22} X
-
-# run METASOFT:
-mkdir $processed_data/160805/metasoft_output_subsample_52_p1e-2
-parallel bash $scripts/160805/metasoft.core.sh $processed_data/160805/metasoft_input_subsample_52_p1e-2/metasoft_input.{}.txt $processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.{}.mcmc.txt $processed_data/160805/metasoft_output_subsample_52_p1e-2/metasoft_output.{}.mcmc.log ::: {1..22} X
-
-# Merge Metasoft output: 
-head -n1 $processed_data/160805/metasoft_output/metasoft_output.1.mcmc.txt > $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
-cat $processed_data/160805/metasoft_output/metasoft_output.{1..22}.mcmc.txt | grep -v RSID >> $processed_data/160805/metasoft_output/metasoft_output.1_22.mcmc.txt
-
-# plot heatmap of m-values: 
-Rscript $scripts/160805/plot_mvalue_heatmap.R 
-
 
 #### 160811:
 # fine maping by inspection: 
@@ -947,47 +888,6 @@ bash $scripts/egenes_vs_sample_size/count_num_egenes_subsampled_52.sh
 Rscript $scripts/egenes_vs_sample_size/plot_num_egenes_subsampled_52.R
 
 #### end eGenes vs sample size
-
-#---------- HCASMC specific eQTLs -------------#
-# setup:
-mkdir hcasmc_specific_eqtl ../processed_data/hcasmc_specific_eqtl ../figures/hcasmc_specific_eqtl
-
-
-# find HCASMC specific eQTLs (full sample): 
-parallel -j5 Rscript ../scripts/hcasmc_specific_eqtl/find_tissue_specific_eqtls.R ../processed_data/160805/metasoft_output/metasoft_output.{2}.mcmc.txt ../figures/hcasmc_specific_eqtl/fullsample/{1}/ ../processed_data/hcasmc_specific_eqtl/fullsample/{1}/stat.{2}.txt ../processed_data/hcasmc_specific_eqtl/fullsample/{1}/tissue_specific_eqtl.{2}.txt {1} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt ::: {1..22}
-
-
-# find tisue specific eQTLs (subsampled to 52):
-parallel -j5 Rscript ../scripts/hcasmc_specific_eqtl/find_tissue_specific_eqtls.R ../processed_data/160805/metasoft_input_subsample_52/metasoft_output.{2}.mcmc.txt ../figures/hcasmc_specific_eqtl/subsample_52/{1}/ ../processed_data/hcasmc_specific_eqtl/subsample_52/{1}/stat.{2}.txt ../processed_data/hcasmc_specific_eqtl/subsample_52/{1}/tissue_specific_eqtl.{2}.txt {1} :::: $data/gtex/gtex.v6p.eqtl.tissues.with_hcasmc.txt ::: {1..22}
-
-
-# Plot examples of HCASMC-specific eQTL:
-bash hcasmc_specific_eqtl/plot_examples_of_hcasmc_eqtl.sh
-
-
-# make manhattan plot: 
-Rscript hcasmc_specific_eqtl/manhattan.R
-
-
-# Calculate eQTL specificity using information theory (fill NAs with 1e-8):
-cat ../processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python $scripts/hcasmc_specific_eqtl/calc_eqtl_specificity.py ../processed_data/hcasmc_specific_eqtl/eqtl_specificity_index/eqtl.1e-8.txt.gz ../processed_data/hcasmc_specific_eqtl/eqtl_specificity_index/specificity.1e-8.txt.gz 1e-8
-
-
-# Calculate eQTL specificity using information theory (fill NAs using mean imputation):
-cat ../processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python $scripts/hcasmc_specific_eqtl/calc_eqtl_specificity.py ../processed_data/hcasmc_specific_eqtl/eqtl_specificity_index/eqtl.mean.txt.gz ../processed_data/hcasmc_specific_eqtl/eqtl_specificity_index/specificity.mean.txt.gz -1
-
-
-# select HCASMC specific eQTL based on QSI, and plot distribution of their p-values: 
-bash hcasmc_specific_eqtl/plot_hcasmc_specific_eqtls_pval.sh
-
-
-# naively select HCASMC specific eQTL: 
-cat ../processed_data/160805/v6p_fastQTL_allpairs_FOR_QC_ONLY2/All_Tissues.allpairs.sorted.txt | python hcasmc_specific_eqtl/naive_select.py > ../processed_data/hcasmc_specific_eqtl/hcasmc_specific_eqtl.naive_select.txt
-
-
-# Make forest plot: 
-bash hcasmc_specific_eqtl/plot_hcasmc_specific_eqtls.sh 
-
 
 
 

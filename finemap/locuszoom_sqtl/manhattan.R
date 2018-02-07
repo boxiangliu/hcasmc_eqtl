@@ -1,0 +1,76 @@
+library(data.table)
+library(cowplot)
+library(ggrepel)
+# devtools::install_github('boxiangliu/manhattan')
+library(manhattan)
+library(stringr)
+library(leafcutter)
+
+smr_fn='../processed_data/finemap/smr/UKBB_HCASMC_sqtl_smr_results5e-05.out.smr'
+fm_fn='../processed_data/finemap/finemap_mike/UKBB_GWAS1KG_EXOME_CAD_SOFT_META_PublicRelease_300517_txt_gz_finemap_clpp_status.txt'
+exon_file='/srv/persistent/bliu2/tools/leafcutter/leafcutter/data/gencode19_exons.txt.gz'
+fig_dir='../figures/finemap/locuszoom_sqtl/manhattan/'
+out_dir='../processed_data/finemap/locuszoom_sqtl/manhattan/'
+if(!dir.exists(fig_dir)){dir.create(fig_dir,recursive=TRUE)}
+if(!dir.exists(out_dir)){dir.create(out_dir,recursive=TRUE)}
+
+read_smr=function(smr_fn){
+	fread(smr_fn)[,list(chrom=ProbeChr,clu_name=Gene,pos=Probe_bp,y=log10(p_SMR),gwas_logp=-log10(p_GWAS),sqtl_logp=-log10(p_eQTL),method='SMR')]
+}
+
+read_finemap=function(fm_fn,threshold=5e-5){
+	if (grepl('clpp_status',fm_fn)) {
+		tmp=fread(fm_fn,col.names=c('snp','sqtl_file','gwas_file','clu_name','conditional_level','n_tested_snps','clpp_score','gwas_logp','sqtl_logp'))
+		tmp[,chrom:=str_split_fixed(snp,'_',2)[,1]]
+		tmp[,pos:=as.integer(str_split_fixed(snp,'_',2)[,2])]
+		fm=tmp[grepl('sqtl',sqtl_file),list(chrom,pos,clu_name,y=clpp_score,gwas_logp,sqtl_logp,method='eCAVIAR')]
+	} else {
+		fm=fread(fm_fn)[,list(chrom=chrom,pos,clu_name=gene,y=clpp_score,gwas_logp=gwas_log_pval,sqtl_logp=sqtl_log_pval,method='eCAVIAR')]
+	}
+
+	set.seed(42)
+	fm[,rank:=rank(-y,ties.method='random'),by='clu_name']
+	fm=fm[rank==1]
+	fm$rank=NULL
+	fm=fm[gwas_logp> -log10(threshold)|sqtl_logp> -log10(threshold)]
+	return(fm)
+}
+
+
+assign_gene=function(exon_file,clusters){
+	exons_table     = read.table(exon_file, header=T, stringsAsFactors = F)
+	intron_meta     = get_intron_meta(clusters)
+	exons_table$chr = add_chr(exons_table$chr)
+	intron_meta$chr = add_chr(intron_meta$chr)
+	clu_gene_map    = map_clusters_to_genes(intron_meta, exons_table)
+	clu_map = data.frame(clusters,clu=gsub(':[0-9]+:[0-9]+','',clusters))
+	clu_gene_map = merge(clu_gene_map,clu_map,by='clu')
+	map = clu_gene_map$genes
+	names(map) = clu_gene_map$clusters
+	return(map[clusters])
+}
+
+smr=read_smr(smr_fn)
+smr$gene_name=''
+fm=read_finemap(fm_fn)
+clusters=paste0('chr',gsub('clu:','clu_',gsub('_',':',fm$clu_name)))
+fm$gene_name=assign_gene(exon_file,clusters)
+
+
+data=rbind(smr,fm)
+data[,method:=factor(method,level=c('SMR','eCAVIAR'))]
+data[,label:=ifelse( (y<log10(5e-5)) | (y>0.1),gene_name,'')]
+data[,chrom:=paste0('chr',chrom)]
+
+dummy=data.table(method=c('SMR','eCAVIAR'),y=c(log10(5e-5),0.1))
+
+p=manhattan(data,build='hg19')+
+	facet_grid(method~.,scale='free_y')+
+	scale_y_continuous(labels=function(x){abs(x)})+
+	geom_text(aes(label=label),hjust=1.1)+
+	geom_hline(data=dummy,aes(yintercept=y),color='red',linetype=2)+
+	ylab(paste('-log10(P)                 CLPP'))
+saveRDS(list(data,dummy,p),sprintf('%s/manhattan.rds',out_dir))
+save_plot(sprintf('%s/manhattan.pdf',fig_dir),p,base_width=8,base_height=4)
+
+

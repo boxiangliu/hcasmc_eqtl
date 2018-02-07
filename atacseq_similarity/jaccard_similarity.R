@@ -97,18 +97,20 @@ show_n=5
 jaccard[,label:=ifelse( (rank<=show_n) | (rank>(length(jaccard)-show_n)),as.character(sample),'')]
 
 top5_label=jaccard[rank<=show_n,as.character(sample)]
-bottom5_label=jaccard[rank>=(length(jaccard)-show_n),as.character(sample)]
+bottom5_label=jaccard[rank>(length(jaccard)-show_n),as.character(sample)]
+bottom5_label=str_replace(bottom5_label,'inferior parietal ','')
 
 p1=ggplot(jaccard,aes(sample,jaccard,label=label,color=gtex,shape=life_stage))+
 	geom_point(size=2)+scale_y_log10(breaks=c(0,0.1,0.2,0.3),labels=c(0,0.1,0.2,0.3))+
 	theme(axis.text.x=element_blank(),axis.ticks.x=element_blank())+
 	xlab(sprintf('ENCODE Tissue/Cell Type (n=%i)',nrow(jaccard)))+
 	ylab('Epigenomic Similarity\n(Jaccard Index)')+
-	annotate('text',x=46,y=0.15,label=paste(c('Top 5',top5_label),collapse='\n'))+
-	annotate('text',x=13,y=0.05,label=paste(c('Bottom 5',bottom5_label),collapse='\n'))+
+	annotate('text',x=13,y=0.05,label=paste(c('Top 5',top5_label),collapse='\n'))+
+	annotate('text',x=48,y=0.15,label=paste(c('Bottom 5',bottom5_label),collapse='\n'))+
 	scale_color_manual(values=color_map,guide='none')+
 	scale_shape_discrete(name='')+
 	theme(legend.position=c(0.8, 0.2))
+
 
 # Save plot and data:
 save_plot(sprintf('%s/jaccard_similarity.pdf',fig_dir),p1,base_aspect_ratio=2,base_height=3)

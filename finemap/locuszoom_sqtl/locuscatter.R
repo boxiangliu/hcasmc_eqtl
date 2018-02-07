@@ -8,8 +8,8 @@ library(ggrepel)
 library(stringr)
 
 
-out_dir='../processed_data/finemap/locuszoom/locuscatter/'
-fig_dir='../figures/finemap/locuszoom/locuscatter/'
+out_dir='../processed_data/finemap/locuszoom_sqtl/locuscatter/'
+fig_dir='../figures/finemap/locuszoom_sqtl/locuscatter/'
 if (!dir.exists(out_dir)){dir.create(out_dir,recursive=TRUE)}
 if (!dir.exists(fig_dir)){dir.create(fig_dir,recursive=TRUE)}
 
@@ -179,58 +179,16 @@ ukbb_fn='/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/ukbb/UKBB.GWAS1KG.EXOME.CAD
 ukbb_marker_col='snptestid'
 ukbb_pval_col='p-value_gc'
 ukbb=read_metal(ukbb_fn,ukbb_marker_col,ukbb_pval_col)
+ukbb[rsid=='rs4760']
 
+chr19=fread('gunzip -c ../processed_data/sqtl/fastQTL/nominal/chr19.nominal.txt.gz',select=c(1,2,4),col.names=c('clu','rsid','pval'))
+smg9=chr19[clu=='chr19:44244370:44248924:clu_12328',list(rsid,pval)]
+smg9[,logp:=-log10(pval)]
+smg9[rsid=='rs4760']
 
-
-# FES:
-main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr15/ENSG00000182511.7_FES.pval.txt',
+# SMG9:
+main(in_fn1=smg9,
 	in_fn2=ukbb,
-	snp='rs2521501',
-	fig_fn=sprintf('%s/ENSG00000182511.7_FES_UKBB.pdf',fig_dir))
-
-
-# SIPA1:
-main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr11/ENSG00000213445.4_SIPA1.pval.txt',
-	in_fn2=ukbb,
-	snp='rs12801636',
-	fig_fn=sprintf('%s/ENSG00000213445.4_SIPA1_UKBB.pdf',fig_dir))
-
-main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr11/ENSG00000213445.4_SIPA1.pval.txt',
-	in_fn2='/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/howson_2017/Howson-JMM_CHD_Mixed_2017.norm.in1kgp3.txt',pval_col2='p',
-	snp='rs12801636',
-	fig_fn=sprintf('%s/ENSG00000213445.4_SIPA1_Howson.pdf',fig_dir))
-
-
-# SMAD3:
-main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr15/ENSG00000166949.11_SMAD3.pval.txt',
-	in_fn2=ukbb,
-	snp='rs72743461',
-	fig_fn=sprintf('%s/ENSG00000166949.11_SMAD3_UKBB.pdf',fig_dir))
-
-# TCF21:
-main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr6/ENSG00000118526.6_TCF21.pval.txt',
-	in_fn2=ukbb,
-	snp='rs2327429',
-	fig_fn=sprintf('%s/ENSG00000118526.6_TCF21_UKBB.pdf',fig_dir))
-
-main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr6/ENSG00000118526.6_TCF21.pval.txt',
-	in_fn2='/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/howson_2017/Howson-JMM_CHD_Mixed_2017.norm.in1kgp3.txt',pval_col2='p',
-	snp='rs2327429',
-	fig_fn=sprintf('%s/ENSG00000118526.6_TCF21_Howson.pdf',fig_dir))
-
-# PDGFRA:
-eqtl=read_metal('/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr4/ENSG00000134853.7_PDGFRA.pval.txt')
-eqtl=eqtl[round(nrow(eqtl)/2):nrow(eqtl)]
-
-main(in_fn1=eqtl,
-	in_fn2=ukbb,
-	snp='rs13134452',
-	fig_fn=sprintf('%s/ENSG00000134853.7_PDGFRA_UKBB.pdf',fig_dir),
-	chr=4)
-
-
-main(in_fn1=eqtl,
-	in_fn2='/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/howson_2017/Howson-JMM_CHD_Mixed_2017.norm.in1kgp3.txt',pval_col2='p',
 	snp=NULL,
-	fig_fn=sprintf('%s/ENSG00000134853.7_PDGFRA_Howson.pdf',fig_dir),
-	chr=4)
+	fig_fn=sprintf('%s/SMG9_chr19:44244370:44248924:clu_12328_UKBB.pdf',fig_dir),
+	chr=19)
