@@ -38,6 +38,10 @@ bash eqtl/fastqtl/change_sid.sh
 bash eqtl/fastqtl/fastqtl.nominal.sh
 bash eqtl/fastqtl/adjust_pvalue.nominal.sh
 
+# FastQTL permutation:
+bash eqtl/fastqtl/fastqtl.perm.sh 
+Rscript eqtl/fastqtl/count_sig_eqtl.sh
+
 # plot the p-values: 
 Rscript sqtl/fastQTL/plot_pvalue.R \
 ../processed_data/eqtl/fastqtl/output/nominal/all.txt.gz \

@@ -1,6 +1,5 @@
 # run RASQUAL
 # bash rasqual.sh <input parameter file> <line number> Y.bin K.bin X.bin VCF
-
 param_file=$1
 line_num=$2
 Y=$3
@@ -8,6 +7,7 @@ K=$4
 X=$5
 vcf_file=$6
 out_dir=$7
+mkdir -p $out_dir
 
 param=($(cat $1 | sed "${line_num}q;d"))
 gene_id=${param[0]}
@@ -29,7 +29,7 @@ echo feature id: $feat_id
 
 if [[ -e $out_dir/${gene_id}_${gene_name}.txt ]]; then 
 	echo $out_dir/${gene_id}_${gene_name}.txt exist! skipping...
-else
+else  
 	tabix $vcf_file $region | \
 	/srv/persistent/bliu2/tools/rasqual/bin/rasqual \
 	-y $Y -k $K -x $X \
@@ -38,5 +38,6 @@ else
     --imputation-quality 0.8 --imputation-quality-fsnp 0.8 \
     --cis-window-size $window_size \
     -f $gene_name --n_threads 1 \
+    --random-permutation \
     --force -v > $out_dir/${gene_id}_${gene_name}.txt
 fi 

@@ -113,6 +113,9 @@ bash rasqual/calc_pval.wrapper.sh
 bash rasqual/merge_output.sh
 bash rasqual/adjust_pvalue.sh
 
+# Run rasqual in permutation mode:
+bash rasqual/rasqual.perm.wrapper.sh
+
 # RASQUAL eQTL enrichment in ATACseq regions:
 bash rasqual/atacseq_enrichment.R
 
