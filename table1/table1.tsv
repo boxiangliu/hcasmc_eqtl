@@ -1,0 +1,4 @@
+association	number_of_trait	method	0.05	0.01	0.001
+eQTL	18842	fastQTL	284	157	83
+eQTL	18842	RASQUAL	1221	973	739
+sQTL	91523	fastQTL	1227	816	546

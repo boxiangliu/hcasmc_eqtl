@@ -84,24 +84,27 @@ gene_map=get_gene_map(unique(meqtl$gene))
 snp_map=get_snp_map(unique(meqtl$SNP))
 
 
-# Correct p-value on eSNPs level:
-meqtl=meqtl[`p-value`<0.05,]
-res=treeQTL(meqtl,snp_map,gene_map,level1=0.05,level2=0.05,eSNP=TRUE)
-eSNPs=setDT(res[[1]])
-eAssoc=setDT(res[[2]])
-setorder(eSNPs,fam_p)
-setorder(eAssoc,BBFDR)
+for (level in c(0.01,0.001)){
+	# Correct p-value on eSNPs level:
+	meqtl=meqtl[`p-value`<level,]
+	res=treeQTL(meqtl,snp_map,gene_map,level1=level,level2=level,eSNP=TRUE)
+	eSNPs=setDT(res[[1]])
+	eAssoc=setDT(res[[2]])
+	setorder(eSNPs,fam_p)
+	setorder(eAssoc,BBFDR)
 
-fwrite(eSNPs,sprintf('%s/eSNPs.tsv',out_dir),sep='\t')
-fwrite(eAssoc,sprintf('%s/eAssoc_eSNPs.tsv',out_dir),sep='\t')
+	fwrite(eSNPs,sprintf('%s/eSNPs_level%s.tsv',out_dir,level),sep='\t')
+	fwrite(eAssoc,sprintf('%s/eAssoc_eSNPs_level%s.tsv',out_dir,level),sep='\t')
 
 
-# Correct p-value on eSNPs level:
-res=treeQTL(meqtl,snp_map,gene_map,level1=0.05,level2=0.05,eSNP=FALSE)
-eGenes=setDT(res[[1]])
-eAssoc=setDT(res[[2]])
-setorder(eGenes,fam_p)
-setorder(eAssoc,BBFDR)
+	# Correct p-value on eSNPs level:
+	res=treeQTL(meqtl,snp_map,gene_map,level1=level,level2=level,eSNP=FALSE)
+	eGenes=setDT(res[[1]])
+	eAssoc=setDT(res[[2]])
+	setorder(eGenes,fam_p)
+	setorder(eAssoc,BBFDR)
 
-fwrite(eGenes,sprintf('%s/eGenes.tsv',out_dir),sep='\t')
-fwrite(eAssoc,sprintf('%s/eAssoc_eGenes.tsv',out_dir),sep='\t')
+	fwrite(eGenes,sprintf('%s/eGenes_level%s.tsv',out_dir,level),sep='\t')
+	fwrite(eAssoc,sprintf('%s/eAssoc_eGenes_level%s.tsv',out_dir,level),sep='\t')
+}
+

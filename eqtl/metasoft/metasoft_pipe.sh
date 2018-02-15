@@ -6,4 +6,5 @@
 Rscript eqtl/metasoft/top_eSNP.R
 bash eqtl/metasoft/gen_metasoft_input.sh
 bash eqtl/metasoft/metasoft.sh
+bash eqtl/metasoft/find_tissue_specific_eqtls.R
 
