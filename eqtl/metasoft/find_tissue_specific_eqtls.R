@@ -221,7 +221,7 @@ metasoft_input = read_metasoft_input(metasoft_input_fn)
 beta = subset_beta(metasoft_input)
 se = subset_se(metasoft_input)
 
-tseQTL = select_tseQTL(mvalue,tissue='HCASMC')
+tseQTL = select_tseQTL(mvalue,tissue='HCASMC',cutoff2 = 0.1)
 tseQTL = subset_protein_coding_and_lncRNA(tseQTL)
 color_map = get_color_map()
 
@@ -231,3 +231,10 @@ foreach (id = tseQTL$id)%do%{
 }
 
 save_tseQTL(tseQTL,sprintf('%s/tseQTL.tsv',out_dir))
+
+
+for (cutoff2 in c(0.1,0.3,0.5,0.7,0.9)){
+	tseQTL = select_tseQTL(mvalue,tissue='HCASMC',cutoff2 = cutoff2)
+	tseQTL = subset_protein_coding_and_lncRNA(tseQTL)
+	save_tseQTL(tseQTL,sprintf('%s/tseQTL_cutoff%s.tsv',out_dir,cutoff2))
+}

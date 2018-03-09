@@ -35,6 +35,29 @@ get_chr=function(eqtl_fn){
 	as.integer(str_replace(unique(fread(eqtl_fn)$chr),'chr',''))
 }
 
+get_position=function(
+	rsid,
+	chr,
+	vcf_dir='/srv/persistent/bliu2/shared/1000genomes/phase3v5a/'){
+	
+	rsid_fn=tempfile()
+	vcf_out=tempfile()
+	on.exit(unlink(rsid_fn))
+	on.exit(unlink(paste0(vcf_out,'.vcf')))
+
+	write.table(rsid,rsid_fn,sep='\t',col.names=FALSE,row.names=FALSE,quote=FALSE)
+
+	vcf_in=sprintf('%s/ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz',vcf_dir,chr)
+	command=sprintf('plink --vcf %s --keep-allele-order --extract %s --recode vcf-iid --out %s',vcf_in,rsid_fn,vcf_out)
+	print(command)
+	system(command)
+	position=read.table(paste0(vcf_out,'.vcf'))[,1:3]
+	colnames(position)=c('chr','pos','rsid')
+	setDT(position)
+	return(position)
+}
+
+
 extract_population=function(population,
 	out_file,
 	panel='/srv/persistent/bliu2/shared/1000genomes/phase3v5a/integrated_call_samples_v3.20130502.ALL.panel'){
@@ -51,6 +74,7 @@ subset_vcf=function(vcf_in,rsid,population,vcf_out){
 	extract_population('EUR',pop_fn)
 	write.table(rsid,rsid_fn,sep='\t',col.names=FALSE,row.names=FALSE,quote=FALSE)
 
+	if (file.exists(paste0(vcf_out,'.vcf'))) {unlink(paste0(vcf_out,'.vcf'))}
 	command=sprintf('plink --vcf %s --keep-allele-order --keep %s --extract %s --recode vcf-iid --out %s',vcf_in,pop_fn,rsid_fn,vcf_out)
 	print(command)
 	system(command)
@@ -61,7 +85,7 @@ calc_LD=function(rsid,chr,pop,out_dir,
 	pop_fn=sprintf('%s/%s.txt',out_dir,pop)
 	rsid_fn=sprintf('%s/rsid.txt',out_dir)
 
-	extract_population('EUR',pop_fn)
+	extract_population(pop,pop_fn)
 	write.table(rsid,rsid_fn,sep='\t',col.names=FALSE,row.names=FALSE,quote=FALSE)
 
 	subset_vcf_prefix=sprintf('%s/%s',out_dir,pop)
@@ -94,34 +118,6 @@ assign_color=function(rsid,snp,ld){
 	return(color)
 }
 
-
-make_combined_plot=function(merged,title1,title2,ld,snp=NULL){
-	if (is.null(snp)){
-		snp=merged[which.min(pval1+pval2),rsid]
-	} else {
-		if(!snp%in%merged$rsid){
-			stop(sprintf('%s not found in %s',snp,in_fn1))
-		}
-	}
-	print(sprintf('INFO - %s',snp))
-
-	color=assign_color(merged$rsid,snp,ld)
-	shape=ifelse(merged$rsid==snp,23,21)
-	names(shape)=merged$rsid
-	size=ifelse(merged$rsid==snp,3,2)
-	names(size)=merged$rsid
-	merged[,label:=ifelse(rsid==snp,rsid,'')]
-
-	p1=make_locuscatter(merged,title1,title2,ld,color,shape,size)
-	p2=make_locuszoom(merged[,list(rsid,logp=logp1,label)],title1,ld,color,shape,size)
-	p2=p2+theme(axis.text.x=element_blank(),axis.title.x=element_blank())
-	p3=make_locuszoom(merged[,list(rsid,logp=logp2,label)],title2,ld,color,shape,size)
-	p4=plot_grid(p2,p3,align='v',nrow=2)
-	p5=plot_grid(p1,p4)
-	return(p5)
-}
-
-
 make_locuscatter=function(merged,title1,title2,ld,color,shape,size){
 	p=ggplot(merged,aes(logp1,logp2))+
 		geom_point(aes(fill=rsid,size=rsid,shape=rsid),alpha=0.8)+
@@ -143,9 +139,9 @@ make_locuscatter=function(merged,title1,title2,ld,color,shape,size){
 	return(p1)
 }
 
-make_locuszoom=function(metal,title,ld,color,shape,size){
-	data=merge(metal,unique(ld[,list(chr=CHR_A,pos=BP_A,rsid=SNP_A)]),by='rsid')
-	chr=unique(data$chr)
+make_locuszoom=function(metal,title,ld,color,shape,size,chr){
+	position=get_position(metal$rsid,chr)
+	data=merge(metal,position,by='rsid')
 	ggplot(data,aes(x=pos,logp))+
 		geom_point(aes(fill=rsid,size=rsid,shape=rsid),alpha=0.8)+
 		geom_point(data=data[label!=''],aes(x=pos,logp,fill=rsid,size=rsid,shape=rsid))+
@@ -159,6 +155,33 @@ make_locuszoom=function(metal,title,ld,color,shape,size){
 		theme(plot.margin=unit(c(0.5, 1, 0.5, 0.5), "lines"))
 }
 
+
+make_combined_plot=function(merged,title1,title2,ld,chr,snp=NULL){
+	if (is.null(snp)){
+		snp=merged[which.min(pval1+pval2),rsid]
+	} else {
+		if(!snp%in%merged$rsid){
+			stop(sprintf('%s not found in %s',snp,in_fn1))
+		}
+	}
+	print(sprintf('INFO - %s',snp))
+
+	color=assign_color(merged$rsid,snp,ld)
+	shape=ifelse(merged$rsid==snp,23,21)
+	names(shape)=merged$rsid
+	size=ifelse(merged$rsid==snp,3,2)
+	names(size)=merged$rsid
+	merged[,label:=ifelse(rsid==snp,rsid,'')]
+
+	p1=make_locuscatter(merged,title1,title2,ld,color,shape,size)
+	p2=make_locuszoom(merged[,list(rsid,logp=logp1,label)],title1,ld,color,shape,size,chr)
+	p2=p2+theme(axis.text.x=element_blank(),axis.title.x=element_blank())
+	p3=make_locuszoom(merged[,list(rsid,logp=logp2,label)],title2,ld,color,shape,size,chr)
+	p4=plot_grid(p2,p3,align='v',nrow=2)
+	p5=plot_grid(p1,p4)
+	return(p5)
+}
+
 main=function(in_fn1,marker_col1='rsid',pval_col1='pval',title1='eQTL',
 	in_fn2,marker_col2='rsid',pval_col2='pval',title2='GWAS',
 	snp=NULL,fig_fn='1.pdf',chr=get_chr(in_fn1)){
@@ -166,11 +189,11 @@ main=function(in_fn1,marker_col1='rsid',pval_col1='pval',title1='eQTL',
 	d1=read_metal(in_fn1,marker_col1,pval_col1)
 	d2=read_metal(in_fn2,marker_col2,pval_col2)
 
-	# chr=get_chr(in_fn1)
 	merged=merge(d1,d2,by='rsid',suffixes=c('1','2'),all=FALSE)
 	ld=calc_LD(merged$rsid,chr,'EUR',out_dir)
 
-	p=make_combined_plot(merged,title1,title2,ld,snp)
+
+	p=make_combined_plot(merged,title1,title2,ld,chr,snp)
 	save_plot(fig_fn,p,base_height=4,base_width=8)
 }
 
@@ -179,16 +202,56 @@ ukbb_fn='/srv/persistent/bliu2/HCASMC_eQTL/data/gwas/ukbb/UKBB.GWAS1KG.EXOME.CAD
 ukbb_marker_col='snptestid'
 ukbb_pval_col='p-value_gc'
 ukbb=read_metal(ukbb_fn,ukbb_marker_col,ukbb_pval_col)
-ukbb[rsid=='rs4760']
 
-chr19=fread('gunzip -c ../processed_data/sqtl/fastQTL/nominal/chr19.nominal.txt.gz',select=c(1,2,4),col.names=c('clu','rsid','pval'))
-smg9=chr19[clu=='chr19:44244370:44248924:clu_12328',list(rsid,pval)]
-smg9[,logp:=-log10(pval)]
-smg9[rsid=='rs4760']
 
-# SMG9:
-main(in_fn1=smg9,
-	in_fn2=ukbb,
-	snp=NULL,
-	fig_fn=sprintf('%s/SMG9_chr19:44244370:44248924:clu_12328_UKBB.pdf',fig_dir),
-	chr=19)
+cluster_list = c(
+	SMG = '19_44244370_44248924_clu_12328',
+	DDT = '22_24268707_24316496_clu_13532',
+	GSTT2 = '22_24323226_24324557_clu_13535',
+	SPECC1L = '22_24698352_24709281_clu_13555',
+	DCLRE1B = '1_114448397_114450631_clu_25930'
+	)
+
+
+for (i in seq_along(cluster_list)){
+	cluster = cluster_list[i]
+	gene = names(cluster_list)[i]
+	print(gene)
+	cluster = paste0('chr',gsub('clu:','clu_',gsub('_',':',cluster)))
+	print(cluster)
+
+	chr = str_extract(cluster,'(?<=chr)(.+?)(?=:)')
+	print(chr)
+	x = fread(
+		input = sprintf('gunzip -c ../processed_data/sqtl/fastQTL/nominal/chr%s.nominal.txt.gz',chr),
+		select = c(1,2,4),
+		col.names = c('clu','rsid','pval')
+		)[clu == cluster, list(rsid,pval,logp=-log10(pval))]
+
+	main(
+		in_fn1 = x,
+		in_fn2 = ukbb,
+		snp = NULL,
+		fig_fn = sprintf(
+			'%s/%s_%s_UKBB.pdf',
+			fig_dir,
+			gene,
+			cluster),
+		chr = chr
+		)
+}
+
+# chr19=fread('gunzip -c ../processed_data/sqtl/fastQTL/nominal/chr19.nominal.txt.gz',select=c(1,2,4),col.names=c('clu','rsid','pval'))
+# smg9=chr19[clu=='chr19:44244370:44248924:clu_12328',list(rsid,pval)]
+# smg9[,logp:=-log10(pval)]
+# smg9[rsid=='rs4760']
+
+# d1=smg9
+# d2=ukbb
+
+# # SMG9:
+# main(in_fn1=smg9,
+# 	in_fn2=ukbb,
+# 	snp=NULL,
+# 	fig_fn=sprintf('%s/SMG9_chr19:44244370:44248924:clu_12328_UKBB.pdf',fig_dir),
+# 	chr=19)

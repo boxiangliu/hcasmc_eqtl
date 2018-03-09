@@ -1,7 +1,6 @@
 library(data.table)
 library(cowplot)
 library(ggrepel)
-# devtools::install_github('boxiangliu/manhattan')
 library(manhattan)
 library(stringr)
 library(leafcutter)
@@ -50,26 +49,41 @@ assign_gene=function(exon_file,clusters){
 	return(map[clusters])
 }
 
+subset_to_protein_coding_and_lncRNA=function(x){
+	annotation=fread(
+		input = '../data/gtex/gencode.v19.genes.v6p.hg19.bed',
+		select = c(6,7),
+		col.names = c('gene_name','type')
+		)
+	annotation = annotation[type %in% c('protein_coding','lincRNA')]
+	x = x[gene_name %in% annotation$gene_name]
+	return(x)
+}
+
 smr=read_smr(smr_fn)
 smr$gene_name=''
-fm=read_finemap(fm_fn)
+fm=read_finemap(fm_fn,threshold=1e-4)
 clusters=paste0('chr',gsub('clu:','clu_',gsub('_',':',fm$clu_name)))
 fm$gene_name=assign_gene(exon_file,clusters)
+fm=subset_to_protein_coding_and_lncRNA(fm)
 
-
+smr_threshold=5e-3
+fm_threshold=0.05
 data=rbind(smr,fm)
 data[,method:=factor(method,level=c('SMR','eCAVIAR'))]
-data[,label:=ifelse( (y<log10(5e-5)) | (y>0.1),gene_name,'')]
+data[,label:=ifelse( (y<log10(smr_threshold)) | (y>fm_threshold),gene_name,'')]
 data[,chrom:=paste0('chr',chrom)]
 
-dummy=data.table(method=c('SMR','eCAVIAR'),y=c(log10(5e-5),0.1))
+dummy=data.table(method=c('SMR','eCAVIAR'),y=c(log10(smr_threshold),fm_threshold))
 
 p=manhattan(data,build='hg19')+
 	facet_grid(method~.,scale='free_y')+
 	scale_y_continuous(labels=function(x){abs(x)})+
-	geom_text(aes(label=label),hjust=1.1)+
+	geom_text_repel(aes(label=label),hjust=1.1,force=10)+
 	geom_hline(data=dummy,aes(yintercept=y),color='red',linetype=2)+
 	ylab(paste('-log10(P)                 CLPP'))
+
+
 saveRDS(list(data,dummy,p),sprintf('%s/manhattan.rds',out_dir))
 save_plot(sprintf('%s/manhattan.pdf',fig_dir),p,base_width=8,base_height=4)
 
