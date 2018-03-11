@@ -100,3 +100,11 @@ for (i in unique(fm$gene_name)){
 	print(p1)
 }
 dev.off()
+
+# For Fig. 3G:
+remove = c("Brain - Cerebellar Hemisphere","Brain - Hippocampus","Colon - Sigmoid","Brain - Hypothalamus","Brain - Cortex")
+data=fm[gene_name=='SIPA1' & !abbreviation%in%remove]
+p1=plot_clpp(data,color_map,top=15)+geom_point(size=2)+theme(axis.title.y=element_blank())
+pdf(sprintf('%s/gtex_comparison.sipa1.top15.pdf',fig_dir),height=3,width=3.2)
+p1
+dev.off()

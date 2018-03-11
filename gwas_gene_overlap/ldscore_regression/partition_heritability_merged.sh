@@ -1,11 +1,13 @@
 unset DISPLAY XAUTHORITY
 
-export sumstats_fn='../processed_data/gwas_gene_overlap/ldscore_regression/gwas_sumstats/cad.sumstats.gz'
+sumstats_fn=$1
+out_dir=$2
+# export sumstats_fn='../processed_data/gwas_gene_overlap/ldscore_regression/gwas_sumstats/cad.sumstats.gz'
+# export out_dir='../processed_data/gwas_gene_overlap/ldscore_regression/partition_heritability_merged/'
 export baseline_annotation_dir='/srv/persistent/bliu2/shared/ldscore/baseline/'
 export tissue_specific_annotation_dir='../processed_data/gwas_gene_overlap/ldscore_regression/ldscore_merged/'
 export weight_dir='/srv/persistent/bliu2/shared/ldscore/weights_hm3_no_hla/'
 export frq_dir='/srv/persistent/bliu2/shared/ldscore/1000G_frq/'
-export out_dir='../processed_data/gwas_gene_overlap/ldscore_regression/partition_heritability_merged/'
 
 mkdir -p $out_dir
 
