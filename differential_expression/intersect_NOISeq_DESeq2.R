@@ -109,6 +109,8 @@ n_sig=foreach(tissue=tissue_list,.combine='rbind')%dopar%{
 	return(temp)
 }
 
+fwrite(n_sig,sprintf('%s/n_sig.txt',out_dir),sep='\t')
+
 p1=plot_sig_genes(n_sig,add_label=FALSE)+
 	scale_x_discrete(labels=c('Coronary artery','Fibroblast','Heart - left ventricle'))
 p1b=plot_sig_genes(n_sig,add_label=FALSE,tissue_set=c("Artery - Coronary","Cells - Transformed fibroblasts"))+
