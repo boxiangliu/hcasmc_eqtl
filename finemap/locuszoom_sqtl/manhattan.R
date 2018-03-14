@@ -14,7 +14,7 @@ if(!dir.exists(fig_dir)){dir.create(fig_dir,recursive=TRUE)}
 if(!dir.exists(out_dir)){dir.create(out_dir,recursive=TRUE)}
 
 read_smr=function(smr_fn){
-	fread(smr_fn)[,list(chrom=ProbeChr,clu_name=Gene,pos=Probe_bp,y=log10(p_SMR),gwas_logp=-log10(p_GWAS),sqtl_logp=-log10(p_eQTL),method='SMR')]
+	fread(smr_fn)[,list(chrom=ProbeChr,clu_name=paste(Gene,cluster,sep='_'),pos=Probe_bp,y=log10(p_SMR),gwas_logp=-log10(p_GWAS),sqtl_logp=-log10(p_eQTL),method='SMR')]
 }
 
 read_finemap=function(fm_fn,threshold=5e-5){
@@ -61,17 +61,22 @@ subset_to_protein_coding_and_lncRNA=function(x){
 }
 
 smr=read_smr(smr_fn)
-smr$gene_name=''
+smr$clusters=paste0('chr',gsub('clu:','clu_',gsub('_',':',smr$clu_name)))
+smr$gene_name=assign_gene(exon_file,smr$clusters)
+smr=subset_to_protein_coding_and_lncRNA(smr)
+
+
 fm=read_finemap(fm_fn,threshold=1e-4)
-clusters=paste0('chr',gsub('clu:','clu_',gsub('_',':',fm$clu_name)))
-fm$gene_name=assign_gene(exon_file,clusters)
+fm$clusters=paste0('chr',gsub('clu:','clu_',gsub('_',':',fm$clu_name)))
+fm$gene_name=assign_gene(exon_file,fm$clusters)
 fm=subset_to_protein_coding_and_lncRNA(fm)
 
-smr_threshold=5e-3
+
+smr_threshold=0.05/2439
 fm_threshold=0.05
 data=rbind(smr,fm)
 data[,method:=factor(method,level=c('SMR','eCAVIAR'))]
-data[,label:=ifelse( (y<log10(smr_threshold)) | (y>fm_threshold),gene_name,'')]
+data[,label:=ifelse( (y<log10(smr_threshold)) | (y>fm_threshold),paste(gene_name,str_split_fixed(clusters,':clu_',2)[,1],sep='\n'),'')]
 data[,chrom:=paste0('chr',chrom)]
 
 dummy=data.table(method=c('SMR','eCAVIAR'),y=c(log10(smr_threshold),fm_threshold))
@@ -79,7 +84,14 @@ dummy=data.table(method=c('SMR','eCAVIAR'),y=c(log10(smr_threshold),fm_threshold
 p=manhattan(data,build='hg19')+
 	facet_grid(method~.,scale='free_y')+
 	scale_y_continuous(labels=function(x){abs(x)})+
-	geom_text_repel(aes(label=label),hjust=1.1,force=10)+
+	geom_text_repel(aes(label=label),force=3)+
+	geom_hline(data=dummy,aes(yintercept=y),color='red',linetype=2)+
+	ylab(paste('-log10(P)                 CLPP'))
+
+p=manhattan(data,build='hg19')+
+	facet_grid(method~.,scale='free_y')+
+	scale_y_continuous(labels=function(x){abs(x)})+
+	geom_text(aes(label=label),hjust=1.1)+
 	geom_hline(data=dummy,aes(yintercept=y),color='red',linetype=2)+
 	ylab(paste('-log10(P)                 CLPP'))
 

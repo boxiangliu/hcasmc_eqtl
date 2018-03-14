@@ -208,8 +208,14 @@ cluster_list = c(
 	SMG = '19_44244370_44248924_clu_12328',
 	DDT = '22_24268707_24316496_clu_13532',
 	GSTT2 = '22_24323226_24324557_clu_13535',
+	GSTT2 = '22_24323226_24324819_clu_13535',
 	SPECC1L = '22_24698352_24709281_clu_13555',
-	DCLRE1B = '1_114448397_114450631_clu_25930'
+	KAT5 = '11_65486246_65486344_clu_3941',
+	KAT5 = '11_65486220_65486344_clu_3941',
+	DCLRE1B = '1_114448397_114450631_clu_25930',
+	LIPA = '10_91007406_91011464_clu_5456',
+	ABCB8 = '7_150725697_150731592_clu_16512',
+	CCDC104 = '2_55771505_55772043_clu_22555'
 	)
 
 
@@ -240,18 +246,3 @@ for (i in seq_along(cluster_list)){
 		chr = chr
 		)
 }
-
-# chr19=fread('gunzip -c ../processed_data/sqtl/fastQTL/nominal/chr19.nominal.txt.gz',select=c(1,2,4),col.names=c('clu','rsid','pval'))
-# smg9=chr19[clu=='chr19:44244370:44248924:clu_12328',list(rsid,pval)]
-# smg9[,logp:=-log10(pval)]
-# smg9[rsid=='rs4760']
-
-# d1=smg9
-# d2=ukbb
-
-# # SMG9:
-# main(in_fn1=smg9,
-# 	in_fn2=ukbb,
-# 	snp=NULL,
-# 	fig_fn=sprintf('%s/SMG9_chr19:44244370:44248924:clu_12328_UKBB.pdf',fig_dir),
-# 	chr=19)
