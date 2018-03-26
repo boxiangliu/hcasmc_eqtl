@@ -30,7 +30,7 @@ overlap_eqtl_and_atacseq=function(top_eqtl,atacseq){
 	return(overlap)
 }
 
-make_qqplot=function(top_eqtl,overlap){
+make_qqplot=function(top_eqtl,overlap,threshold = 1e-16){
 	res1=qqunif(top_eqtl$pval)
 	res2=qqunif(overlap$pval)
 	plot(res1,col='blue',pch=16,cex=1.5,xlab='-log10(Expected)',ylab='-log10(Observed)')

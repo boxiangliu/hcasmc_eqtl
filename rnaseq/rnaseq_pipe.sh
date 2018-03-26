@@ -6,6 +6,7 @@ mkdir ../data/rnaseq_dase/
 bash rnaseq/preprocess/get_rnaseq_data.sh
 bash rnaseq/preprocess/sort_and_index.sh
 bash rnaseq/preprocess/quickcheck.sh
+bash rnaseq/preprocess/calculate_median_coverage.sh
 bash rnaseq/preprocess/RNAseQC.sh
 bash rnaseq/preprocess/copy_rpkm.sh
 bash rnaseq/preprocess/combine_rpkm.sh

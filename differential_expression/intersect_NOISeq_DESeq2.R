@@ -11,8 +11,8 @@ registerDoMC(6)
 deseq2_fn='../processed_data/differential_expression/DESeq2/dds.rds'
 noiseq_fn='../processed_data/differential_expression/noiseq/noiseq.rds'
 tissue_list=c("Artery - Aorta","Artery - Coronary","Artery - Tibial", 'Heart - Atrial Appendage', 'Heart - Left Ventricle','Cells - Transformed fibroblasts')
-fig_dir='../figures/intersect_NOISeq_DESeq2/'
-out_dir='../processed_data/intersect_NOISeq_DESeq2/'
+fig_dir='../figures/differential_expression/intersect_NOISeq_DESeq2/'
+out_dir='../processed_data/differential_expression/intersect_NOISeq_DESeq2/'
 if (!dir.exists(fig_dir)) {dir.create(fig_dir)}
 if (!dir.exists(out_dir)) {dir.create(out_dir)}
 

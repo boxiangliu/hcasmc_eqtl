@@ -63,9 +63,11 @@ Rscript genotype/phasing_no_ref/make_sample_list.R
 bash genotype/phasing_no_ref/extract_dosage.sh
 
 
-# Genotype PC:
+# Genotype PC (ancestry):
 bash genotype/genotype_pc/genotype_pc.sh
 
+# Count number of SNPs:
+bash genotype/joint_genotyping/count_SNPs.sh
 
 # Phasing (and imputation) with 1000 Genome Reference Panel: 
 bash genotype/phasing_with_1kg/conform_gt.sh

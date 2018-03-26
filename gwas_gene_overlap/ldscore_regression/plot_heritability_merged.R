@@ -42,11 +42,19 @@ plot_enrichment=function(partition_heritability,title='',gtex_anno_fn='../data/g
 }
 
 # Plot partitioned heritability for each tissue for the supplement:
-plot_enrichment_for_supplement=function(partition_heritability,title){
+plot_enrichment_for_supplement=function(partition_heritability,title,gtex_anno_fn='../data/gtex/gtex_tissue_colors.with_hcasmc.txt'){
+	gtex_anno=fread(gtex_anno_fn)
+	partition_heritability=merge(partition_heritability,gtex_anno[,list(tissue_site_detail,tissue_color_hex,abbreviation)],by.x='tissue',by.y='tissue_site_detail',all.x=TRUE,all.y=FALSE)
+
 	setorder(partition_heritability,Enrichment)
 	partition_heritability[,tissue:=factor(tissue,unique(tissue))]
-	ggplot(partition_heritability,aes(x=tissue,y=Enrichment,ymin=Enrichment-Enrichment_std_error,ymax=Enrichment+Enrichment_std_error,color=gene_set))+
-		geom_pointrange(position=position_dodge(width=0.7))+xlab('')+coord_flip()+ggtitle(title)
+	partition_heritability[,abbreviation:=factor(abbreviation,unique(abbreviation))]
+	ggplot(partition_heritability,aes(x=abbreviation,y=Enrichment,
+		ymin=Enrichment-Enrichment_std_error,ymax=Enrichment+Enrichment_std_error,color=gene_set,group=gene_set))+
+		geom_linerange(size=1.5,position=position_dodge(width=0.7))+
+		geom_point(size=3,position=position_dodge(width=0.7))+
+		xlab('')+coord_flip()+ggtitle(title)+
+		scale_color_discrete(name='Gene Set',labels=c('Top 1000','Top 2000','Top 4000'))
 }
 
 # Plot all combinations:

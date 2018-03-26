@@ -76,3 +76,4 @@ genotype_pcs=t(pca$eigenvect)
 colnames(genotype_pcs)=pca$sample.id
 rownames(genotype_pcs)=paste0("C",seq(nrow(genotype_pcs)))
 write.table(genotype_pcs,file=output_file,quote=F,sep='\t',row.names=T,col.names=T)
+
