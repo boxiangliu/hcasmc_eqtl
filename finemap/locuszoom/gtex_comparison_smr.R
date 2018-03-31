@@ -1,6 +1,9 @@
 library(data.table)
 library(cowplot)
 
+fig_dir = '../figures/finemap/locuszoom/gtex_comparison_smr/'
+if (!dir.exists(fig_dir)) {dir.create(fig_dir,recursive=TRUE)}
+
 get_color_map=function(){
 	color=fread('shared/tissue_color.txt')
 	color[,tissue_color_hex:=max(tissue_color_hex),by=tissue]
@@ -18,27 +21,33 @@ tissue_id2name=function(tissue_id){
 }
 
 color_map=get_color_map()
-smr <- fread("../processed_data/finemap/smr/SMAD3_across_tissues.txt",data.table=F)
-tissue <- smr$tissue
-tissue <- gsub("_lite","",tissue)
-tissue <- unname(tissue_id2name(tissue))
-mean <- smr$b_SMR
-lower <- smr$b_SMR - 1.96*smr$se_SMR
-upper <- smr$b_SMR + 1.96*smr$se_SMR
 
-df <- data.frame(tissue, mean, lower, upper)
-df <- df[order(df$mean, decreasing=FALSE),]
+for (gene in c('TCF21','FES')){
+	fn = sprintf("../processed_data/finemap/smr/%s_across_tissues.txt",gene)
+	smr <- fread(fn,data.table=F)
+	tissue <- smr$tissue
+	tissue <- gsub("_lite","",tissue)
+	tissue <- unname(tissue_id2name(tissue))
+	mean <- smr$b_SMR
+	lower <- smr$b_SMR - 1.96*smr$se_SMR
+	upper <- smr$b_SMR + 1.96*smr$se_SMR
 
-# reverses the factor level ordering for labels after coord_flip()
-df$tissue <- factor(df$tissue, levels=df$tissue)
+	df <- data.frame(tissue, mean, lower, upper)
+	df <- df[order(df$mean, decreasing=FALSE),]
 
-g <- ggplot(data=df, aes(x=tissue, y=mean, ymin=lower, ymax=upper, color=tissue)) +
-	geom_pointrange() + 
-	geom_hline(yintercept=0, lty=2) +  # add a dotted line at x=1 after flip
-	scale_color_manual(values=color_map,guide='none')+
-	coord_flip() +  # flip coordinates (puts labels on y axis)
-	xlab("Tissue") + ylab("beta SMR (95% CI)") +
-	ggtitle("SMAD3") +
-	theme(plot.title = element_text(hjust = 0.8)) +
-	theme_bw()  # use a white background
-print(g)
+	# reverses the factor level ordering for labels after coord_flip()
+	df$tissue <- factor(df$tissue, levels=rev(df$tissue))
+
+	g <- ggplot(data=df, aes(x=tissue, y=mean, ymin=lower, ymax=upper, color=tissue)) +
+		geom_pointrange() + 
+		geom_hline(yintercept=0, lty=2) +  # add a dotted line at x=1 after flip
+		scale_color_manual(values=color_map,guide='none')+
+		coord_flip() +  # flip coordinates (puts labels on y axis)
+		xlab("Tissue") + ylab("beta SMR (95% CI)") +
+		ggtitle(gene) +
+		theme(plot.title = element_text(hjust = 0.8)) +
+		ylab('')
+	
+	fig_fn = sprintf('%s/gtex_comparison_smr.%s.pdf',fig_dir,gene)
+	save_plot(fig_fn,g,base_width = 6)
+}

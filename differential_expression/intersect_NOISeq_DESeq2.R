@@ -98,6 +98,8 @@ plot_sig_genes=function(n_sig,add_label=FALSE,tissue_set=c("Artery - Coronary", 
 deseq2_list=read_deseq2_result(deseq2_fn)
 noiseq_list=read_noiseq_result(noiseq_fn)
 
+tissue = "Artery - Aorta"
+
 n_sig=foreach(tissue=tissue_list,.combine='rbind')%dopar%{
 	deseq2=select_tissue(deseq2_list,tissue)
 	noiseq=select_tissue(noiseq_list,tissue)
