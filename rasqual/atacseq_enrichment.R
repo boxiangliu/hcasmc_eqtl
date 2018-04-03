@@ -36,14 +36,17 @@ make_qqplot=function(top_eqtl,overlap,threshold = 1e-16){
 	plot(res1,col='blue',pch=16,cex=1.5,xlab='-log10(Expected)',ylab='-log10(Observed)')
 	points(res2,col='red',pch=16,cex=1.5)
 	abline(a=0,b=1,col='red')
-	legend('topleft',legend=c('eQTL','eQTL in ATACseq'),pch=16,col=c('blue','red'))
+	legend('topleft',legend=c('eQTL','eQTL in ATAC-seq'),pch=16,col=c('blue','red'))
 }
 
 eqtl=read_eqtl(eqtl_fn)
 top_eqtl=get_top_eqtl(eqtl)
 atacseq=read_atacseq(atacseq_fn)
 overlap=overlap_eqtl_and_atacseq(top_eqtl,atacseq)
-wilcox.test(top_eqtl$pval,overlap$pval) # 9.221e-05
+pval = wilcox.test(top_eqtl$pval,overlap$pval)$p.value # 9.221e-05
+label = sprintf('Wilcoxon Rank-Sum Test P-value = %.02e',pval)
+
 pdf(sprintf('%s/atacseq_enrichment.pdf',fig_dir))
 make_qqplot(top_eqtl,overlap)
+text(x=2,y=150,label=label)
 dev.off()
