@@ -98,7 +98,7 @@ for (i in seq_along(eqtl_fn)){
 		effect_col = 'pi',
 		se_col = 'chisq'
 		)
-	
+	eqtl[,effect := 1-effect]
 	merged = merge_and_align_genotype(ukbb,eqtl,y_flip_effect=function(b) {1 - b})
 
 	p = plot_effect_sizes(merged,gene_name)

@@ -1225,22 +1225,8 @@ bash hcascm_specific_open_chromatin/_hcasmc_specific_open_chromatin_pipe.sh
 bash finemap/finemap_pipe.sh
 
 
-#--------------- GWAS gene overlap ------------# 
-Rscript gwas_gene_overlap/ldscore_regression/tissue_specific_gene.R
-Rscript gwas_gene_overlap/ldscore_regression/tissue_specific_snp_annotation.R
-bash gwas_gene_overlap/ldscore_regression/gwas_sumstats.sh
-
-# bash gwas_gene_overlap/ldscore_regression/ldscore.sh
-bash gwas_gene_overlap/ldscore_regression/ldscore_merged.sh
-
-# bash gwas_gene_overlap/ldscore_regression/partition_heritability.sh
-bash gwas_gene_overlap/ldscore_regression/partition_heritability_merged.sh \
-../processed_data/gwas_gene_overlap/ldscore_regression/gwas_sumstats/cad.sumstats.gz \
-../processed_data/gwas_gene_overlap/ldscore_regression/partition_heritability_merged/
-
-bash gwas_gene_overlap/ldscore_regression/partition_heritability_merged.sh \
-../processed_data/gwas_gene_overlap/ldscore_regression/gwas_sumstats/scz.sumstats.gz \
-../processed_data/gwas_gene_overlap/ldscore_regression/partition_heritability_merged_scz/
+#--------------- GWAS gene overlap (LD score regression) ------------# 
+bash gwas_gene_overlap/gwas_gene_overlap_pipe.sh
 
 #-------------- Differential expression ---------# 
 bash differential_expression/differential_expression_pipe.sh

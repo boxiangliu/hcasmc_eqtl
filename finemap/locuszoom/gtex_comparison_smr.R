@@ -20,9 +20,17 @@ tissue_id2name=function(tissue_id){
 	return(map[tissue_id])
 }
 
+abbreviate_tissue_name=function(tissue_name){
+	color=fread('shared/tissue_color.txt')
+	color[tissue_site_detail_id=='hcasmc.rpkm',tissue_site_detail_id:='hcasmc']
+	map=color$abbreviation
+	names(map)=color$tissue_site_detail
+	return(map[tissue_name])
+}
+
 color_map=get_color_map()
 
-for (gene in c('TCF21','FES')){
+for (gene in c('TCF21','FES','SMAD3','SIPA1','PDGFRA')){
 	fn = sprintf("../processed_data/finemap/smr/%s_across_tissues.txt",gene)
 	smr <- fread(fn,data.table=F)
 	tissue <- smr$tissue
@@ -32,22 +40,20 @@ for (gene in c('TCF21','FES')){
 	lower <- smr$b_SMR - 1.96*smr$se_SMR
 	upper <- smr$b_SMR + 1.96*smr$se_SMR
 
-	df <- data.frame(tissue, mean, lower, upper)
+	df <- data.frame(tissue, mean, lower, upper, stringsAsFactors = FALSE)
 	df <- df[order(df$mean, decreasing=FALSE),]
+	df$abbreviation=abbreviate_tissue_name(df$tissue)
+	df$abbreviation <- factor(df$abbreviation, levels=df$abbreviation)
 
-	# reverses the factor level ordering for labels after coord_flip()
-	df$tissue <- factor(df$tissue, levels=rev(df$tissue))
-
-	g <- ggplot(data=df, aes(x=tissue, y=mean, ymin=lower, ymax=upper, color=tissue)) +
+	g <- ggplot(data=df, aes(x=abbreviation, y=mean, ymin=lower, ymax=upper, color=tissue)) +
 		geom_pointrange() + 
 		geom_hline(yintercept=0, lty=2) +  # add a dotted line at x=1 after flip
 		scale_color_manual(values=color_map,guide='none')+
-		coord_flip() +  # flip coordinates (puts labels on y axis)
-		xlab("Tissue") + ylab("beta SMR (95% CI)") +
 		ggtitle(gene) +
-		theme(plot.title = element_text(hjust = 0.8)) +
-		ylab('')
-	
+		coord_flip() + 
+		theme(axis.text.y=element_text(color=ifelse(df$abbreviation=='HCASMC','purple','black')))+
+		xlab("") + ylab("beta SMR (95% CI)")
+
 	fig_fn = sprintf('%s/gtex_comparison_smr.%s.pdf',fig_dir,gene)
-	save_plot(fig_fn,g,base_width = 6)
+	save_plot(fig_fn,g,base_width = 6,base_height = 7.5)
 }

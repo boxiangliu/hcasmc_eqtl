@@ -2,7 +2,7 @@ library(data.table)
 library(cowplot)
 
 # Variables: 
-fig_dir='../figures/hcasmc_specific_open_chromatin/classify_peaks/'
+fig_dir='../figures/hcasmc_specific_open_chromatin2/classify_peaks/'
 if (!dir.exists(fig_dir)) {dir.create(fig_dir)}
 
 # Read gencode: 
@@ -83,32 +83,26 @@ peak_specific=fread('../processed_data/hcasmc_specific_open_chromatin/peak_speci
 
 # Assign specificity index to raw peaks:
 tss_ol_specific=merge(tss_ol,peak_specific,by.x=c('chr','start_se','end_se'),by.y=c('chr','start','end'))
-tss_ol_specific=tss_ol_specific[,list(psi=min(psi)),by=c('chr','start','end')]
+tss_ol_specific=tss_ol_specific[,list(num_tissue=min(num_tissue)),by=c('chr','start','end')]
 
 
 gene_body_ol_specific=merge(gene_body_ol,peak_specific,by.x=c('chr','start_se','end_se'),by.y=c('chr','start','end'))
-gene_body_ol_specific=gene_body_ol_specific[,list(psi=min(psi)),by=c('chr','start','end')]
+gene_body_ol_specific=gene_body_ol_specific[,list(num_tissue=min(num_tissue)),by=c('chr','start','end')]
 
 
 intergenic_ol_specific=merge(intergenic_ol,peak_specific,by.x=c('chr','start_se','end_se'),by.y=c('chr','start','end'))
-intergenic_ol_specific=intergenic_ol_specific[,list(psi=min(psi)),by=c('chr','start','end')]
+intergenic_ol_specific=intergenic_ol_specific[,list(num_tissue=min(num_tissue)),by=c('chr','start','end')]
 
 
 peak_ol_specific=merge(peaks,peak_specific,by.x=c('chr','start_se','end_se'),by.y=c('chr','start','end'))
-peak_ol_specific=peak_ol_specific[,list(psi=min(psi)),by=c('chr','start','end')]
+peak_ol_specific=peak_ol_specific[,list(num_tissue=min(num_tissue)),by=c('chr','start','end')]
 
 
 # Plot distribution of specificity score:
-to_plot=rbind(data.table(psi=intergenic_ol_specific$psi,type='intergenic'),
-			  data.table(psi=tss_ol_specific$psi,type='tss'),
-			  data.table(psi=gene_body_ol_specific$psi,type='gene_body'),
-			  data.table(psi=peak_ol_specific$psi,type='all'))
+to_plot=rbind(data.table(num_tissue=intergenic_ol_specific$num_tissue,type='intergenic'),
+			  data.table(num_tissue=tss_ol_specific$num_tissue,type='tss'),
+			  data.table(num_tissue=gene_body_ol_specific$num_tissue,type='gene_body'),
+			  data.table(num_tissue=peak_ol_specific$num_tissue,type='all'))
 to_plot$type=factor(to_plot$type,levels=c('all','tss','gene_body','intergenic'))
-p2=ggplot(to_plot,aes(type,psi,fill=type))+
-	geom_violin()+
-	xlab('')+
-	ylab('HCASMC peak specificity')+
-	scale_fill_discrete(guide='none')+
-	scale_x_discrete(breaks = c('all','tss','gene_body','intergenic'),labels = c('All','TSS','Gene body','Intergenic'))
-
+p2=ggplot(to_plot,aes(type,num_tissue))+geom_boxplot()
 save_plot(sprintf("%s/peak_specificity_vs_type.pdf",fig_dir),p2)

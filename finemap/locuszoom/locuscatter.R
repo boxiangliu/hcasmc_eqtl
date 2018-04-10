@@ -221,7 +221,7 @@ main(in_fn1='/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pva
 # PDGFRA:
 eqtl=read_metal('/srv/persistent/bliu2/HCASMC_eQTL/processed_data/rasqual/output_pval/chr4/ENSG00000134853.7_PDGFRA.pval.txt')
 eqtl=eqtl[round(nrow(eqtl)/2):nrow(eqtl)]
-
+merge(eqtl,ukbb,by='rsid')
 main(in_fn1=eqtl,
 	in_fn2=ukbb,
 	snp='rs13134452',

@@ -57,6 +57,25 @@ plot_enrichment_for_supplement=function(partition_heritability,title,gtex_anno_f
 		scale_color_discrete(name='Gene Set',labels=c('Top 1000','Top 2000','Top 4000'))
 }
 
+# Plot coefficient: 
+plot_coefficient=function(partition_heritability,title='',gtex_anno_fn='../data/gtex/gtex_tissue_colors.with_hcasmc.txt'){
+	gtex_anno=fread(gtex_anno_fn)
+	color=gtex_anno$tissue_color_hex
+	names(color)=gtex_anno$abbreviation
+	partition_heritability=merge(partition_heritability,gtex_anno[,list(tissue_site_detail,tissue_color_hex,abbreviation)],by.x='tissue',by.y='tissue_site_detail',all.x=TRUE,all.y=FALSE)
+	setorder(partition_heritability,`Coefficient_z-score`)
+	partition_heritability[,abbreviation:=factor(abbreviation,unique(abbreviation))]
+	ggplot(partition_heritability,aes(x=abbreviation,y=`Coefficient_z-score`,color=abbreviation))+
+		geom_point(size=3)+xlab('')+
+		scale_color_manual(values=color,guide='none')+
+		theme(axis.text.y=element_text(color=ifelse(partition_heritability$abbreviation=='HCASMC','purple','black')))+
+		coord_flip()+
+		ggtitle(title)
+}
+
+#------------#
+# enrichment #
+#------------#
 # Plot all combinations:
 tissue_set_list=c('tissue_specific_gene','tissue_specific_gene_no_sm','tissue_specific_gene_no_sm_no_blood')
 experiment_list=c('top200','top500','top1000','top2000','top4000','top8000')
@@ -87,3 +106,19 @@ pdf(sprintf('%s/heritability_nobaseline.supplement.pdf',fig_dir))
 p2
 dev.off()
 
+#---------#
+# z-score #
+#---------#
+
+# Plot all combinations:
+tissue_set_list=c('tissue_specific_gene','tissue_specific_gene_no_sm','tissue_specific_gene_no_sm_no_blood')
+experiment_list=c('top200','top500','top1000','top2000','top4000','top8000')
+pdf(sprintf('%s/heritability_nobaseline_zscore.pdf',fig_dir))
+for (tissue_set in tissue_set_list){
+	p=foreach(experiment=experiment_list,.final=function(x) setNames(x,experiment_list))%dopar%{
+		partition_heritability=read_heritability(partition_heritability_dir,sprintf('%s/%s',tissue_set,experiment))
+		plot_coefficient(partition_heritability,sprintf('%s\n%s',tissue_set,experiment))
+	}
+	print(p)
+}
+dev.off()
