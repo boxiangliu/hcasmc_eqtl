@@ -35,3 +35,19 @@ mkdir -p $out_dir
 	--a1-inc \
 	--snp snpid \
 	--signed-sumstats or,1 
+
+zcat ../data/gwas/ukbb/UKBB.GWAS1KG.EXOME.CAD.SOFT.META.PublicRelease.300517.txt.gz | cut -f2- > ukbb.txt
+~/tools/ldsc/munge_sumstats.py \
+	--sumstats ukbb.txt \
+	--out $out_dir/ukbb \
+	--merge-alleles $hapmap_fn \
+	--N-col n_samples \
+	--info info_ukbb \
+	--info-min 0.4 \
+	--p p-value_gc \
+	--a1 effect_allele \
+	--a2 noneffect_allele \
+	--a1-inc \
+	--snp snptestid \
+	--signed-sumstats logOR,0
+rm ukbb.txt
