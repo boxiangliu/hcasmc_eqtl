@@ -41,6 +41,7 @@ bash genotype/quality_control/vcf_stats.sh
 grep "^SN" ../processed_data/genotype/quality_control/stats.txt | awk 'BEGIN {FS="\t"} {print $0}' > ../processed_data/genotype/quality_control/count.txt
 Rscript genotype/quality_control/variant_count_by_type.R
 Rscript genotype/quality_control/DNA_RNA_difference.R
+bash genotype/quality_control/genotype_correlation.sh 
 
 # Phasing (and imputation) without reference panels: 
 bash genotype/phasing_no_ref/download.sh
