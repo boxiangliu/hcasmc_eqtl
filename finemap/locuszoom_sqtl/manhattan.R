@@ -1,6 +1,7 @@
 library(data.table)
 library(cowplot)
 library(ggrepel)
+# devtools::install_github('boxiangliu/manhattan')
 library(manhattan)
 library(stringr)
 library(leafcutter)
@@ -60,33 +61,36 @@ subset_to_protein_coding_and_lncRNA=function(x){
 	return(x)
 }
 
+subset_to_best_colocalization_per_gene = function(x){
+	x[,best_y := max(abs(y)),by = 'gene_name']
+	x = x[abs(y)==best_y,]
+	x[,best_y := NULL]
+	return(x)
+}
+
 smr=read_smr(smr_fn)
 smr$clusters=paste0('chr',gsub('clu:','clu_',gsub('_',':',smr$clu_name)))
 smr$gene_name=assign_gene(exon_file,smr$clusters)
 smr=subset_to_protein_coding_and_lncRNA(smr)
+smr=subset_to_best_colocalization_per_gene(smr)
+smr$bold = FALSE
 
-
-fm=read_finemap(fm_fn,threshold=1e-4)
+fm=read_finemap(fm_fn,threshold=5e-5)
 fm$clusters=paste0('chr',gsub('clu:','clu_',gsub('_',':',fm$clu_name)))
 fm$gene_name=assign_gene(exon_file,fm$clusters)
 fm=subset_to_protein_coding_and_lncRNA(fm)
+fm=subset_to_best_colocalization_per_gene(fm)
+fm[, bold:= gwas_logp>-log10(5e-5)&sqtl_logp>-log10(5e-5)&abs(y)>0.05]
 
-
-smr_threshold=0.05/2439
+smr_threshold=0.05/nrow(smr)
 fm_threshold=0.05
 data=rbind(smr,fm)
 data[,method:=factor(method,level=c('SMR','eCAVIAR'))]
-data[,label:=ifelse( (y<log10(smr_threshold)) | (y>fm_threshold),paste(gene_name,str_split_fixed(clusters,':clu_',2)[,1],sep='\n'),'')]
+data[,label:=ifelse( (y<log10(smr_threshold)) | (y>fm_threshold),gene_name,'')]
 data[,chrom:=paste0('chr',chrom)]
 
 dummy=data.table(method=c('SMR','eCAVIAR'),y=c(log10(smr_threshold),fm_threshold))
 
-p=manhattan(data,build='hg19')+
-	facet_grid(method~.,scale='free_y')+
-	scale_y_continuous(labels=function(x){abs(x)})+
-	geom_text_repel(aes(label=label),force=3)+
-	geom_hline(data=dummy,aes(yintercept=y),color='red',linetype=2)+
-	ylab(paste('-log10(P)                 CLPP'))
 
 p=manhattan(data,build='hg19')+
 	facet_grid(method~.,scale='free_y')+
