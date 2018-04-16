@@ -48,12 +48,11 @@ merge_and_align_genotype = function(x,y,y_flip_effect = function(b) {1 - b}){
 }
 
 plot_effect_sizes = function(merged,gene_name){
-	ylabel = sprintf('%s\nAllelic ratio',gene_name)
-	ggplot(merged[pval.x<PVAL&pval.y<PVAL],aes(effect.x,effect.y))+
+	ggplot(merged[pval.x<PVAL&pval.y<PVAL],aes(effect.y,effect.x))+
 		geom_point(size = 3, alpha = 0.5) + 
-		stat_smooth(method='lm', formula = I(y-0.5) ~ x + 0, position = position_nudge(y = 0.5)) + 
-		xlab('UKBB log(OR)') + 
-		ylab(ylabel)
+		stat_smooth(method='lm', formula = y ~ I(x-0.5) + 0, position = position_nudge(x = 0)) + 
+		ylab('GWAS log(OR)') + 
+		xlab(substitute(italic(x)~'allelic ratio',list(x=gene_name)))
 }
 
 plot_blank = function(){
@@ -102,16 +101,17 @@ for (i in seq_along(eqtl_fn)){
 	merged = merge_and_align_genotype(ukbb,eqtl,y_flip_effect=function(b) {1 - b})
 
 	p = plot_effect_sizes(merged,gene_name)
-	plot_list[[i]] = p
+	plot_list[[gene_name]] = p
 	fig_fn = sprintf('%s/%s_effect_size.pdf',fig_dir,gene_name)
-	save_plot(fig_fn,p)
+	save_plot(fig_fn,p,base_height=2.5,base_width=2.5)
 }
 
+save.image('finemap/direction/image.rda')
+load('finemap/direction/image.rda')
 
-row1 = plot_grid(plot_list[[1]],plot_list[[2]],labels = c('A','B'),align = 'h')
-row2 = plot_grid(plot_list[[3]],plot_list[[4]],labels = c('C','D'),align = 'h')
-row3 = plot_grid(plot_list[[5]],plot_blank(),labels = c('E',''))
+row1 = plot_grid(plot_list[['TCF21']],plot_list[['FES']],plot_list[['PDGFRA']],nrow=1,labels = c('a','b','c'),align = 'h')
+row2 = plot_grid(plot_list[['SIPA1']],plot_list[['SMAD3']],plot_blank(),nrow=1,labels = c('d','e'),align = 'h')
 
-multi_panel = plot_grid(row1,row2,row3,labels='',ncol=1)
+multi_panel = plot_grid(row1,row2,labels='',ncol=1)
 fig_fn = sprintf('%s/multi_panel_effect_size.pdf',fig_dir)
-save_plot(fig_fn,multi_panel,base_width=7.5,base_height=9)
+save_plot(fig_fn,multi_panel,base_width=8,base_height=5)

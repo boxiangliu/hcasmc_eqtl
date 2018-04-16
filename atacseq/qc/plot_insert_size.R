@@ -39,6 +39,7 @@ plot_insert_size_distr = function(data){
 
 # Main: 
 file_list = get_insert_size_log_file(atacseq_dir,fn_pattern)
+file_list = file_list[file_list != "../data/atacseq/fbs//2108/out/qc/rep1/CA2108_S4_concat_R1_001.PE2SE.inserts.hist_data.log"]
 
 data = foreach(i = seq_along(file_list),.combine='rbind')%do%{
 	sample_name = names(file_list)[i]
@@ -48,6 +49,8 @@ data = foreach(i = seq_along(file_list),.combine='rbind')%do%{
 	return(dt)
 }
 
-p = plot_insert_size_distr(data)
+p = plot_insert_size_distr(data) + 
+	scale_fill_discrete(name = 'Sample', breaks = sort(c(paste0('1508 rep',1:2),paste0('2305 rep',1:3),paste0(c('1346','1522','2356','2510','2989'),' rep1'))), labels = sort(c(paste0('1508-rep',1:2),paste0('2305-rep',1:3),c('1346','1522','2356','2510','2989')))) +
+	theme(legend.position = c(0.95, 0.95),legend.justification = c("right", "top"))
 fig_path = sprintf('%s/insert_size_distr.pdf',fig_dir)
-save_plot(fig_path, p, base_width = 6, base_height = 4)
+save_plot(fig_path, p, base_width = 4, base_height = 4)

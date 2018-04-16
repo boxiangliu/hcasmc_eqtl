@@ -56,10 +56,14 @@ data = foreach(i = seq_along(file_list),.combine='rbind')%do%{
 	return(dt)
 }
 
-p = plot_profile(data)
+data = data[!str_detect(sample_name,'2108'),]
+
+p = plot_profile(data) + 
+	scale_color_discrete(name = 'Sample', breaks = sort(c(paste0('1508 rep',1:2),paste0('2305 rep',1:3),paste0(c('1346','1522','2356','2510','2989'),' rep1'))), labels = sort(c(paste0('1508-rep',1:2),paste0('2305-rep',1:3),c('1346','1522','2356','2510','2989')))) +
+	theme(legend.position = c('0.95','0.95'),legend.justification = c('right','top'))
 
 fig_path = sprintf('%s/dist_to_TSS.pdf',fig_dir)
-save_plot(fig_path,p,base_width=6,base_height=4)
+save_plot(fig_path,p,base_width=4,base_height=4)
 
 matrix = read_matrix(matrix_fn)
 row_data = matrix[[1]]
