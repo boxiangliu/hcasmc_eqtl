@@ -6,6 +6,7 @@ library(manhattan)
 library(stringr)
 
 smr_fn='../processed_data/finemap/smr/UKBB_HCASMC_eqtl_smr_results5e-05.out.smr'
+smr_hcasmcRef_fn = '../processed_data/finemap/smr/UKBB_HCASMC_eqtl_HCASMCref_smr_results5e-05.out.smr'
 fm_fn='../processed_data/finemap/finemap_mike/UKBB_GWAS1KG_EXOME_CAD_SOFT_META_PublicRelease_300517_txt_gz_finemap_clpp_status.txt'
 fig_dir='../figures/finemap/locuszoom/manhattan/'
 out_dir='../processed_data/finemap/locuszoom/manhattan/'
@@ -55,3 +56,21 @@ saveRDS(list(data,dummy,p),sprintf('%s/manhattan.rds',out_dir))
 save_plot(sprintf('%s/manhattan.pdf',fig_dir),p,base_width=8,base_height=4)
 
 
+smr2=read_smr(smr_hcasmcRef_fn)
+fm=read_finemap(fm_fn)
+
+data=rbind(smr,fm)
+data[,method:=factor(method,level=c('SMR','eCAVIAR'))]
+data[,label:=ifelse( (method=='SMR'&y<log10(5e-5)) | (method=='eCAVIAR'&y>0.05),gene_name,'')]
+data[,chrom:=paste0('chr',chrom)]
+
+dummy=data.table(method=c('SMR','eCAVIAR'),y=c(log10(5e-5),0.05))
+
+p=manhattan(data,build='hg19')+
+	facet_grid(method~.,scale='free_y')+
+	scale_y_continuous(labels=function(x){abs(x)})+
+	geom_text(aes(label=label),hjust=-0.2)+
+	geom_hline(data=dummy,aes(yintercept=y),color='red',linetype=2)+
+	ylab(paste('-log10(P)                 CLPP'))
+saveRDS(list(data,dummy,p),sprintf('%s/manhattan_hcasmc_ref.rds',out_dir))
+save_plot(sprintf('%s/manhattan_hcasmc_ref.pdf',fig_dir),p,base_width=8,base_height=4)

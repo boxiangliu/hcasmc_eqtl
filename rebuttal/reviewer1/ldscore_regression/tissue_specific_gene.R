@@ -5,7 +5,7 @@ gtex_rpkm_fn='/mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-0
 gtex_sample_annotation_fn='/mnt/lab_data/montgomery/shared/datasets/gtex/GTEx_Analysis_2015-01-12/sample_annotations/GTEx_Analysis_2015-01-12_Annotations_SampleAttributesDS.txt'
 hcasmc_rpkm_fn='../processed_data/rnaseq/preprocess/combine_rpkm/combined.rpkm'
 gene_annotation_fn='../data/gtex/gencode.v19.genes.v6p.hg19.bed'
-out_dir='../processed_data/gwas_gene_overlap/ldscore_regression/tissue_specific_gene/'
+out_dir='../processed_data/rebuttal/reviewer1/ldscore_regression/tissue_specific_gene/'
 if (!dir.exists(out_dir)) {dir.create(out_dir,recursive=TRUE)}
 
 # Functions: 
@@ -18,17 +18,6 @@ select_tissue_specific_genes_4sd=function(kept_tissue_rpkm,out_dir){
 		tissue_specific_gene=names(which(kept_tissue_rpkm[,tissue]>kept_tissue_rpkm_mean+4*kept_tissue_rpkm_sd))
 		tissue_specific_gene_annotation=gene_annotation[Name%in%tissue_specific_gene,]
 		fwrite(tissue_specific_gene_annotation,sprintf('%s/%s.4sd.txt',out_dir,tissue),sep='\t')
-	}
-}
-
-select_tissue_specific_genes_3sd=function(kept_tissue_rpkm,out_dir){
-	kept_tissue_rpkm_sd=apply(kept_tissue_rpkm,1,sd)
-	kept_tissue_rpkm_mean=apply(kept_tissue_rpkm,1,mean)
-	for (tissue in names(kept_tissue_rpkm)){
-		message(tissue)
-		tissue_specific_gene=names(which(kept_tissue_rpkm[,tissue]>kept_tissue_rpkm_mean+3*kept_tissue_rpkm_sd))
-		tissue_specific_gene_annotation=gene_annotation[Name%in%tissue_specific_gene,]
-		fwrite(tissue_specific_gene_annotation,sprintf('%s/%s.3sd.txt',out_dir,tissue),sep='\t')
 	}
 }
 
@@ -75,7 +64,7 @@ hcasmc_median_rpkm=hcasmc_long[,list(median_rpkm=median(rpkm)),by=c('Name','tiss
 
 # Combined GTEx and HCASMC RPKMs: 
 combined_rpkm_long=rbind(hcasmc_median_rpkm,gtex_median_rpkm)
-fwrite(combined_rpkm_long,sprintf('%s/combined_rpkm_long.txt',out_dir),sep='\t')
+# fwrite(combined_rpkm_long,sprintf('%s/combined_rpkm_long.txt',out_dir),sep='\t')
 # combined_rpkm_long=fread(sprintf('%s/combined_rpkm_long.txt',out_dir))
 
 # Read gene annotation: 
@@ -101,6 +90,7 @@ combined_rpkm$Name=NULL
 
 combined_rpkm_corr=cor(combined_rpkm)
 diag(combined_rpkm_corr)=0 # set diagonal to 0 to keep current tissue in each iteration.
+combined_rpkm_corr[3:4,3:4] # Pearson correlation = 0.9899669
 
 threshold=0.96
 n_tissue_kept=0
@@ -119,6 +109,7 @@ while(n_tissue_remaining>0){
 }
 
 tissue_kept=colnames(combined_rpkm_corr)
+tissue_kept[3] = "Adipose - Visceral (Omentum)"
 fwrite(data.table(tissue_kept),sprintf('%s/kept_tissue.txt',out_dir),row.names=FALSE,col.names=FALSE)
 saveRDS(neighboring_tissue,sprintf('%s/neighboring_tissue.rds',out_dir))
 
@@ -129,7 +120,7 @@ kept_tissue_rpkm=combined_rpkm[tissue_kept]
 out_dir_with_sm=sprintf('%s/tissue_specific_gene/',out_dir)
 if(!dir.exists(out_dir_with_sm)) {dir.create(out_dir_with_sm)}
 select_tissue_specific_genes_4sd(kept_tissue_rpkm,out_dir_with_sm)
-select_tissue_specific_genes_3sd(kept_tissue_rpkm,out_dir_with_sm)
+
 
 # Select top tissue-specific genes:
 topN_list=c(200,500,1000,2000,4000,8000)
@@ -141,12 +132,11 @@ select_tissue_specific_genes_topN(kept_tissue_rpkm,out_dir_with_sm,topN_list)
 smooth_muscle_tissue_list=c('Cervix - Endocervix','Colon - Sigmoid','Esophagus - Mucosa','Vagina','Stomach')
 kept_tissue_rpkm_no_sm=kept_tissue_rpkm[,!(names(kept_tissue_rpkm)%in%smooth_muscle_tissue_list)]
 
+
 # Select tissue-specific genes (greater than 4 s.d.): 
 out_dir_no_sm=sprintf('%s/tissue_specific_gene_no_sm/',out_dir)
 if(!dir.exists(out_dir_no_sm)) {dir.create(out_dir_no_sm)}
-
 select_tissue_specific_genes_4sd(kept_tissue_rpkm_no_sm,out_dir_no_sm)
-select_tissue_specific_genes_3sd(kept_tissue_rpkm_no_sm,out_dir_no_sm)
 
 
 # Select top tissue-specific genes:
@@ -162,7 +152,6 @@ kept_tissue_rpkm_no_sm_no_blood=kept_tissue_rpkm_no_sm[,names(kept_tissue_rpkm_n
 out_dir_no_sm_no_blood=sprintf('%s/tissue_specific_gene_no_sm_no_blood/',out_dir)
 if(!dir.exists(out_dir_no_sm_no_blood)) {dir.create(out_dir_no_sm_no_blood)}
 select_tissue_specific_genes_4sd(kept_tissue_rpkm_no_sm_no_blood,out_dir_no_sm_no_blood)
-select_tissue_specific_genes_3sd(kept_tissue_rpkm_no_sm_no_blood,out_dir_no_sm_no_blood)
 
 
 # Select top tissue-specific genes:

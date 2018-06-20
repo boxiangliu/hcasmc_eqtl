@@ -19,7 +19,7 @@ mkdir -p $out_dir
 	--a1-inc \
 	--snp markername \
 	--signed-sumstats beta,0 
-
+# 05/20/2018, Bosh: The --ai-inc might need to be removed 
 
 ~/tools/ldsc/munge_sumstats.py \
 	--sumstats ../data/gwas/scz/scz2.snp.results.txt \
