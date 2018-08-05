@@ -109,8 +109,8 @@ for (i in seq_along(eqtl_fn)){
 save.image('finemap/direction/image.rda')
 load('finemap/direction/image.rda')
 
-row1 = plot_grid(plot_list[['TCF21']],plot_list[['FES']],plot_list[['PDGFRA']],nrow=1,labels = c('a','b','c'),align = 'h')
-row2 = plot_grid(plot_list[['SIPA1']],plot_list[['SMAD3']],plot_blank(),nrow=1,labels = c('d','e'),align = 'h')
+row1 = plot_grid(plot_list[['TCF21']],plot_list[['FES']],plot_list[['PDGFRA']],nrow=1,labels = c('A','B','C'),align = 'h')
+row2 = plot_grid(plot_list[['SIPA1']],plot_list[['SMAD3']],plot_blank(),nrow=1,labels = c('D','E'),align = 'h')
 
 multi_panel = plot_grid(row1,row2,labels='',ncol=1)
 fig_fn = sprintf('%s/multi_panel_effect_size.pdf',fig_dir)
